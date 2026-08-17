@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">SailPoint ISC Workflows by TedxHarry</title>
+  <desc id="desc">Theory, Design, and Engineering Guide for SailPoint Identity Security Cloud Workflows</desc>
+  <rect width="1200" height="630" fill="#f8fbf9"/>
+  <rect x="0" y="0" width="1200" height="18" fill="#42b983"/>
+  <rect x="76" y="78" width="10" height="410" rx="5" fill="#42b983"/>
+  <text x="126" y="156" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#257d58">SAILPOINT ISC WORKFLOWS</text>
+  <text x="126" y="245" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" fill="#34445b">Theory, Design, and</text>
+  <text x="126" y="318" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" fill="#34445b">Engineering Guide</text>
+  <text x="126" y="390" font-family="Arial, Helvetica, sans-serif" font-size="27" fill="#59697c">Triggers · Actions · Operators · Data · Debugging · Governance</text>
+  <text x="126" y="468" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600" fill="#6f7b88">Created and maintained by</text>
+  <text x="420" y="468" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#257d58">TedxHarry</text>
+  <circle cx="1036" cy="148" r="70" fill="#34445b"/>
+  <path d="M996 113h80v16h-32v64h-16v-64h-32z" fill="#42b983"/>
+  <circle cx="1069" cy="184" r="13" fill="#eef9f4"/>
+</svg>
