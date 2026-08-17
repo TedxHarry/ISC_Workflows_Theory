@@ -183,6 +183,18 @@
       margin-bottom: 0;
     }
 
+    .module-cross-link {
+      color: #2f9f70 !important;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid #b9dfce;
+    }
+
+    .module-cross-link:hover {
+      color: #257d58 !important;
+      border-bottom-color: #2f9f70;
+    }
+
     .course-navigation {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -405,6 +417,82 @@
         .replace(/\/$/, '');
     }
 
+    function linkModuleReferences() {
+      const content = document.querySelector('.markdown-section');
+      const path = currentPath();
+      const currentModule = modules.find(function (item) {
+        return item.path === path;
+      });
+
+      if (!content) {
+        return;
+      }
+
+      const moduleByNumber = {};
+      modules.forEach(function (item, index) {
+        moduleByNumber[String(index).padStart(2, '0')] = item;
+      });
+
+      const walker = document.createTreeWalker(
+        content,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function (node) {
+            const parent = node.parentElement;
+            if (!parent || !/\bModule\s+(0[0-9]|1[0-2])\b/.test(node.nodeValue)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            if (parent.closest('a, code, pre, h1, script, style, .course-navigation, .course-footer')) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const textNodes = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        textNodes.push(node);
+      }
+
+      textNodes.forEach(function (textNode) {
+        const text = textNode.nodeValue;
+        const fragment = document.createDocumentFragment();
+        const pattern = /\bModule\s+(0[0-9]|1[0-2])\b/g;
+        let lastIndex = 0;
+        let match;
+        let changed = false;
+
+        while ((match = pattern.exec(text)) !== null) {
+          const target = moduleByNumber[match[1]];
+
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+
+          if (target && (!currentModule || target.path !== currentModule.path)) {
+            const link = document.createElement('a');
+            link.href = '#/' + target.path;
+            link.className = 'module-cross-link';
+            link.title = 'Open ' + target.title;
+            link.textContent = match[0];
+            fragment.appendChild(link);
+            changed = true;
+          } else {
+            fragment.appendChild(document.createTextNode(match[0]));
+          }
+
+          lastIndex = pattern.lastIndex;
+        }
+
+        if (changed) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+          textNode.parentNode.replaceChild(fragment, textNode);
+        }
+      });
+    }
+
     window.$docsify = {
       name: 'SailPoint ISC Workflows',
       repo: 'TedxHarry/ISC_Workflows_Theory',
@@ -460,6 +548,10 @@
             }
 
             return html + '<footer class="course-footer">© TedxHarry · SailPoint ISC Workflows</footer>';
+          });
+
+          hook.doneEach(function () {
+            linkModuleReferences();
           });
         }
       ]
