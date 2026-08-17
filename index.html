@@ -3,13 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SailPoint Identity Security Cloud Workflows theory, design, and engineering guide">
+  <meta name="description" content="Independent SailPoint Identity Security Cloud Workflows theory, design, and engineering guide by TedxHarry">
+  <meta name="author" content="TedxHarry">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SailPoint ISC Workflows | TedxHarry">
+  <meta property="og:description" content="Theory, design, engineering, debugging, governance, and real-world workflow patterns for SailPoint Identity Security Cloud.">
+  <meta property="og:url" content="https://tedxharry.github.io/ISC_Workflows_Theory/">
+  <meta property="og:image" content="https://tedxharry.github.io/ISC_Workflows_Theory/social-preview.svg">
+  <meta property="og:site_name" content="SailPoint ISC Workflows">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SailPoint ISC Workflows | TedxHarry">
+  <meta name="twitter:description" content="Independent theory, design, and engineering guide for SailPoint ISC Workflows.">
+  <meta name="twitter:image" content="https://tedxharry.github.io/ISC_Workflows_Theory/social-preview.svg">
+
   <title>SailPoint ISC Workflows</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
 
   <style>
     :root {
       --course-green: #42b983;
+      --course-green-dark: #257d58;
+      --course-green-mid: #2f8f68;
       --course-green-soft: #eef9f4;
       --course-navy: #34445b;
       --course-text: #3e4c5f;
@@ -78,12 +95,12 @@
 
     .sidebar-nav li a:hover {
       background: #f5f8f6;
-      color: #2f8f68;
+      color: var(--course-green-dark);
     }
 
     .sidebar-nav li.active > a {
       background: var(--course-green-soft);
-      color: #2f9f70;
+      color: var(--course-green-dark);
       font-weight: 700;
       border-right: 3px solid var(--course-green);
     }
@@ -99,6 +116,10 @@
     .markdown-section p,
     .markdown-section li {
       line-height: 1.75;
+    }
+
+    .markdown-section a {
+      color: var(--course-green-dark);
     }
 
     .markdown-section h1,
@@ -137,23 +158,29 @@
 
     .module-category {
       margin-bottom: 0.45rem;
-      color: #2f9f70;
+      color: var(--course-green-dark);
       font-size: 0.76rem;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
+    }
+
+    .module-progress {
+      color: #89958f;
+      font-weight: 700;
     }
 
     .markdown-section code {
       padding: 0.12rem 0.34rem;
-      border: 1px solid #edf0ee;
+      border: 1px solid #e8ecea;
       border-radius: 4px;
-      background: #f5f7f6;
+      background: #f3f6f4;
     }
 
     .markdown-section pre {
+      position: relative;
       margin: 1.5rem 0;
-      padding: 1.25rem 1.4rem;
+      padding: 1.35rem 1.4rem;
       border: 1px solid var(--course-border);
       border-radius: 8px;
       background: var(--course-code-bg);
@@ -164,6 +191,26 @@
       padding: 0;
       border: 0;
       background: transparent;
+    }
+
+    .copy-code-button {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.6rem;
+      z-index: 2;
+      padding: 0.25rem 0.48rem;
+      border: 1px solid #dbe4df;
+      border-radius: 5px;
+      background: #fff;
+      color: #617068;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .copy-code-button:hover {
+      border-color: #b9d8c9;
+      color: var(--course-green-dark);
     }
 
     .markdown-section blockquote {
@@ -184,22 +231,78 @@
     }
 
     .module-cross-link {
-      color: #2f9f70 !important;
-      font-weight: 600;
+      color: var(--course-green-dark) !important;
+      font-weight: 650;
       text-decoration: none;
-      border-bottom: 1px solid #b9dfce;
+      border-bottom: 1px solid #a9d5c0;
     }
 
     .module-cross-link:hover {
-      color: #257d58 !important;
-      border-bottom-color: #2f9f70;
+      color: #1e6849 !important;
+      border-bottom-color: var(--course-green-dark);
+    }
+
+    .callout-key,
+    .callout-example,
+    .callout-warning,
+    .callout-note {
+      margin: 1.6rem 0;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--course-border);
+      border-left: 4px solid var(--course-green);
+      border-radius: 7px;
+      background: #f8fbf9;
+    }
+
+    .callout-warning {
+      border-left-color: #c68a2b;
+      background: #fffaf1;
+    }
+
+    .callout-warning .callout-label {
+      color: #94671e;
+    }
+
+    .callout-label {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--course-green-dark);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .official-references {
+      margin-top: 3rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--course-border);
+      border-radius: 8px;
+      background: #fafcfb;
+    }
+
+    .official-references h2 {
+      margin: 0 0 0.65rem;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .official-references ul {
+      margin: 0;
+      padding-left: 1.15rem;
+    }
+
+    .official-references li {
+      margin: 0.2rem 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
     .course-navigation {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
-      margin-top: 3.25rem;
+      margin-top: 2.2rem;
       padding-top: 1.5rem;
       border-top: 1px solid var(--course-border);
     }
@@ -235,7 +338,7 @@
     }
 
     .course-navigation .nav-title {
-      color: #2f9f70;
+      color: var(--course-green-dark);
       font-weight: 700;
     }
 
@@ -256,7 +359,7 @@
 
     .course-hero .hero-kicker {
       margin-bottom: 0.55rem;
-      color: #2f9f70;
+      color: var(--course-green-dark);
       font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.1em;
@@ -294,14 +397,14 @@
       display: inline-block;
       padding: 0.72rem 1.05rem;
       border-radius: 7px;
-      background: var(--course-green);
+      background: var(--course-green-dark);
       color: #fff !important;
       font-weight: 700;
       text-decoration: none !important;
     }
 
     .start-button:hover {
-      background: #37a977;
+      background: #1f704f;
     }
 
     .course-stats {
@@ -345,26 +448,10 @@
       line-height: 1.5;
     }
 
-    .callout-key,
-    .callout-example,
-    .callout-warning,
-    .callout-note {
-      margin: 1.6rem 0;
-      padding: 1rem 1.15rem;
-      border: 1px solid var(--course-border);
-      border-left: 4px solid var(--course-green);
-      border-radius: 7px;
-      background: #f8fbf9;
-    }
-
-    .callout-label {
-      display: block;
-      margin-bottom: 0.35rem;
-      color: #2f8f68;
-      font-size: 0.74rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .independent-note {
+      margin-top: 1.1rem;
+      color: #7c878f;
+      font-size: 0.82rem;
     }
 
     @media screen and (max-width: 900px) {
@@ -387,6 +474,48 @@
         font-size: 2rem;
       }
     }
+
+    @media print {
+      .sidebar,
+      .sidebar-toggle,
+      .github-corner,
+      .search,
+      .course-navigation,
+      .copy-code-button {
+        display: none !important;
+      }
+
+      body,
+      .content {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .markdown-section {
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 18mm 16mm 16mm !important;
+        color: #222 !important;
+        font-size: 11pt;
+        line-height: 1.55;
+      }
+
+      .markdown-section a {
+        color: #222 !important;
+        text-decoration: underline;
+      }
+
+      .markdown-section pre,
+      .callout-key,
+      .callout-warning,
+      .official-references {
+        break-inside: avoid;
+      }
+
+      .course-footer {
+        color: #555;
+      }
+    }
   </style>
 </head>
 <body>
@@ -403,11 +532,127 @@
       { path: '06-data-variables-and-expressions', title: 'Module 06: Data, Variables and Expressions', category: 'Workflow Building Blocks' },
       { path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging and Execution', category: 'Testing and Operations' },
       { path: '08-operations-limits-and-governance', title: 'Module 08: Operations, Limits and Governance', category: 'Testing and Operations' },
-      { path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows', category: 'Design and Architecture' },
+      { path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows and When Not', category: 'Design and Architecture' },
       { path: '10-use-case-patterns', title: 'Module 10: Use Case Patterns', category: 'Design and Architecture' },
       { path: '11-challenges-and-edge-cases', title: 'Module 11: Challenges and Edge Cases', category: 'Design and Architecture' },
       { path: '12-readiness-and-paper-design', title: 'Module 12: Readiness and Paper Design', category: 'Design and Architecture' }
     ];
+
+    const moduleHighlights = {
+      '00-orientation': {
+        key: 'Workflows are the event-driven automation layer in ISC. They sit beside transforms, the access model, provisioning, rules, and external event subscriptions.',
+        watch: 'Do not reach for a workflow just because it can perform the task. Start by asking which ISC tool naturally owns the requirement.'
+      },
+      '01-the-workflow-model': {
+        key: 'A trigger supplies the starting data, and later steps can read data produced by earlier steps. Think of the workflow as data moving forward through a controlled sequence.',
+        watch: 'Never guess a JSONPath from how a field sounds in English. Inspect the real payload and follow the actual nesting.'
+      },
+      '02-triggers': {
+        key: 'Choose the trigger whose event and payload already match the business moment you care about. Good trigger choice makes the rest of the workflow simpler.',
+        watch: 'A restrictive or incorrect trigger filter can prevent the workflow from starting. When there is no execution record, test the filter early.'
+      },
+      '03-operators-and-logic': {
+        key: 'Operators decide, shape, and repeat. Comparisons branch, variables reshape data, and loops repeat work across arrays.',
+        watch: 'Loop executions count toward an individual workflow total. Large loops are both a design and an operational concern.'
+      },
+      '04-actions': {
+        key: 'Every action has its own contract. Know what success means, what output it returns, and how long that specific action is allowed to run.',
+        watch: 'A successful Manage Access step does not guarantee every requested access change succeeded. Inspect failedAccessRequests when complete success matters.'
+      },
+      '05-forms-and-interactive-workflows': {
+        key: 'Form Submitted starts a workflow, a Form action pauses a running workflow for a recipient, and an Interactive Process is launched by a user from the Launchpad.',
+        watch: 'Interactive Message is not a Slack approval prompt. It displays progress information to the user inside an Interactive Process.'
+      },
+      '06-data-variables-and-expressions': {
+        key: 'Reliable workflows start with the real payload. Read the JSON shape first, then write the path that follows that shape.',
+        watch: 'Trigger filters and workflow-step JSONPath expressions use different implementations. An expression that works in one place should not be assumed to behave identically in the other.'
+      },
+      '07-testing-debugging-and-execution': {
+        key: 'The first debugging question is whether the workflow started. No execution record and a failed execution are different problems.',
+        watch: 'Testing can execute enabled steps for real. Protect live identities and systems with simulation and a sandbox whenever possible.'
+      },
+      '08-operations-limits-and-governance': {
+        key: 'Tenant execution rate limits and individual workflow limits are separate counters with different rules, especially around loop executions.',
+        watch: 'Workflow execution history is not a permanent audit archive. Plan external retention if evidence must live longer than the supported history window.'
+      },
+      '09-when-to-use-workflows': {
+        key: 'Workflows are best at event-driven orchestration. Use the access model, transforms, provisioning, rules, or external services when those tools own the job better.',
+        watch: 'A workflow being technically capable of doing something is not enough reason to choose it.'
+      },
+      '10-use-case-patterns': {
+        key: 'Patterns are starting points, not recipes. Preserve the trigger choice, data assumptions, failure behavior, and scale reasoning when you adapt one.',
+        watch: 'The gotcha in a pattern is often more important than the happy path. Keep the failure condition visible when adapting an example.'
+      },
+      '11-challenges-and-edge-cases': {
+        key: 'Production design is about partial failure, repeat execution, stale state, dependency behavior, and scale, not only the happy path.',
+        watch: 'Know the timeout and success semantics of the action you are actually using. There is no single timeout that applies to every workflow action.'
+      },
+      '12-readiness-and-paper-design': {
+        key: 'A strong paper design names the trigger, data, logic, actions, failure paths, re-run safety, and test plan before anyone opens the builder.',
+        watch: 'Do not stop at the happy path. A design is incomplete until you can explain what fails and how the process recovers safely.'
+      }
+    };
+
+    const officialReferences = {
+      '00-orientation': [
+        ['Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/index.html'],
+        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html']
+      ],
+      '01-the-workflow-model': [
+        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html'],
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
+        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html']
+      ],
+      '02-triggers': [
+        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
+        ['JSONPath Expressions within Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-jsonpath-expressions.html']
+      ],
+      '03-operators-and-logic': [
+        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html'],
+        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html']
+      ],
+      '04-actions': [
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
+        ['Parameter Storage', 'https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html']
+      ],
+      '05-forms-and-interactive-workflows': [
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
+        ['Interactive Process', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-interactive-process.html'],
+        ['Forms', 'https://documentation.sailpoint.com/saas/help/forms/index.html']
+      ],
+      '06-data-variables-and-expressions': [
+        ['JSONPath Expressions within Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-jsonpath-expressions.html'],
+        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html']
+      ],
+      '07-testing-debugging-and-execution': [
+        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
+        ['Workflow Executions API v2026', 'https://developer.sailpoint.com/docs/api/v2026/get-workflow-executions']
+      ],
+      '08-operations-limits-and-governance': [
+        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
+        ['Parameter Storage', 'https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html'],
+        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html']
+      ],
+      '09-when-to-use-workflows': [
+        ['Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/index.html'],
+        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html']
+      ],
+      '10-use-case-patterns': [
+        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html']
+      ],
+      '11-challenges-and-edge-cases': [
+        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html']
+      ],
+      '12-readiness-and-paper-design': [
+        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html'],
+        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
+        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
+        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html']
+      ]
+    };
 
     function currentPath() {
       return window.location.hash
@@ -417,21 +662,39 @@
         .replace(/\/$/, '');
     }
 
-    function linkModuleReferences() {
-      const content = document.querySelector('.markdown-section');
+    function currentModuleInfo() {
       const path = currentPath();
-      const currentModule = modules.find(function (item) {
+      const index = modules.findIndex(function (item) {
         return item.path === path;
       });
+      return index >= 0 ? { module: modules[index], index: index } : null;
+    }
+
+    function createModuleLink(number, currentModule, includeWord) {
+      const index = parseInt(number, 10);
+      const target = modules[index];
+      const text = includeWord ? 'Module ' + number : number;
+
+      if (!target || (currentModule && target.path === currentModule.path)) {
+        return document.createTextNode(text);
+      }
+
+      const link = document.createElement('a');
+      link.href = '#/' + target.path;
+      link.className = 'module-cross-link';
+      link.title = 'Open ' + target.title;
+      link.textContent = text;
+      return link;
+    }
+
+    function linkModuleReferences() {
+      const content = document.querySelector('.markdown-section');
+      const info = currentModuleInfo();
+      const currentModule = info ? info.module : null;
 
       if (!content) {
         return;
       }
-
-      const moduleByNumber = {};
-      modules.forEach(function (item, index) {
-        moduleByNumber[String(index).padStart(2, '0')] = item;
-      });
 
       const walker = document.createTreeWalker(
         content,
@@ -439,14 +702,12 @@
         {
           acceptNode: function (node) {
             const parent = node.parentElement;
-            if (!parent || !/\bModule\s+(0[0-9]|1[0-2])\b/.test(node.nodeValue)) {
+            if (!parent || !/\bModules?\s+(?:0[0-9]|1[0-2])\b/.test(node.nodeValue)) {
               return NodeFilter.FILTER_REJECT;
             }
-
-            if (parent.closest('a, code, pre, h1, script, style, .course-navigation, .course-footer')) {
+            if (parent.closest('a, code, pre, h1, script, style, .course-navigation, .course-footer, .official-references')) {
               return NodeFilter.FILTER_REJECT;
             }
-
             return NodeFilter.FILTER_ACCEPT;
           }
         }
@@ -461,26 +722,30 @@
       textNodes.forEach(function (textNode) {
         const text = textNode.nodeValue;
         const fragment = document.createDocumentFragment();
-        const pattern = /\bModule\s+(0[0-9]|1[0-2])\b/g;
+        const pattern = /\bModule\s+(0[0-9]|1[0-2])\b|\bModules\s+((?:0[0-9]|1[0-2])(?:\s*(?:,|and|&)\s*(?:0[0-9]|1[0-2]))+)/g;
         let lastIndex = 0;
         let match;
         let changed = false;
 
         while ((match = pattern.exec(text)) !== null) {
-          const target = moduleByNumber[match[1]];
-
           fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
 
-          if (target && (!currentModule || target.path !== currentModule.path)) {
-            const link = document.createElement('a');
-            link.href = '#/' + target.path;
-            link.className = 'module-cross-link';
-            link.title = 'Open ' + target.title;
-            link.textContent = match[0];
-            fragment.appendChild(link);
+          if (match[1]) {
+            fragment.appendChild(createModuleLink(match[1], currentModule, true));
             changed = true;
           } else {
-            fragment.appendChild(document.createTextNode(match[0]));
+            fragment.appendChild(document.createTextNode('Modules '));
+            const listText = match[2];
+            const numberPattern = /(0[0-9]|1[0-2])/g;
+            let listIndex = 0;
+            let numberMatch;
+            while ((numberMatch = numberPattern.exec(listText)) !== null) {
+              fragment.appendChild(document.createTextNode(listText.slice(listIndex, numberMatch.index)));
+              fragment.appendChild(createModuleLink(numberMatch[1], currentModule, false));
+              listIndex = numberPattern.lastIndex;
+            }
+            fragment.appendChild(document.createTextNode(listText.slice(listIndex)));
+            changed = true;
           }
 
           lastIndex = pattern.lastIndex;
@@ -491,6 +756,108 @@
           textNode.parentNode.replaceChild(fragment, textNode);
         }
       });
+    }
+
+    function removeLegacyFooterNavigation() {
+      const info = currentModuleInfo();
+      const content = document.querySelector('.markdown-section');
+      if (!info || !content) {
+        return;
+      }
+
+      const paragraphs = Array.from(content.querySelectorAll('p'));
+      const legacy = paragraphs.find(function (p) {
+        return /Course home/i.test(p.textContent) && (p.querySelectorAll('a').length >= 2 || /Previous|Next/i.test(p.textContent));
+      });
+
+      if (legacy) {
+        const previous = legacy.previousElementSibling;
+        if (previous && previous.tagName === 'HR') {
+          previous.remove();
+        }
+        legacy.remove();
+      }
+    }
+
+    function insertModuleCallouts() {
+      const info = currentModuleInfo();
+      const content = document.querySelector('.markdown-section');
+      if (!info || !content) {
+        return;
+      }
+
+      const highlight = moduleHighlights[info.module.path];
+      if (!highlight) {
+        return;
+      }
+
+      const h1 = content.querySelector('h1');
+      const intro = h1 ? h1.nextElementSibling : null;
+      if (intro && intro.tagName === 'P' && !content.querySelector('.auto-key-callout')) {
+        const box = document.createElement('div');
+        box.className = 'callout-key auto-key-callout';
+        box.innerHTML = '<span class="callout-label">Key idea</span>' + highlight.key;
+        intro.insertAdjacentElement('afterend', box);
+      }
+
+      const beforeMoveOn = Array.from(content.querySelectorAll('h2')).find(function (heading) {
+        return heading.textContent.trim().toLowerCase() === 'before you move on';
+      });
+
+      if (beforeMoveOn && !content.querySelector('.auto-watch-callout')) {
+        const box = document.createElement('div');
+        box.className = 'callout-warning auto-watch-callout';
+        box.innerHTML = '<span class="callout-label">Watch out</span>' + highlight.watch;
+        beforeMoveOn.insertAdjacentElement('beforebegin', box);
+      }
+    }
+
+    function addCopyButtons() {
+      const content = document.querySelector('.markdown-section');
+      if (!content) {
+        return;
+      }
+
+      content.querySelectorAll('pre').forEach(function (pre) {
+        if (pre.querySelector('.copy-code-button')) {
+          return;
+        }
+
+        const code = pre.querySelector('code');
+        if (!code) {
+          return;
+        }
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'copy-code-button';
+        button.textContent = 'Copy';
+        button.setAttribute('aria-label', 'Copy code');
+        button.addEventListener('click', function () {
+          const text = code.innerText;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+              button.textContent = 'Copied';
+              setTimeout(function () { button.textContent = 'Copy'; }, 1400);
+            });
+          }
+        });
+        pre.appendChild(button);
+      });
+    }
+
+    function referencesHtml(path) {
+      const refs = officialReferences[path] || [];
+      if (!refs.length) {
+        return '';
+      }
+
+      let html = '<section class="official-references"><h2>Official References</h2><ul>';
+      refs.forEach(function (ref) {
+        html += '<li><a href="' + ref[1] + '" target="_blank" rel="noopener noreferrer">' + ref[0] + '</a></li>';
+      });
+      html += '</ul></section>';
+      return html;
     }
 
     window.$docsify = {
@@ -508,21 +875,18 @@
       plugins: [
         function (hook) {
           hook.afterEach(function (html) {
-            const path = currentPath();
-            const index = modules.findIndex(function (item) {
-              return item.path === path;
-            });
+            const info = currentModuleInfo();
 
-            if (index >= 0) {
-              const module = modules[index];
-              html = '<div class="module-category">' + module.category + '</div>' + html;
+            if (info) {
+              const module = info.module;
+              html = '<div class="module-category">' + module.category + ' <span class="module-progress">· Module ' + (info.index + 1) + ' of ' + modules.length + '</span></div>' + html;
+              html += referencesHtml(module.path);
 
-              const previous = index > 0
-                ? modules[index - 1]
+              const previous = info.index > 0
+                ? modules[info.index - 1]
                 : { path: '', title: 'Course Home' };
-
-              const next = index < modules.length - 1
-                ? modules[index + 1]
+              const next = info.index < modules.length - 1
+                ? modules[info.index + 1]
                 : null;
 
               let navigation = '<nav class="course-navigation" aria-label="Course navigation">';
@@ -551,7 +915,12 @@
           });
 
           hook.doneEach(function () {
+            const info = currentModuleInfo();
+            document.title = info ? info.module.title + ' | SailPoint ISC Workflows' : 'SailPoint ISC Workflows';
+            removeLegacyFooterNavigation();
+            insertModuleCallouts();
             linkModuleReferences();
+            addCopyButtons();
           });
         }
       ]
