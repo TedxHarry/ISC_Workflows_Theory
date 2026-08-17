@@ -1,4 +1,4 @@
-# Module 09: When to Use Workflows, and When Not
+# Module 09: When to Use Workflows and When Not
 
 Choosing the right tool, and knowing when a workflow is the wrong one.
 
@@ -10,69 +10,67 @@ Back in Module 00 you got a quick map of the tools around workflows. Now that yo
 
 Transforms are for shaping the value of an attribute. They are configurable JSON, no code, and they run while ISC aggregates data from a source or provisions data to one. If the job is "this value should be calculated or formatted a certain way," a transform is the answer, and it is cheap and quiet because it runs as part of how an identity or account is built. What a transform cannot do is reach out to other systems, orchestrate a sequence of steps, or make branching decisions of any real complexity. It shapes a value and nothing more. When you catch yourself building a workflow whose real purpose is to compute one attribute, stop, because that is a transform wearing a workflow costume.
 
-Rules are for logic that the configurable tools genuinely cannot express, and they are written in code, specifically Java BeanShell. They are the most powerful option and the heaviest, and SailPoint's own guidance is blunt about it: treat rule usage as a last resort and use built-in ISC features whenever you can. There are two families. Cloud rules run inside the ISC cloud in a restricted context, typically to calculate an attribute value, and they can read the ISC data model but cannot commit changes to it. Connector rules run on the virtual appliance out at the connection to an end system, and they do not have access to the ISC data model at all. The fact that decides everything about rules in practice is this: SailPoint requires every rule to be reviewed before it is deployed, with a stated turnaround of about one business day. So a rule is not something you tweak on a whim over lunch. It is code, it is reviewed, it is slow to change, and you reach for it only when nothing lighter will do.
+Rules are for logic that the configurable tools genuinely cannot express, and they are written in code, specifically Java BeanShell. They are the most powerful option and the heaviest, and SailPoint's own guidance is to use built-in ISC features whenever possible. Cloud rules run inside the ISC cloud in a restricted context. Connector rules run closer to the connected system through the virtual appliance. The important design lesson is that a rule is code and carries a heavier lifecycle than a no-code feature. Reach for it only when the supported configurable tools genuinely cannot express the requirement.
 
-Provisioning is the machinery that actually creates, updates, enables, and disables accounts on your connected sources. It is not usually a "workflow or provisioning" choice, because provisioning is the engine that other things set in motion. When Priya gets a role, or her lifecycle state changes, ISC provisions the resulting account changes to the real systems. A workflow can start provisioning, but it does not replace it. If your goal is that an account genuinely changes on a target system, that is provisioning's job, most often driven by the access model, and a workflow that tries to micromanage account changes by hand is usually reinventing an engine that already exists.
+Provisioning is the machinery that actually creates, updates, enables, and disables accounts on connected sources. It is not usually a "workflow or provisioning" choice, because provisioning is the engine that other things set in motion. A workflow can request or coordinate a change, but provisioning is what fulfills supported account changes on the target system.
 
-Roles, access profiles, and lifecycle states are the access model, and they deserve a place in this list because so much of what people build workflows for belongs here instead. If a person should have certain access because of who they are, their department, their job, their lifecycle state, that is birthright access, and you model it with roles and access profiles and let the access model grant it automatically. You do not write a workflow that hands out standard employee access one person at a time. The access model does that better, consistently, and with proper certification and audit behind it. Workflows are for the side effects and the exceptions, not for the core "who gets what."
+Roles, access profiles, and lifecycle states are the access model, and they deserve a place in this list because so much of what people build workflows for belongs here instead. If a person should have certain access because of who they are, their department, their job, or their lifecycle state, model that through the access model. Workflows are better suited to side effects, orchestration, exceptions, notifications, and integrations than to recreating the core "who gets what" model one person at a time.
 
-Event trigger subscriptions are the do-it-yourself cousin of workflows, and understanding them sharpens what workflows are for. The same ISC events that start a workflow can instead be delivered straight to your own external service, as an HTTP webhook or through Amazon EventBridge, so that your own code handles the event in whatever language and with whatever horsepower you like. There is a further distinction worth knowing: some triggers are fire-and-forget, a one-way notification that can have many subscribers, and some are response-required, an interactive kind that expects your service to send a decision back, with time limits on the answer. A workflow is the no-code, managed way to react to an event inside ISC. A direct subscription is the way to react to the same event in your own system when you need to. Same events, two very different amounts of control and effort.
+Event trigger subscriptions are the do-it-yourself cousin of workflows. The same family of ISC events that can start workflows can also be delivered to external services through event-trigger mechanisms. A workflow is the managed no-code way to react inside ISC. A direct subscription lets your own service receive the event and handle it with your own code, libraries, infrastructure, and scaling model.
 
 ## A way to decide
 
 When a new task lands, walk it down a short path of questions and let the first honest yes tell you the tool.
 
-Is the task really just to shape or calculate an attribute value. If yes, it is a transform, not a workflow.
+Is the task really just to shape or calculate an attribute value? If yes, use a transform rather than a workflow.
 
-Should the access be granted or removed because of who the person is or what state they are in. If yes, model it with roles, access profiles, and lifecycle states, and let the access model do it. A workflow at most notices and adds a side effect.
+Should access be granted or removed because of who the person is or what state they are in? If yes, model it with roles, access profiles, and lifecycle configuration. A workflow may add a side effect, but it should not replace the access model.
 
-Does the account actually need to change on a target system. That change is provisioning, set in motion by the access model or a lifecycle change. A workflow can trigger it, but the fulfillment is provisioning's.
+Does an account actually need to change on a target system? That change is fulfilled through provisioning. A workflow can initiate or coordinate the request, but it does not replace the provisioning engine.
 
-Is the task to react when something happens by orchestrating a sequence of notifications, approvals, lookups, or calls, with no code, at a modest volume. This is the true home of the workflow. Say yes here with confidence.
+Is the task to react when something happens by orchestrating notifications, approvals, lookups, or calls, with modest volume and no custom code? This is the true home of workflows.
 
-Does the task need your own code, a specific language or library, heavy or high-volume processing, or a request-response exchange that returns data to ISC. If yes, this points at a direct event trigger subscription to your own service, or a purpose-built integration, rather than a workflow.
+Does the task need your own code, a special library, heavy data processing, high throughput, or behavior that fits better in an external service? Then an event-trigger subscription or purpose-built integration may be the better tool.
 
-Is there logic that only code can express and none of the above fits. Then, and only then, a rule, accepting that it must be reviewed and is slow to change.
+Is there logic that only code can express and none of the supported configurable tools fit? Then consider a rule, accepting the maintenance and review implications that come with code.
 
-Notice that the workflow is the fourth question, not the first. That order is the whole lesson. Reach for the lighter, more purpose-built tools first, and let the workflow own what it is genuinely best at, which is event-driven orchestration that ties several actions together without code.
+Notice that the workflow is not the first answer. That order is the lesson. Reach for the most purpose-built supported tool first.
 
 ## Anti-patterns, named so you can avoid them
 
-Some misuses are common enough to have a shape. Learn to see them.
+The mega-workflow tries to do everything in one enormous canvas, all of onboarding, provisioning, notification, ticketing, and cleanup at once. It is hard to test, hard to change, and one failure can drag unrelated behavior into the same incident. The fix is modularity from Module 08.
 
-The mega-workflow tries to do everything in one enormous canvas, all of onboarding and provisioning and notification at once. It is hard to test, hard to change, and one failure takes down the lot. The fix is the modularity from Module 08: small, focused workflows, each doing one job.
+The bulk processor loops over a huge population on a schedule. Loop iterations count toward an individual workflow's total executions, which produces a warning at 200,000 and blocks remaining executions at 300,000. A large scheduled job can also contribute to the tenant-wide daily rate limit of around 400,000 non-loop executions, after which executions continue at 5 per second for the rest of the day. Bulk work belongs in a tool designed for bulk processing, not in a workflow pretending to be one.
 
-The bulk processor loops a workflow over your whole population on a schedule, night after night. It will pile up executions against the per-workflow block and the tenant throttle from Module 08, and it is simply not what workflows are for. Bulk work belongs in search, certifications, or an external job built for volume.
+The attribute-shaper uses Get Identity, Define Variable, and perhaps an HTTP call to compute one attribute that should be owned by a transform. It is slower, harder to reason about, and spends workflow executions to do a transform's quiet job.
 
-The attribute-shaper uses Get Identity, Define Variable, and maybe an HTTP call to compute a value that a transform should own. It is slower, more fragile, and burns executions to do a transform's quiet job. Move it to a transform.
+The birthright-by-workflow pattern hands out standard access one identity at a time with a workflow instead of modeling it through roles and access profiles. You take on maintenance that the access model already solves better.
 
-The birthright-by-workflow hands out standard access one identity at a time with a workflow, instead of modeling it as a role and letting the access model grant it. You lose consistency and clean audit, and you take on maintenance you did not need. Model the access, and let the workflow handle only the extras, the welcome note, the ticket.
+The poller runs a scheduled workflow that keeps checking for something an event would have told it directly. If an appropriate event trigger exists, use the event instead of burning executions on repeated polling.
 
-The poller runs a scheduled workflow that keeps checking for something an event would have told it instantly. If an event trigger exists for the thing you are polling for, use the event and delete the poll.
+The no-filter firehose fires on every event and sorts out relevance after the workflow has already started. That wastes executions and makes operations noisier. Filter at the trigger when the trigger's payload supports the condition you need.
 
-The no-filter firehose fires on every event and sorts out the ones it cares about inside the workflow, which wastes executions and, as Module 07 showed, makes failures harder to reason about. Filter at the trigger.
-
-And two you have already been warned about: rebuilding approvals out of plain forms instead of approval policies, from Module 05, and hiding a secret inside a workflow definition, from Module 08. Both have proper tools. Use them.
+And two you have already met: rebuilding governed approvals out of ordinary forms instead of approval tooling, and hard-coding credentials into workflow definitions instead of using supported secure parameter handling.
 
 ## The honest limits of workflows
 
-A confident engineer knows the ceiling of every tool they use. Here is where workflows genuinely end, stated plainly so you never mistake the edge for a personal failing.
+A confident engineer knows the ceiling of every tool they use.
 
-They are not built for volume. The roughly four hundred thousand daily executions and the drop to five per second, and the per-workflow block at a hundred and fifty thousand, all say the same thing: workflows are for event-scale automation, not for grinding through large data sets.
+They are not built for bulk volume. At the tenant level, around 400,000 daily executions triggers rate limiting to 5 executions per second for the remainder of the day, and that tenant counter does not include loop executions. At the individual workflow level, loop executions do count: 200,000 total executions produces a warning and 300,000 blocks remaining executions for that workflow.
 
-They have timeouts. Actions cap out around ninety seconds, so a slow external call or a long operation will fail, and stacking many calls in a loop makes this worse.
+Actions have timeouts, but there is no single universal timeout. Get Identity is documented at 1 minute, HTTP Request at 90 seconds, Manage Access at 30 minutes, and Manage Accounts at 1 hour. The correct engineering habit is to check the action you are actually using rather than carrying one timeout number around in your head.
 
-They are not a general programming environment. Complex algorithms, heavy data manipulation, and tight processing over large collections are painful or impossible to express well in the builder, and that pain is a signal to move the work to code that lives outside a workflow.
+They are not a general programming environment. Complex algorithms, heavy transformations over large collections, and specialized libraries are signs that the work may belong in code outside the workflow engine.
 
-They depend on systems you do not control. Every HTTP Request and every connector action ties your workflow's fate to another system's availability and behavior, which is a permanent source of failure you manage rather than remove.
+They depend on systems you do not control. Every external API call and connector-backed action introduces another system's availability, latency, credentials, and behavior into your workflow's reliability.
 
-They are hard to change safely and to fully test. There is no rich built-in version history, editing means disabling and opening a gap, and, as Modules 07 and 11 stress, you cannot rehearse a multi-day wait or a real outage. So workflows lean on discipline and defensive design in a way a self-contained program does not.
+They are difficult to prove completely through testing. You cannot practically reproduce every external outage, race condition, long wait, or production-scale load scenario. That is why testing, defensive design, and monitoring all matter together.
 
-None of this makes workflows weak. It makes them specific. They are superb at one thing, reacting to an event by orchestrating a set of actions without code, and knowing exactly where that strength stops is what lets you use them with real confidence and reach for something else without hesitation when the task calls for it.
+None of this makes workflows weak. It makes them specific. They are excellent at event-driven orchestration without custom code. Knowing where that strength stops is what lets you use them well.
 
 ## Before you move on
 
-Sort a handful of Acme tasks to their right tools, and say why in a sentence each. Format every identity's display name as "Last, First." When Priya is hired, give her the standard employee access every Acme staffer gets. When Priya moves to Finance, notify the Finance access owner and open a ticket. Every night, recompute a risk score for all eighty thousand identities and write it back. Stream ISC identity-created events into Acme's HR data lake for analytics. And compute one attribute using a lookup that a transform genuinely cannot express. For each, name the tool and the reason, and then answer the question that this whole module turns on: why is "a workflow could technically do it" never a good enough reason on its own to use one? If those come easily, you can choose tools like an engineer, and you are ready for Module 10, where we walk through the real use-case patterns a workflow is exactly right for.
+Sort a handful of Acme tasks to their right tools and say why. Format every identity's display name as "Last, First." Give all employees standard birthright access. Notify the Finance access owner and open a ticket when Priya moves to Finance. Recompute a large risk dataset for eighty thousand identities every night. Stream identity-created events into an external analytics service. Compute one value using logic the supported transforms cannot express. For each, name the tool and the reason, then answer the question this module turns on: why is "a workflow could technically do it" never enough reason on its own? If those come easily, you can choose tools like an engineer, and you are ready for Module 10.
 
 ---
-[← Previous: Module 08 Operations, Limits, and Governance](08-operations-limits-and-governance.md) | [Course home](../README.md) | [Next: Module 10 Use-Case Patterns →](10-use-case-patterns.md)
+[← Previous: Module 08 Operations, Limits, and Governance](08-operations-limits-and-governance.md) | [Course home](../README.md) | [Next: Module 10 Use Case Patterns →](10-use-case-patterns.md)
