@@ -6,6 +6,22 @@
   <meta name="description" content="SailPoint Identity Security Cloud Workflows theory, design, and engineering guide">
   <title>SailPoint ISC Workflows</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    .site-author {
+      margin: -0.6rem 0 1.25rem;
+      font-size: 0.85rem;
+      color: #777;
+    }
+
+    .course-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #e5e5e5;
+      font-size: 0.85rem;
+      color: #777;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <div id="app">Loading course...</div>
@@ -22,7 +38,14 @@
         placeholder: 'Search course...',
         noData: 'No results found',
         depth: 4
-      }
+      },
+      plugins: [
+        function (hook) {
+          hook.afterEach(function (html) {
+            return html + '<footer class="course-footer">© TedxHarry · SailPoint ISC Workflows</footer>';
+          });
+        }
+      ]
     };
   </script>
 
