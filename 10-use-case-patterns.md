@@ -1,4 +1,4 @@
-# Module 10: Use-Case Patterns
+# Module 10: Use Case Patterns
 
 The workflows people actually build, described so you can adapt them.
 
@@ -34,17 +34,17 @@ A note before we start. A pattern is a starting point, not a finished build. The
 
 ## Integration
 
-**Chat and webhook integration.** Workflows are a natural bridge to the tools your people already live in. The trigger is whatever event matters, the logic shapes a message, and the action is a Send Slack Message, an Interactive Message for something the person can respond to, or an HTTP Request to any webhook. The gotcha is security and dependence, straight from Module 08. Do not hard-code a token into the HTTP call, and be careful never to spill sensitive personal data into a chat channel or a log, because a convenient notification is also a convenient leak.
+**Chat and webhook integration.** Workflows are a natural bridge to the tools your people already live in. The trigger is whatever event matters, the logic shapes a message, and the action is a Send Slack Message or an HTTP Request to a webhook. Interactive Message belongs to an Interactive Process launched through the Launchpad, as Module 05 explains. The gotcha is security and dependence, straight from Module 08. Do not hard-code credentials into the HTTP call, and be careful never to spill sensitive personal data into a chat channel or a log, because a convenient notification is also a convenient leak.
 
 **Inbound automation from an external system.** Sometimes the event that should drive ISC lives entirely in another system, such as an HR platform announcing a new hire before anything exists in ISC. The External Trigger lets that system call in and start a workflow with its own data. The logic then acts on that payload, and the actions do whatever the inbound event calls for. The gotcha is trust and identity. The payload is whatever the caller sends, so validate it with Verify Data Type before you rely on it, as Modules 03 and 06 taught, and remember from Modules 07 and 08 that ids from another system may not line up with ISC ids, so you often must look up the real identity rather than assume the incoming id matches.
 
 ## Evidence
 
-**Scheduled evidence.** Auditors ask for proof that a control ran, and a workflow can gather and file that evidence on a schedule. The trigger is a Scheduled Trigger, and because nothing happened to any one person, the logic must go and find its subject, using Get List of Identities or a search, exactly the shift Module 02 described for scheduled work. The actions assemble the findings and email them or push them to a store of record. The gotcha is retention and scope. Execution history is kept for ninety days per Module 07, so if the evidence lives only in workflow history you must collect it within that window or pull it through the API, and a broad scheduled gather still has to respect the execution limits from Module 08.
+**Scheduled evidence.** Auditors ask for proof that a control ran, and a workflow can gather and file that evidence on a schedule. The trigger is a Scheduled Trigger, and because nothing happened to any one person, the logic must go and find its subject, using Get List of Identities or a search, exactly the shift Module 02 described for scheduled work. The actions assemble the findings and send them to an external system of record. The gotcha is retention and scope. Workflow execution records are available for up to 90 days, so evidence that must live longer needs to be retained somewhere outside the workflow execution history. A broad scheduled gather also has to respect the execution limits from Module 08.
 
 ## Before you move on
 
 Take one pattern and prove you own it rather than just recognize it. Pick the leaver ticketing pattern and name its trigger, the one lookup its logic most likely needs, its main action, and the two production gotchas it shares with the wider course, one about the system it depends on and one about running it twice. Then do something harder: sketch how you would combine two patterns into one sensible workflow for Priya's departure, a notification and a ticket, and decide what each branch does if the ticket system is unreachable at that moment. And finally, look back at the aggregation-failure pattern and say, in one sentence, why the filter is not a detail but the whole point. If you can do that, these stop being recipes you follow and become patterns you command, and you are ready for Module 11, where we press on the hard edges and the failures these patterns have to survive.
 
 ---
-[← Previous: Module 09 When to Use Workflows, and When Not](09-when-to-use-workflows.md) | [Course home](../README.md) | [Next: Module 11 Challenges and Edge Cases →](11-challenges-and-edge-cases.md)
+[← Previous: Module 09 When to Use Workflows and When Not](09-when-to-use-workflows.md) | [Course home](../README.md) | [Next: Module 11 Challenges and Edge Cases →](11-challenges-and-edge-cases.md)
