@@ -56,7 +56,7 @@ The trigger is an appropriate Native Change account trigger from Module 02, filt
 
 Now you. For each of these, run the seven questions and write the design in your own words.
 
-Design a joiner welcome that emails Priya and her manager on her first day. A strong answer names Identity Created as the trigger, recognizes that the manager may require a lookup, and flags the Module 02 risk that early attributes may still be filling in.
+Design a joiner welcome that emails Priya and her manager on her first day. A strong answer names Identity Created as the trigger, recognizes that the manager may require a lookup, and flags the Module 02 lesson that required fields in the Identity Created payload should be validated rather than assumed to contain usable non-null values.
 
 Design a mover review that alerts the Finance access owner when anyone moves into Finance. A strong answer uses Identity Attributes Changed, reads the `changes` array correctly rather than assuming the first item, minds case sensitivity, and filters to the real department transition.
 

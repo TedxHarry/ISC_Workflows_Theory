@@ -69,7 +69,7 @@ This is the distinction earlier modules kept flagging.
 
 Trigger filters use the **Jayway** JSONPath implementation. The filter runs against the trigger event payload and determines whether the workflow should start for that event. This is why trigger-filter examples often reference fields directly from the event shape rather than from a later workflow-step wrapper.
 
-Actions and operators use SailPoint's workflow-step JSONPath implementation, which is currently documented as supporting **RFC 9535 baseline JSONPath functionality plus SailPoint extensions**. This is the implementation used by the Variable Selector and by JSONPath expressions inside workflow steps.
+Actions and operators use SailPoint's **JSON Slice** implementation of JSONPath, which is currently documented as supporting **RFC 9535 baseline JSONPath functionality plus SailPoint extensions**. This is the implementation used by the Variable Selector and by JSONPath expressions inside workflow steps.
 
 The two environments are related but not identical. SailPoint explicitly documents that trigger filters use a different implementation from actions and operators. So do not assume that a filter expression can be copied unchanged into a later step, or that a function supported in a workflow step is automatically supported in a trigger filter.
 
@@ -87,9 +87,9 @@ The Variable Selector lets you choose a prior step and one of its available valu
 
 The most common workflow bug is often not a dramatic crash. It is a path that points at a field that is missing or empty, leaving a later step with no useful value.
 
-Real identity data is incomplete more often than demos suggest. Not everyone has a manager. A new identity may not yet have every optional attribute populated. An external response may omit a field. So a workflow should not assume that a value is present just because it usually is.
+Real identity data is incomplete more often than demos suggest. As Module 02 explains, an Identity Created payload can include an attribute configured in the identity profile while that particular value is null or otherwise unusable for the step you want to run. Not everyone has a manager, and an external response can also omit a field. So a workflow should validate the values it depends on rather than assuming that presence in the payload means the value is ready for use.
 
-The defenses are simple. Verify important values before you rely on them. The Verify Data Type operator from Module 03 can confirm that a value exists or is the type you expect. Branch on absence instead of letting a blank continue into an email or an action. Provide a fallback when the business process has a sensible one.
+The defenses are simple. Verify important values before you rely on them. The Verify Data Type operator from Module 03 can confirm that a value exists or is the type you expect. Branch on absence instead of letting a blank continue into an email or an action. Provide a fallback when the business process has a sensible one. If you need information that the trigger did not provide, or you need to read current identity data, fetch it deliberately rather than guessing.
 
 Picture the manager notification. You want to email Priya's manager, but some identities have no manager. The dependable design fetches the required identity data, verifies that the manager value exists, and only then sends. If the manager is missing, take a deliberate alternate path rather than sending into a void.
 
