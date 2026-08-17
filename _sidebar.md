@@ -20,7 +20,7 @@
 
 ## Design & Architecture
 
-- [09: When to Use Workflows](09-when-to-use-workflows.md)
+- [09: When to Use Workflows and When Not](09-when-to-use-workflows.md)
 - [10: Use Case Patterns](10-use-case-patterns.md)
 - [11: Challenges & Edge Cases](11-challenges-and-edge-cases.md)
 - [12: Readiness & Paper Design](12-readiness-and-paper-design.md)
