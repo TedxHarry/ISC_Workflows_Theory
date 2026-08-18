@@ -50,16 +50,16 @@ The Manage Access trap above is one instance of a bigger idea, and it is worth n
 Workflow step succeeded   ≠   Request approved   ≠   Change live on the target system
 ```
 
-Manage Access shows the full distance between them. The step goes green the moment ISC accepts the request, but from there the outcome can still be unfinished at every stage:
+Manage Access shows the full distance between them. A successful Manage Access step does not mean the requested access has reached its final business state:
 
 ```
-Manage Access accepted the request
+Manage Access completed successfully
         ↓
-Approval may still be pending
+The access request may still require additional processing
         ↓
-Provisioning may still be running
+Provisioning may still be in progress
         ↓
-The target account may not yet reflect the change
+The target account may not yet reflect the intended change
 ```
 
 The same gap can hide inside gentler actions too. An HTTP Request can return a successful response whose body does not contain the field you assumed. And a notification can leave a run looking healthy while the intended person was never actually reached. So when the outcome matters, do not stop at the status. Inspect the step's input and output, including the rendered recipient of a Send Email, rather than assuming a green run proves the message reached the right person. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
