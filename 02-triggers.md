@@ -40,6 +40,17 @@ This is Priya's first day. Her identity comes into being, and the workflow fires
 
 Reach for Identity Created whenever the trigger is "a new person now exists." Welcome emails, opening a starter ticket, notifying a manager, kicking off birthright access reviews. One caution to hold now and remember later: the payload includes identity attributes configured in the identity profile, but a field can still have a null or otherwise unusable value for the step you want to run. Do not treat presence in the payload as proof that every required value is ready for your process. Validate the fields your workflow depends on, and use a lookup when you need additional or current identity data.
 
+> **Work It Out**
+>
+> Acme's onboarding workflow runs on Identity Created. It emails the new hire's manager and expects the person to already have their birthright access. In production, some runs email nothing useful because the manager attribute is empty, and on other runs the person does not yet have the access the message claims. What two assumptions is this workflow making that it should not, and how would you handle each?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> First, it assumes every configured attribute holds a usable value. The payload carries the attributes mapped in the identity profile, but an optional attribute such as manager is not guaranteed to contain a usable, non-null value, so validate the fields the message depends on and fetch or branch deliberately when one is not usable rather than sending an empty value. Second, it assumes the identity is already in the lifecycle state the process requires. Lifecycle state is configuration-dependent: it is determined by the mapped lifecycle-state attribute, which is often calculated from a hire date, so a new identity may be created directly as active or first as pre-hire. So do not assume Identity Created means the person is already active or fully provisioned. Check the lifecycle state the identity carries. If the tenant creates joiners directly as active, Identity Created can drive the active Joiner process, filtering on the lifecycle-state attribute in that event. If the tenant first assigns pre-hire and later transitions the identity to active, use Identity Lifecycle State Changed for that later transition. Which pattern applies depends on the tenant's lifecycle-state mapping and processing design.
+>
+> </details>
+
 ### Identity Attributes Changed, the mover
 
 Months later Priya moves from Sales to Finance. Her department attribute changes, and this trigger fires. Its seed has a shape you have not seen yet, and the shape is the whole lesson:

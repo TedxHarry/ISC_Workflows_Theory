@@ -32,6 +32,17 @@ Notifying and fetching are gentle. Manage Access is where a workflow changes rea
 
 For Priya this can be both a joiner and a leaver tool. On day one you might add access that is appropriate for a workflow-driven exception. On her last day you might remove specific access as part of an offboarding process. Remember from Module 09 that standard birthright access is better modeled through roles, access profiles, and lifecycle configuration rather than handed out one person at a time by a workflow.
 
+> **Work It Out**
+>
+> An engineer proposes a Joiner workflow that, on Identity Created, uses Manage Access to grant each new hire the standard birthright access for their department, one identity at a time. It works in a demo. Why is this usually the wrong design, and what should own that access instead?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Standard birthright access is exactly what the access model is built to own. Lifecycle states can grant configured access profiles and enable source accounts when an identity enters the state, while roles can automatically assign access based on identity criteria such as department, and access profiles provide the entitlement bundles granted through those mechanisms. So the platform already grants birthright access consistently for everyone without a workflow. Rebuilding that in a workflow, one identity at a time, duplicates a control the platform owns, drifts out of sync as the model changes, and adds executions and failure points for no gain. Prefer the automated role and lifecycle access model for standard, repeatable birthright access, and use Manage Access when the Joiner workflow intentionally needs supplemental or exception access the access model does not cover.
+>
+> </details>
+
 Manage Access has a 30 minute timeout. More importantly, understand what "success" means here. The action submits access requests and continues based on that submission. If approval is required, the workflow does not wait for the approval decision. If approval is not required, the workflow still does not wait for confirmation that the target source has finished updating the account.
 
 There is also an important result-handling trap. A Manage Access step can complete successfully while some requested access changes are represented in `failedAccessRequests`. The workflow execution itself is not automatically marked failed just because that output contains failed requests. If your process requires every requested change to succeed, inspect `successfulAccessRequests` and `failedAccessRequests` and branch deliberately instead of treating a green Manage Access step as proof that every access change completed.

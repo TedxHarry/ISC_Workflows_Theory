@@ -105,6 +105,17 @@ The method underneath all of these is the same. Read the status. Find the first 
 >
 > </details>
 
+> **Work It Out**
+>
+> A Joiner workflow fired for a new hire, and its status is green, but the onboarding email went to the team without the new hire's manager on it, and the manager's task was never created. In the execution history, where do you look, and what is the most likely cause given what an Identity Created event does and does not carry?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Open the run and read the trigger input first. An Identity Created event carries the identity reference and the attributes mapped in the identity profile, but an optional attribute such as manager is not guaranteed to contain a usable, non-null value, for example when a usable manager relationship has not been established. Confirm in the step input whether the manager value is usable, then check whether the workflow validated it, fetched with Get Identity, or branched on the missing value. The green status only means the steps ran, not that the manager was found. The fix is to validate the manager attribute before use and take a deliberate path when it is not usable. Get Identity can retrieve the identity's current state, but it is a refresh of what ISC already knows, not a guarantee that missing source data now exists, so the workflow must still branch appropriately if manager remains null.
+>
+> </details>
+
 ## Running it again, and the trap of the second run
 
 Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.

@@ -30,6 +30,17 @@ Picture Priya. Her identity is created, and moments later an attribute change oc
 
 The response is to reduce dependence on timing between separate workflows. Re-read current state before making a sensitive decision when necessary. Make operations safe to repeat where possible. Keep truly sequential operations inside one controlled flow rather than relying on the relative timing of independent event handlers.
 
+> **Work It Out**
+>
+> Acme's Joiner workflow sends a welcome email and opens a starter ticket. The workflow successfully opens the ticket but later fails, so an engineer runs the onboarding process again. Meanwhile, some new hires arrive with manager or department information that is not usable for the notification. What problems can this create, and how should the design handle both?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> A re-run can repeat business side effects that already succeeded, such as creating another starter ticket or sending another welcome. Make those operations idempotent where required by checking durable state or the target system before repeating them, for example confirming whether a starter ticket for this new hire already exists. Separately, validate the identity data the process requires. If manager or department is not usable, retrieve the current identity state with Get Identity and branch rather than assuming the value exists. If the business action truly requires data that becomes available later, choose a later event or lifecycle transition that corresponds to that requirement rather than acting on first creation.
+>
+> </details>
+
 ## Partial failures and retries
 
 A workflow can complete some work and then fail later. That partial completion is often more dangerous than a clean failure at the start.
