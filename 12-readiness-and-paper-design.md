@@ -50,7 +50,13 @@ That is a complete, defensible design, and you built it with no tenant. Notice t
 
 Acme wants a message in the security channel whenever an account is changed directly on a critical system outside normal ISC control.
 
-The trigger is an appropriate Native Change account trigger from Module 02, filtered to the critical source and change types you care about. The trigger data describes the event, and you enrich it only if the message needs more context. The action is a notification or ticketing step. The failures to consider include the notification system being unavailable and sensitive information being exposed in the wrong destination. Re-run safety matters less if a duplicate alert is only mildly annoying, but you should still be able to say that explicitly rather than ignore the question.
+Start with the trigger. If the direct change is a new account, use Native Change Account Created. If it is an update to an existing account, such as a new AD group assignment, use Native Change Account Updated. If the account disappeared from the target, use Native Change Account Deleted. Do not use ordinary Account Updated unless the question is simply "ISC account data changed" rather than "the target changed outside ISC."
+
+Then check the source configuration. Native Change Detection must be enabled, the relevant operation must be monitored, and the relevant attribute must be monitored. For an AD privileged group, that usually means monitoring Account Updates and the entitlement attribute that carries group membership. Aggregation must run after the target change before the event can be detected.
+
+The data is enough for a good alert: source, account, native identity, correlation state, event type, account change types, and the entitlement or account attribute that changed. If the account is correlated, the payload gives identity context. If it is uncorrelated, route to the source owner and say it is uncorrelated rather than inventing a human owner. Enrichment belongs only where the alert or ticket needs more current identity, owner, or routing context.
+
+The first version should usually be notify-only. If the business wants remediation, make that an explicit branch with extra proof: a valid entitlement id, a documented rule that says the change must be revoked, a source action that can do the revoke, and repeat-run behavior that will not create a loop. A green execution proves the workflow followed its path. It does not prove the original direct change was malicious, and it does not prove the target will stay corrected forever.
 
 ## Scenarios to design yourself
 
@@ -63,6 +69,8 @@ Design a mover review that alerts the Finance access owner when anyone moves int
 Design an aggregation-failure alert. A strong answer uses Account Aggregation Completed, filters on status so it speaks only on failures, and can say in one sentence why that filter is the whole point.
 
 Design the sensitive Finance access approval workflow. A strong answer names what starts it: an Access Request Submitted trigger reached only because the access profile is configured to use an enabled Workflow as its Approval Type through Adaptive Approval. It names the data available, the item-oriented seed carrying a single `requestedItem`, `requestedBy`, `requestedFor`, and `accessRequestId`. It says clearly what the Approval Policy action owns, the governed decision and reviewer routing, and what happens on rejection, where the workflow follows its rejection branch, notifies, and ends successfully. It states what a green run actually proves, only that this execution reached and handled an approval decision, not that access was granted, provisioned, or is live. It identifies the separate event that observes the final decision, Access Request Decision, and, on an approved path where provisioning occurs, the separate event that observes the provisioning action, Provisioning Completed. And it names what still must be verified before anyone can say the access is definitely live on the target: an independent check of the Finance application itself, because neither the approval event nor the provisioning event is proof of confirmed-live access.
+
+Design a Native Change response for Priya's AD account being added directly to `Finance Privileged Operators`. A strong answer uses Native Change Account Updated, not Identity Attributes Changed or Access Request Submitted. It names the source setup: Native Change Detection enabled, Account Updates monitored, group membership or all entitlement attributes monitored, and aggregation run after the target change. It reads `accountChangeTypes`, `entitlementChanges.added`, `source`, `account.nativeIdentity`, and `account.correlated`. It alerts Security and the source owner without claiming the change was malicious. If it proposes auto-revocation, it states the extra proof required: valid entitlement id, clear policy, supported action, exception handling, and idempotency so repeat events do not create a loop.
 
 Design a leaver offboarding that removes access, opens a ticket, and notifies, and survives a partial failure. A strong answer uses the lifecycle change trigger rather than Identity Deleted, orders the steps thoughtfully, validates important outputs such as `failedAccessRequests`, makes repeat execution safe, and gives external actions error paths.
 
@@ -77,6 +85,8 @@ You are ready for the labs and real work when you can honestly say yes to each o
 You can explain the workflow model in your own words: one trigger, operators that decide and shape, actions that do, and a JSON data flow in which later steps read from earlier data.
 
 You can pick the right trigger for a described event, including the judgment calls around joiner, mover, leaver, schedule, form, and external events, and you can explain what the trigger filter is buying you.
+
+You can separate ordinary account events from Native Change account events, explain that native changes are detected during aggregation on configured sources, and design the first response without assuming the change was malicious or safe to auto-revert.
 
 You can read and write JSONPath against a real payload, reach into arrays safely, and distinguish trigger-filter paths from paths used inside workflow steps.
 

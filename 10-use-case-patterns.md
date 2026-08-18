@@ -81,7 +81,45 @@ Enrichment can still belong inside this Adaptive Approval workflow, but it does 
 
 ## Security response
 
-**Native-change response.** When a change is made directly on a target system, outside of ISC, that can be exactly the kind of unauthorized change you want to catch. The trigger is one of the Native Change Account triggers from Module 02, the logic examines what changed, and the action alerts a security reviewer, or in stronger designs pushes a correction back. The gotcha is judgment about automation. A native change is not always bad, so decide deliberately between detect-and-alert and automatic revert. If you choose to revert, you are changing real access, so test it with simulation on as Module 07 insisted, because an over-eager auto-revert can undo legitimate work.
+**Native-change response.** This is the pattern Acme uses when a target account changes outside ISC. The most useful starting case is Priya's AD account being added directly to `Finance Privileged Operators`, a group that should normally be granted only through a governed request. The trigger is Native Change Account Updated, not Identity Attributes Changed and not Access Request Submitted, because the event is an out-of-band account update detected during aggregation.
+
+The configuration is half the design. On the AD source, Native Change Detection must be enabled. Account Updates must be selected for monitoring. The entitlement attribute that represents AD group membership, for example `memberOf`, must be selected, or the source must monitor all entitlement attributes. After that configuration changes, aggregation must run before ISC can detect native changes. If the source is not configured for Native Change Detection, or the relevant operation or attribute is not monitored, this workflow will not start for the change.
+
+The workflow itself should read the seed before it acts:
+
+```
+Native Change Account Updated
+        |
+        v
+Confirm source.id is the critical AD source
+        |
+        v
+Confirm accountChangeTypes includes ENTITLEMENTS_ADDED
+        |
+        v
+Loop through entitlementChanges.added
+        |
+        +---- sensitive entitlement -> notify Security and source owner
+        |
+        +---- other entitlement     -> success, no action needed
+```
+
+The alert should name what the event actually proves: source, account name, native identity, correlation state, identity name when correlated, entitlement name and value, and source owner. That is enough for a reviewer to understand the drift without pretending the workflow knows who made the directory change. A native change can be malicious, but it can also be an emergency admin action, a break-glass process, or a manual fulfillment step that bypassed the normal request path. The workflow should call it out-of-band until another system proves intent.
+
+The remediation branch is a separate decision. SailPoint documents Native Change Detection workflows and provides templates that revoke entitlement additions detected by Native Change Account Created or Updated, then email the source owner. That makes revocation a supported pattern, but it does not make it safe for every tenant or every entitlement. Auto-revert is reasonable only when the business rule is unambiguous, the entitlement id is present, the source supports the revoke action you are using, and a repeat run will not keep undoing a legitimate correction. Where those facts are not true, notify-only plus a ticket is usually the stronger engineering choice.
+
+The gotcha is loops. An ISC-initiated revocation should not be described as a new Native Change merely because a later aggregation reads the corrected target state. Native Change is reserved for out-of-band changes detected during aggregation. The repeat-event risk starts when another external actor or process changes the target again, for example when an administrator re-adds the entitlement after ISC removes it. That later external re-addition can be detected as another Native Change Account Updated event on a later aggregation. It may be exactly the signal you want, or it may flood Security if the same external change repeats. Use a durable incident key such as source id, account id, entitlement id, event type, and a time window when duplicate suppression matters. Do not expect separate workflow executions to remember that one of them already sent the alert. If you also monitor ordinary Account Updated events, keep that trigger family separate: SailPoint documents ordinary account updates as able to come from aggregation or provisioning.
+
+> **Work It Out**
+>
+> Acme wants to auto-revoke `Finance Privileged Operators` whenever it is added directly in AD. Name the minimum facts you would verify before enabling that remediation path in production.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Verify that the source is configured for Native Change Detection, Account Updates are monitored, and the AD group-membership entitlement attribute is monitored. Verify the event payload includes the entitlement in `entitlementChanges.added` with a valid entitlement id, because revocation needs an id it can act on. Verify the source and workflow action can remove that entitlement from the account in the tenant you are using. Verify the business rule says this direct addition must always be revoked, including emergency and maintenance cases, or define an exception path. Then verify repeat-run behavior so the workflow does not create a notification flood or remediation loop if the target state changes again after the first correction.
+>
+> </details>
 
 **Outlier response.** ISC can flag an identity whose access looks anomalous, and a workflow can react. The trigger is Outlier Detected, which as Module 02 noted is a licensed capability, so it only appears if your tenant has it. The logic decides how serious the signal is, and the action routes it to a reviewer or opens a case. The gotcha is treating a signal as a verdict. An outlier is a hint, not proof, so the safe pattern is to notify and prompt a review rather than to automatically strip access, because false positives on automatic removal punish innocent people.
 
