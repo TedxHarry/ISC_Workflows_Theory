@@ -75,6 +75,17 @@ The same gap can hide inside gentler actions too. An HTTP Request can return a s
 >
 > </details>
 
+> **Work It Out**
+>
+> Priya's offboarding disables her source account with Manage Accounts and removes her access with Manage Access. Both steps finish successfully. Is Priya fully offboarded, and what would you check before trusting that she is?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Not necessarily. A successful Manage Access step means the removal request was accepted, not that provisioning has finished removing the access on every target, and a successful Manage Accounts step does not prove the disable has propagated to the source. This is green does not mean done at higher stakes, because leftover access after a departure is a real security gap. Before trusting the outcome, inspect the step outputs, including `successfulAccessRequests` and `failedAccessRequests`, and where the process truly depends on completion, confirm the final state on the target or add a reconciliation step rather than relying on the green status alone.
+>
+> </details>
+
 ## HTTP Request: integrate with anything
 
 Sooner or later you will need a workflow to talk to a system ISC has no built-in action for. HTTP Request is the universal answer, and it is one of the most powerful actions in the toolbox because it lets a workflow reach almost anywhere.
