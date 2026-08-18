@@ -116,6 +116,38 @@ The method underneath all of these is the same. Read the status. Find the first 
 >
 > </details>
 
+## Debugging across the access-request boundaries
+
+Access-request incidents become easier when you first identify which pattern created the execution. Adaptive Approval and Manage Access are related to the same request lifecycle, but they are not the same workflow pattern.
+
+For an Adaptive Approval workflow started by Access Request Submitted:
+
+1. Confirm the requested access item is configured to use the enabled Workflow as its Approval Type.
+2. Inspect the trigger input and confirm `accessRequestId`, `requestedItem`, `requestedBy`, and `requestedFor`.
+3. Inspect the Approval Policy configuration and output. This workflow is the approval process, so the approval step must reach a result before logic that branches on approved or rejected can continue.
+4. Inspect the approval identifiers and result data, including `approvalId`, status, and approved or rejected information where the action documents it.
+5. If the request was approved but the user still has no access, move to provisioning evidence. Approval is proven; fulfillment is not.
+
+For a workflow that uses Manage Access to submit a new access request:
+
+1. Inspect both `successfulAccessRequests` and `failedAccessRequests`, not just the green step status.
+2. If approval is required, do not expect the final decision inside that Manage Access execution. The action submits the request and the workflow continues without waiting for approval.
+3. Use a separate workflow on Access Request Decision when downstream logic needs the final approved or denied result.
+4. If the incident is really "the access is still not live," inspect Provisioning Completed and provisioning or account activity, then confirm the target state itself when business certainty requires it.
+
+The single question underneath both patterns is the same: which boundary has actually been proven, and which boundary am I only assuming? Submission, approval, provisioning completion, and access independently confirmed live on the target are different facts.
+
+> **Work It Out**
+>
+> Priya requested a sensitive Finance access profile through Request Center. Its Approval Type points to an enabled Adaptive Approval workflow. The Access Request Submitted execution shows that the Approval Policy completed with an approved result, and the workflow ended successfully. A day later Priya still cannot use the Finance application. What does the green workflow prove, and where should you debug next?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The green Adaptive Approval workflow proves that this approval workflow ran successfully and reached an approved business decision. It does not prove provisioning completed or that the Finance application reflects the access. Move to the provisioning boundary: inspect Provisioning Completed and the relevant provisioning or account activity for errors, warnings, account requests, and status. If the business needs certainty that the access is actually usable, verify the Finance target itself. Do not add Manage Access to this explanation, because the request already existed before Access Request Submitted fired and Approval Policy is the action governing that existing request.
+>
+> </details>
+
 ## Running it again, and the trap of the second run
 
 Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.
