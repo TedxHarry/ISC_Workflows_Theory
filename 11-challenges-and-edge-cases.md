@@ -51,6 +51,17 @@ Do not assume the workflow engine will automatically repair every failed busines
 >
 > </details>
 
+> **Work It Out**
+>
+> Priya's offboarding workflow removed her access, disabled her account, and opened a ServiceNow ticket, then failed before the final confirmation step. You re-run it from the start. What can go wrong, and how should the workflow have been designed so the re-run is safe?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> A re-run from the start can repeat the steps that already succeeded, opening a second duplicate ticket and re-issuing access and account changes that were already applied. Design each world-changing step to be safe to repeat. Before opening a ticket, check whether a ticket for this offboarding already exists. Before removing access or disabling an account, check the current state so a repeat is a no-op rather than a fresh action. Order cheap checks before expensive or irreversible actions, and keep enough durable state to recognize that an earlier attempt already completed a step, so recovery does not multiply side effects.
+>
+> </details>
+
 ## Large payloads
 
 Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.
