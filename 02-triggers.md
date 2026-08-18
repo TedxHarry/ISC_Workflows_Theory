@@ -71,7 +71,7 @@ Priya's move also gives us the filter we will lean on later. If Acme only cares 
 
 When Priya leaves Acme, there is not one single "leaver" trigger, and the choice between the options is a real piece of engineering judgment, so let us slow down here.
 
-The moment you almost always want is Identity Lifecycle State Changed, which you will often see written in its shorter form, Lifecycle State Changed. When HR marks Priya as terminated, her identity's lifecycle state flips, for example from active to inactive, and this trigger fires. The important thing is that her identity still exists at this point, which is exactly what you need, because you still have all her data in hand while you send the offboarding notice, open the revoke-access ticket, and let her manager know. The seed carries her identity along with the state she moved from and the state she moved to, so your logic can react to the specific transition, for instance acting only when the new state is the terminated one. A representative leaver event has this shape:
+The moment you almost always want is Identity Lifecycle State Changed, which you will often see written in its shorter form, Lifecycle State Changed. When HR marks Priya as terminated, her identity's lifecycle state flips, for example from active to inactive, and this trigger fires. The important thing is that her identity still exists at this point and can still be looked up, which is exactly what you need while you send the offboarding notice, open the revoke-access ticket, and let her manager know. The seed carries her identity along with the state she moved from and the state she moved to, so your logic can react to the specific transition, for instance acting only when the new state is the terminated one. A representative leaver event has this shape:
 
 ```json
 {
@@ -85,9 +85,9 @@ The moment you almost always want is Identity Lifecycle State Changed, which you
 }
 ```
 
-The exact lifecycle-state values are whatever your tenant configures, so confirm them in the builder rather than assuming these names. There is a close partner, Identity Lifecycle State Change Processed, which fires after ISC has finished processing the lifecycle state change and evaluating or applying the actions configured for that state change. Reach for that one when you need to react after lifecycle processing is complete. Do not treat the trigger itself as proof that every downstream target-system access change completed successfully.
+The exact lifecycle-state values are whatever your tenant configures, so confirm them in the builder rather than assuming these names. Notice too that this seed carries the identity reference and the state transition, not her full attribute set, so if the offboarding notice, the ticket, or an external action needs more identity data, fetch the current identity data with Get Identity. There is a close partner, Identity Lifecycle State Change Processed, which fires after ISC has finished processing the lifecycle state change and evaluating or applying the actions configured for that state change. Reach for that one when you need to react after lifecycle processing is complete. Do not treat the trigger itself as proof that every downstream target-system access change completed successfully.
 
-Then there is Identity Deleted, and here is the trap. It fires when the identity record is removed from ISC entirely, which usually happens well after the person has gone, once they drop out of the authoritative source. Its seed looks almost the same as the joiner's:
+Then there is Identity Deleted, and here is the trap. It fires when the identity itself is deleted from Identity Security Cloud. That is different from an employment termination or a lifecycle-state transition, so it is not the trigger to rely on for timely offboarding. Source accounts can still exist after the ISC identity is deleted, but they are no longer correlated to that identity. Its seed looks almost the same as the joiner's:
 
 ```json
 {
