@@ -92,6 +92,17 @@ Identity-related triggers identify the subject, but their event-specific data is
 
 One honest note on exact fields. The lifecycle-state fields are the kind of detail that can shift between versions, so before you write a filter against "the new state," open that trigger in the builder and read its own JSON rather than trusting your memory of the field name. That habit, checking the trigger's real seed in the builder, is worth building now and will save you across every trigger you ever use.
 
+> **Work It Out**
+>
+> Acme wants Priya's access revoked promptly when she is terminated. An engineer builds the offboarding workflow on the Identity Deleted trigger. In testing against a real termination, the workflow does not run until days later, long after her access should have been removed. What trigger should this be, and why did Identity Deleted behave this way?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Identity Deleted fires only when the identity record is removed from ISC entirely, which usually happens well after the person leaves, once they drop out of the authoritative source. That is far too late for timely access removal. Build timely offboarding on Identity Lifecycle State Changed, which fires when the state flips to terminated while the identity and its data still exist. Reach for Identity Lifecycle State Change Processed when you need to act after ISC has finished processing the state change and its configured actions, and treat Identity Deleted as a signal for final housekeeping and audit, not for revoking access.
+>
+> </details>
+
 ### Scheduled Trigger, the clock
 
 Not everything reacts to an event. Sometimes the event is simply "it is Monday at nine." A Scheduled Trigger runs your workflow on a time schedule you set, once a day, every hour, weekly, and so on. There is no person and no identity in the seed, because nothing happened to anyone. The workflow starts because the clock said so, and then it goes and gathers whatever data it needs by itself.
