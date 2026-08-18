@@ -136,11 +136,149 @@ Reach for a Scheduled Trigger for anything periodic: a weekly report, a nightly 
 
 There is a close cousin called Scheduled Search. Instead of firing purely on time, it runs a saved search on a schedule and starts the workflow with the results. Reach for that when the periodic question is "which identities or accounts match this search right now," for example "everyone still missing a manager."
 
-### Access Request Submitted, joining the request flow
+### Access Request Submitted, joining the governed approval flow
 
-When someone asks for access in ISC, that submission can start a workflow. The seed carries the request: who asked, for what, for whom. This is how you weave extra logic into the access request process, for example enriching a request with context, notifying an owner, or opening a record in another system when a particular kind of access is requested.
+Access Request Submitted is not a generic "any access request happened" trigger. In native Workflows it participates in Adaptive Approval. It fires when an access request is submitted for an access item whose Approval Type points to that enabled Workflow. A request for an item using ordinary reviewer configuration, or an item that does not route approval through that Workflow, does not start this Workflow. This trigger also requires the Access Request service.
 
-There is a partner trigger, Access Request Decision, that fires when a request is approved or denied rather than when it is submitted. Reach for Submitted to react at the start of a request, and Decision to react to the outcome. Knowing which end of the flow you care about is the whole choice.
+The current Workflow sample is detailed. The excerpt below keeps the fields most useful for day-to-day reasoning while preserving their documented names and types:
+
+```json
+{
+  "requestId": "...",
+  "workflowId": "...",
+  "parentWorkflowExecutionId": "...",
+  "workflowExecutionId": "...",
+  "accessRequestId": "...",
+  "accountActivityId": "...",
+  "requestedItem": {
+    "id": "...",
+    "name": "Engineering Access",
+    "description": "Engineering Access",
+    "type": "ACCESS_PROFILE",
+    "operation": "Add",
+    "reauthRequired": true,
+    "requestedAccounts": []
+  },
+  "requestedBy": {
+    "id": "...",
+    "name": "Adam Admin",
+    "type": "IDENTITY"
+  },
+  "requestedFor": {
+    "id": "...",
+    "name": "annie",
+    "type": "IDENTITY"
+  },
+  "sod": {
+    "violated": "true",
+    "details": {}
+  },
+  "requestedAt": "2009-11-10T23:00:00Z"
+}
+```
+
+Read `requestedItem` closely. It is singular and represents the access item carried by this event, not a whole shopping-cart array. SailPoint also documents that items in a larger request can be processed and provisioned individually, so do not treat a multi-item Request Center submission as one atomic object. At the same time, do not turn the singular payload into an undocumented guarantee of exactly one Workflow execution per basket item. If exact fan-out matters, validate it against real tenant executions.
+
+Notice two type and value lessons. The current Workflow sample shows `requestedItem.operation` as `"Add"`. Treat that as a sample value, not a complete enum unless current documentation defines the full set. And `sod.violated` is shown as the string `"true"`, not a JSON boolean. Inspect real execution input before writing comparisons.
+
+There is a partner native Workflow trigger, Access Request Decision. It marks a different lifecycle boundary: the final approved or denied decision. When multiple approval decisions are required, SailPoint documents that this trigger fires after the final decision, once the final approved or denied outcome is known. A representative excerpt is:
+
+```json
+{
+  "accessRequestId": "...",
+  "requestedBy": {
+    "id": "...",
+    "name": "Adam Admin",
+    "type": "IDENTITY"
+  },
+  "requestedFor": {
+    "id": "...",
+    "name": "Ed Engineer",
+    "type": "IDENTITY"
+  },
+  "requestedItemsStatus": [
+    {
+      "approvalInfo": [
+        {
+          "approvalComment": "...",
+          "approvalDecision": "APPROVED",
+          "approver": {
+            "id": "...",
+            "name": "Stephen Austin",
+            "type": "IDENTITY"
+          },
+          "approverName": "Stephen.Austin"
+        }
+      ],
+      "id": "...",
+      "name": "Engineering Access",
+      "operation": "Add",
+      "type": "ACCESS_PROFILE"
+    }
+  ]
+}
+```
+
+So Submitted and Decision are different boundaries. Use Access Request Submitted to begin the configured Adaptive Approval workflow. Use Approval Policy inside that workflow to conduct the governed review. Use Access Request Decision when a separate workflow needs to react to the final outcome. Do not invent an Access Request Completed Workflow trigger.
+
+For an approved request that proceeds to fulfillment, provisioning is a later boundary again. The native Workflow trigger is Provisioning Completed, documented as firing when a provisioning action completes on a source. A representative excerpt is:
+
+```json
+{
+  "trackingNumber": "...",
+  "action": "IdentityRefresh",
+  "requester": {
+    "id": "...",
+    "name": "Adam Admin",
+    "type": "IDENTITY"
+  },
+  "recipient": {
+    "id": "...",
+    "name": "Ed Engineer",
+    "type": "IDENTITY"
+  },
+  "errors": [],
+  "warnings": [],
+  "sources": "Corp AD",
+  "accountRequests": [
+    {
+      "source": {
+        "id": "...",
+        "name": "Corporate Active Directory",
+        "type": "SOURCE"
+      },
+      "accountId": "...",
+      "accountOperation": "Modify",
+      "provisioningResult": "committed",
+      "provisioningTarget": "Corp AD",
+      "attributeRequests": [
+        {
+          "operation": "Add",
+          "attributeName": "memberOf",
+          "attributeValue": "..."
+        }
+      ]
+    }
+  ]
+}
+```
+
+Treat Provisioning Completed as evidence about ISC's provisioning stage, not as an independent readback from the target application. If the business requires proof that access is actually live and usable on the target, verify that state separately.
+
+There is also a real documentation conflict in `provisioningResult`. The current Workflow trigger sample uses `"committed"`, while SailPoint's current Developer Provisioning Completed event-trigger page uses `"SUCCESS"` in its sample. Do not normalize that conflict into one universal literal. Inspect the payload your tenant actually produces before you filter on this field.
+
+One final naming trap: SailPoint Developer Event Triggers are a separate extensibility surface from native Workflow triggers. A Developer Event Trigger can use the same or similar display name, including Access Request Submitted, while having a different payload and contract. Do not copy a Developer Event Trigger payload into a native Workflow design. Likewise, do not teach Access Request Dynamic Approval as a native Workflow trigger unless the current Workflow builder or catalog lists it.
+
+> **Work It Out**
+>
+> Acme has two sensitive Finance access profiles. Finance Reporting is configured to use an enabled Workflow as its Approval Type. Finance Admin uses the normal reviewer configuration instead. Requests for Finance Reporting start the Access Request Submitted workflow, while requests for Finance Admin do not. A colleague insists the trigger should fire for both because both are access requests. What is the colleague misunderstanding?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The colleague is treating Access Request Submitted as a generic event for every access request. It is not. In native Workflows, this trigger is part of Adaptive Approval and fires when the requested access item routes approval to that enabled Workflow. Finance Reporting is wired to the Workflow, so its request starts it. Finance Admin is not, so its request follows its configured reviewer path instead. Check the access item's Approval Type when this trigger does not start, and remember that the trigger seed is item-oriented rather than a whole-basket payload.
+>
+> </details>
 
 ### External Trigger, the door for other systems
 
