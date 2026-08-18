@@ -30,6 +30,17 @@ Now the failure that catches everyone, and it is worth a real pause. Compare Str
 
 A close cousin of this bug is comparing the wrong data type. If a value arrives as the text "5" and you compare it with Compare Numbers, or a real number 5 compared as a string, the result can surprise you. Match the operator to what the data actually is, not to what it looks like on screen.
 
+> **Work It Out**
+>
+> Acme's Finance mover alert uses a Compare Strings Equals, with value one set to the new department and value two set to the text `finance`. In testing, Priya moves to Finance and the workflow clearly runs, but the alert never fires. What is wrong, and how would you fix it?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Compare Strings Equals is exact, so case matters. Priya's department arrives as "Finance" with a capital F, and the comparison tests against "finance" in lowercase, so the answer is no every time and the alert path is never taken. Fix it by comparing against the value in the case the data actually uses, or by normalizing the value first, for example trimming it and adjusting case where a supported operation allows it, so the two sides genuinely match. When a comparison should match but does not, suspect case and stray spaces before anything else.
+>
+> </details>
+
 ## Combining conditions with Define Comparison
 
 One question is often not enough. Acme really wants the alert only when two things are true together: the department actually changed to Finance, and Priya is still an active identity. A single comparison cannot ask two questions. Define Comparison can.
