@@ -83,6 +83,17 @@ The method underneath all of these is the same. Read the status. Find the first 
 >
 > </details>
 
+> **Work It Out**
+>
+> Priya's offboarding workflow ran and every step shows success, but a reviewer finds she still has access to a sensitive application the next day. Where do you look, and what are three likely explanations that a green run can hide?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Open the execution and read the Manage Access step output, not just its status. Inspect both `successfulAccessRequests` and `failedAccessRequests`, because a Manage Access step can complete successfully while some requested removals are listed as failed, and the workflow is not automatically marked failed for that. Three common explanations behind a green run: the removal for that application is in `failedAccessRequests`; the removal request was accepted but is still awaiting an approval decision, because Manage Access continues after submitting an approval-required request rather than waiting for it; or the removal was accepted and any approval granted, but provisioning to the target had not finished when the reviewer checked. Green does not mean done, so verify the outputs and, where completion matters, confirm the target state rather than trusting the status. This is also a reason standard termination revocation is often better handled by a leaver lifecycle state that removes all access, where the removal approval is bypassed automatically.
+>
+> </details>
+
 ## Running it again, and the trap of the second run
 
 Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.

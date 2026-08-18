@@ -71,9 +71,23 @@ Priya's move also gives us the filter we will lean on later. If Acme only cares 
 
 When Priya leaves Acme, there is not one single "leaver" trigger, and the choice between the options is a real piece of engineering judgment, so let us slow down here.
 
-The moment you almost always want is Identity Lifecycle State Changed, which you will often see written in its shorter form, Lifecycle State Changed. When HR marks Priya as terminated, her identity's lifecycle state flips, for example from active to inactive, and this trigger fires. The important thing is that her identity still exists at this point, which is exactly what you need, because you still have all her data in hand while you send the offboarding notice, open the revoke-access ticket, and let her manager know. The seed carries her identity along with the state she moved from and the state she moved to, so your logic can react to the specific transition, for instance acting only when the new state is the terminated one. There is a close partner, Identity Lifecycle State Change Processed, which fires after ISC has finished processing the lifecycle state change and evaluating or applying the actions configured for that state change. Reach for that one when you need to react after lifecycle processing is complete. Do not treat the trigger itself as proof that every downstream target-system access change completed successfully.
+The moment you almost always want is Identity Lifecycle State Changed, which you will often see written in its shorter form, Lifecycle State Changed. When HR marks Priya as terminated, her identity's lifecycle state flips, for example from active to inactive, and this trigger fires. The important thing is that her identity still exists at this point and can still be looked up, which is exactly what you need while you send the offboarding notice, open the revoke-access ticket, and let her manager know. The seed carries her identity along with the state she moved from and the state she moved to, so your logic can react to the specific transition, for instance acting only when the new state is the terminated one. A representative leaver event has this shape:
 
-Then there is Identity Deleted, and here is the trap. It fires when the identity record is removed from ISC entirely, which usually happens well after the person has gone, once they drop out of the authoritative source. Its seed looks almost the same as the joiner's:
+```json
+{
+  "identity": {
+    "id": "2c9180835d191a86015d28455b4b232a",
+    "name": "priya.patel",
+    "type": "IDENTITY"
+  },
+  "oldLifecycleState": "active",
+  "newLifecycleState": "terminated"
+}
+```
+
+The exact lifecycle-state values are whatever your tenant configures, so confirm them in the builder rather than assuming these names. Notice too that this seed carries the identity reference and the state transition, not her full attribute set, so if the offboarding notice, the ticket, or an external action needs more identity data, fetch the current identity data with Get Identity. There is a close partner, Identity Lifecycle State Change Processed, which fires after ISC has finished processing the lifecycle state change and evaluating or applying the actions configured for that state change. Reach for that one when you need to react after lifecycle processing is complete. Do not treat the trigger itself as proof that every downstream target-system access change completed successfully.
+
+Then there is Identity Deleted, and here is the trap. It fires when the identity itself is deleted from Identity Security Cloud. That is different from an employment termination or a lifecycle-state transition, so it is not the trigger to rely on for timely offboarding. Source accounts can still exist after the ISC identity is deleted, but they are no longer correlated to that identity. Its seed looks almost the same as the joiner's:
 
 ```json
 {
@@ -91,6 +105,17 @@ Then there is Identity Deleted, and here is the trap. It fires when the identity
 Identity-related triggers identify the subject, but their event-specific data is not one shared schema. Identity Created and Identity Deleted provide attributes, Identity Attributes Changed provides a `changes` array, and lifecycle-state triggers provide their own state-specific data. That difference is exactly why you should inspect the trigger payload instead of carrying one assumed shape across the whole identity family. The timing of Identity Deleted is the other key point. If you build offboarding on Identity Deleted, you will act too late, because by then the identity and much of its context are already gone. So hold this rule of thumb: use Identity Lifecycle State Changed to drive timely offboarding, use Identity Lifecycle State Change Processed when you need to react after ISC has processed the lifecycle state change and its configured actions, and treat Identity Deleted as a signal for final housekeeping and audit, not for timely access removal.
 
 One honest note on exact fields. The lifecycle-state fields are the kind of detail that can shift between versions, so before you write a filter against "the new state," open that trigger in the builder and read its own JSON rather than trusting your memory of the field name. That habit, checking the trigger's real seed in the builder, is worth building now and will save you across every trigger you ever use.
+
+> **Work It Out**
+>
+> Acme wants Priya's access revoked promptly when she is terminated. An engineer builds the offboarding workflow on the Identity Deleted trigger, expecting it to fire when Priya is terminated, but it does not drive her access removal in time. What trigger should this be, and why is Identity Deleted the wrong choice?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Identity Deleted represents deletion of the ISC identity itself, not the employment termination or the lifecycle-state transition, so it is not the right trigger for timely offboarding. After an identity is deleted, its source accounts may still exist but no longer correlate to an identity. Build timely offboarding on Identity Lifecycle State Changed, which fires when the state flips to a leaver state while the identity and its data still exist. Reach for Identity Lifecycle State Change Processed when you need to act after ISC has evaluated and applied the actions configured for that lifecycle state, remembering that Processed still is not proof that every downstream target-system change has finished.
+>
+> </details>
 
 ### Scheduled Trigger, the clock
 

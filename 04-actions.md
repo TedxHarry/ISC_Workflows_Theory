@@ -75,6 +75,17 @@ The same gap can hide inside gentler actions too. An HTTP Request can return a s
 >
 > </details>
 
+> **Work It Out**
+>
+> A leaver workflow is deliberately managing part of Priya's offboarding for a source not covered by lifecycle-state configuration: it removes access with Manage Access and disables the source account with Manage Accounts. Both steps finish successfully. Is that part of her offboarding truly complete, and what would you check before trusting that it is?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Not necessarily, because a green step reports the action's own success, not the final target state, and the two actions behave differently. Manage Access is asynchronous: it submits the removal request and continues, so a successful step means the request was accepted, not that provisioning has finished on the target, and if approval is required the workflow continues without waiting for the decision. Inspect its `successfulAccessRequests` and `failedAccessRequests`. Manage Accounts reports its own results, so inspect `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. This is green does not mean done at higher stakes, because leftover access after a departure is a real security gap, so for a security-critical control, verify the final account and access state on the target rather than relying on the green status alone.
+>
+> </details>
+
 ## HTTP Request: integrate with anything
 
 Sooner or later you will need a workflow to talk to a system ISC has no built-in action for. HTTP Request is the universal answer, and it is one of the most powerful actions in the toolbox because it lets a workflow reach almost anywhere.
