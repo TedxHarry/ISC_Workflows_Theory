@@ -116,6 +116,31 @@ The method underneath all of these is the same. Read the status. Find the first 
 >
 > </details>
 
+## Debugging Native Change executions
+
+Native Change problems start with a different first question: did aggregation detect the change at all?
+
+If there is no workflow execution for the direct account change you expected, check the source before you debug the workflow canvas. Native Change Detection must be enabled on that source. The operation must be monitored, for example Account Updates for a group added to an existing AD account. The attribute must be monitored, for example the entitlement attribute that represents group membership. The source must have aggregated after the direct target change. And remember the AND relationship from Module 02: the operation and monitored attribute both have to line up with the change.
+
+Then check whether the source can use the feature in the way you configured it. SailPoint documents that Native Change Detection is not available for Non-Employee Lifecycle Management sources, and that SAML Just-in-Time sources require the Native Change Detection API endpoint to enable it. If the UI does not show the expected source option, do not treat that as a filter bug until you have confirmed the source's supported configuration path.
+
+If the workflow did run, inspect the trigger input before every other step. Native Change is account-centered. For a sensitive group addition, look at `source.id`, `account.id`, `account.nativeIdentity`, `account.correlated`, `accountChangeTypes`, and `entitlementChanges`. If `account.correlated` is `false`, the identity object is system-generated rather than a proven human identity, so an alert that names a person as the owner of the change is overclaiming. Route it to the source owner with the source and native account identity.
+
+For an update event, do not assume the first entitlement change is the one you care about. Read through `entitlementChanges`, then through each `added` and `removed` list. For account attributes, separate `singleValueAttributeChanges` from `multiValueAttributeChanges`; they are different shapes. If a filter or choice expects the sensitive group under `singleValueAttributeChanges`, it will never match a real entitlement addition.
+
+If a remediation step reports success but the sensitive access still appears on the next aggregation, apply green does not mean done. The workflow status proves the step completed from the workflow engine's point of view. It does not prove the target account stayed corrected after the fact. Check the remediation action output, the next aggregation result, the Native Change audit event, and the target system state. Also check whether a human or another process re-added the same access after your workflow removed it.
+
+> **Work It Out**
+>
+> A Native Change Account Updated workflow should alert when `Finance Privileged Operators` is added to an AD account. The group was added directly in AD, but no workflow execution appears. Name the first checks, in order.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> First check whether the AD source has Native Change Detection enabled. Then check whether Account Updates are monitored and whether the entitlement attribute that carries group membership is monitored. Confirm an aggregation ran after the direct AD change, because native changes are detected on aggregation. If those are correct, remove or loosen the trigger filter and test against the real event shape. If the source does not expose the expected Native Change Detection option, verify the source's supported configuration path before treating the workflow as broken.
+>
+> </details>
+
 ## Debugging across the access-request boundaries
 
 Access-request incidents become easier when you first identify which pattern created the execution. Adaptive Approval and Manage Access are related to the same request lifecycle, but they are not the same workflow pattern.

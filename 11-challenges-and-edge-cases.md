@@ -84,6 +84,37 @@ Do not assume the workflow engine will automatically repair every failed busines
 >
 > </details>
 
+## Native change is a signal, not a verdict
+
+Native Change Detection is built for drift, and drift is a real security concern. But the workflow must be careful with language and action. The event tells you ISC detected an out-of-band account create, update, or delete during aggregation on a configured source. It does not, by itself, prove the change was malicious, who made it, or whether the business intended it through an emergency path outside ISC.
+
+That matters because native-change response workflows sit close to real access. A notify-only workflow can still create noise or leak sensitive data into the wrong channel. A remediation workflow can change access. If the workflow automatically revokes every direct entitlement addition, it can undo a valid emergency grant. If it disables an account created directly on the source, it can interrupt a legitimate break-glass or service account process unless the business rule says that is exactly what should happen.
+
+The safer architecture is staged:
+
+```
+detect  ->  classify  ->  notify or ticket  ->  remediate only when the rule is clear
+```
+
+Classify from fields the payload actually gives you: source, account, correlation state, event type, account change types, entitlement additions or removals, and account attribute changes. Enrich only when you need data the seed does not carry, for example current identity details or ownership routing. If the account is uncorrelated, do not invent a human owner. Treat it as an account investigation and route to the source owner.
+
+Auto-remediation adds two more edge cases. First, revocation needs a valid entitlement id. SailPoint's Native Change Detection workflow template documentation says those templates skip entitlements with null IDs because revocation requests require a valid Entitlement ID. Second, remediation can create follow-on events. Removing an entitlement changes the account, and a later aggregation can observe that changed state. If your workflow alerts on every observed change without suppression, or if a source admin keeps re-adding the same group and the workflow keeps removing it, you have an incident loop, not a clean control.
+
+Make the repeated path explicit. For alerts, record a durable incident key such as source id, account id, entitlement id, event type, and a time window, then suppress duplicates or update the existing ticket. For remediation, re-read current state before acting when the action is risky, and skip if the entitlement is already gone. That is idempotency applied to drift response.
+
+The unsupported-source edge case is ordinary, not exotic. If no event arrives, do not start by rewriting JSONPath. Confirm Native Change Detection is available and enabled for that source, the monitored operation and attributes match the direct change, and aggregation has run. SailPoint also documents that Native Change Detection is not available for Non-Employee Lifecycle Management sources, while SAML Just-in-Time sources require the API endpoint for enablement.
+
+> **Work It Out**
+>
+> Acme builds auto-revocation for direct AD additions to `Finance Privileged Operators`. During an outage, the AD team adds Priya to that group for a documented emergency. The workflow revokes it on the next aggregation, sends a green execution record, and Security later asks why the workflow "fixed the unauthorized change." What is wrong with that interpretation, and how would you redesign the response?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The green execution proves the workflow followed its path, not that the original change was unauthorized or that revocation was the right business action. Native Change Detection proves out-of-band drift was detected during aggregation. It does not prove malicious intent or emergency status. Redesign the response so high-risk entitlement additions are classified first, with a notify or ticket path by default and auto-remediation only for changes covered by a clear policy. Add an exception path for documented emergency access, include source owner review, and make repeated events safe by using a durable incident key or by checking current state before revoking again.
+>
+> </details>
+
 ## Access requests across separate boundaries and executions
 
 Access requests stretch across several boundaries that are handled at different times, and most access-request edge cases come from forgetting that. Hold the approved and denied paths apart:

@@ -339,13 +339,130 @@ The `stats` open a second, richer kind of automation once you are comfortable. E
 >
 > </details>
 
+### Native Change Account triggers, when the target changed first
+
+Native Change is the pattern for target-system drift. Someone or something changes an account directly on the source, outside ISC control, and ISC discovers that difference during account aggregation by comparing what it had stored with what it just read from the source.
+
+That timing is the first boundary to understand. Native Change is not instant target telemetry. The workflow starts after aggregation detects the out-of-band change, and only for sources where Native Change Detection is enabled, the relevant account operation is monitored, and at least one monitored attribute participates in the detected change. After you enable it on a source, you must run an aggregation before ISC can discover native changes.
+
+The exact native Workflow trigger names are:
+
+- Native Change Account Created
+- Native Change Account Updated
+- Native Change Account Deleted
+
+Those names are close to the ordinary Account Created, Account Updated, and Account Deleted triggers, but they are not the same boundary. Ordinary account events fire when an account is created, updated, or deleted in ISC, and the Developer examples show a cause such as aggregation or provisioning. Native Change Account events are narrower: they represent account changes made outside ISC and then detected by aggregation on a source configured for Native Change Detection.
+
+Picture Priya again. A directory administrator adds her AD account directly to a sensitive Finance group. That change bypasses request approval in ISC, so the workflow you want is not a mover workflow and not an access-request workflow. It is Native Change Account Updated, because the account already existed and the direct target change added an entitlement.
+
+The seed is account-centered. A representative updated event looks like this:
+
+```json
+{
+  "identity": {
+    "id": "2c91808978eb9fab0178fb8ca6d308fb",
+    "name": "priya.patel",
+    "type": "IDENTITY",
+    "email": "priya.patel@acme.com",
+    "manager": {
+      "id": "2c91808378eb9fa30178fb8caf90097f",
+      "name": "Rina Shah",
+      "type": "IDENTITY",
+      "email": "rina.shah@acme.com"
+    }
+  },
+  "source": {
+    "id": "2c91808a78efc63e0178fb8624b248c5",
+    "name": "Acme Active Directory",
+    "type": "SOURCE",
+    "owner": {
+      "id": "2c9180867a7c46d0017a7ca099d50531",
+      "name": "AD Source Owner",
+      "type": "IDENTITY",
+      "email": "ad.owner@acme.com"
+    }
+  },
+  "account": {
+    "id": "2c91808378eb9fa30178fb9481a30afa",
+    "name": "priya.patel",
+    "type": "ACCOUNT",
+    "uuid": "{08ee6c6d-7d02-4978-9417-d92ba6a5ed50}",
+    "correlated": true,
+    "nativeIdentity": "CN=Priya Patel,OU=Users,DC=acme,DC=com"
+  },
+  "eventType": "ACCOUNT_UPDATED",
+  "accountChangeTypes": [
+    "ENTITLEMENTS_ADDED"
+  ],
+  "entitlementChanges": [
+    {
+      "attributeName": "memberOf",
+      "added": [
+        {
+          "id": "2c91808978eb9fab0178fb9482620b71",
+          "name": "Finance Privileged Operators",
+          "value": "CN=Finance Privileged Operators,OU=Groups,DC=acme,DC=com",
+          "owner": null
+        }
+      ],
+      "removed": []
+    }
+  ],
+  "singleValueAttributeChanges": [],
+  "multiValueAttributeChanges": []
+}
+```
+
+Read the lists instead of guessing. `accountChangeTypes` tells you what kind of change was present. `entitlementChanges` gives added and removed entitlement objects by account attribute, such as `memberOf`. `singleValueAttributeChanges` records one-value account attributes with `oldValue` and `newValue`. `multiValueAttributeChanges` records non-entitlement multi-value account attributes with `addedValues` and `removedValues`. The `account` object tells you what ISC currently knows about the account, and `nativeIdentity` is the target account identifier you will usually need in an alert.
+
+The created, updated, and deleted events differ in useful ways:
+
+- Native Change Account Created uses `eventType` `ACCOUNT_CREATED`. Its single-value account attributes have `oldValue` set to `null`, and entitlement changes have added values while `removed` is empty.
+- Native Change Account Updated uses `eventType` `ACCOUNT_UPDATED`. It includes only the changed account attributes for the monitored configuration, and entitlement changes can include additions, removals, or both.
+- Native Change Account Deleted uses `eventType` `ACCOUNT_DELETED`. Its single-value account attributes have `newValue` set to `null`, and entitlement changes have removed values while `added` is empty.
+
+There is one identity lesson that matters a lot in incidents. Native Change events fire for correlated and uncorrelated accounts. If `account.correlated` is `false`, the `identity` in the payload is a system-generated identity, not the real human identity. SailPoint documents that this system-generated identity can still be used in API requests that require an identity ID, including entitlement revocation, but you should not message that as "Priya changed" or route it as though a human identity was proven. Your alert should say the account is uncorrelated and include the source and native identity so the source owner can investigate.
+
+For source configuration, keep the AND relationship in your head. If Acme enables Native Change Detection for Account Updates and selects only the `memberOf` entitlement attribute, then ISC is looking for updated accounts where that monitored entitlement attribute changed. If the same administrator changes only an unmonitored telephone number, this workflow should not start. That is not a broken workflow. It is the configured scope doing what it was told to do.
+
+Source support is part of the design too. SailPoint documents that Native Change Detection is not available for Non-Employee Lifecycle Management sources, and SAML Just-in-Time sources must be enabled through the Native Change Detection API endpoint. If the source does not expose the configuration you expect, verify the source's supported path before you blame the workflow trigger.
+
+The safe first workflow is notify-only:
+
+```
+Native Change Account Updated
+        |
+        v
+Check source and accountChangeTypes
+        |
+        v
+Read entitlementChanges for sensitive additions
+        |
+        +---- matched     -> notify Security and the source owner
+        |
+        +---- not matched -> success, no action needed
+```
+
+Remediation is documented, but it is a design decision, not a reflex. SailPoint provides templates that revoke entitlement additions detected by Native Change Account Created or Updated, and those templates send a summary email to the source owner. That proves the product supports remediation workflows for native changes. It does not prove every native change should be auto-reverted. Direct target changes can be emergency fixes, break-glass access, source-owner maintenance, or real unauthorized drift. If you revoke automatically, test with dangerous steps simulated, use valid entitlement IDs, and make the action safe to repeat.
+
+> **Work It Out**
+>
+> Priya's AD account is added directly to `Finance Privileged Operators`. The Native Change Account Updated event arrives with `account.correlated` set to `true`, `accountChangeTypes` containing `ENTITLEMENTS_ADDED`, and an added `memberOf` entitlement named `Finance Privileged Operators`. What does the workflow know, what does it not know, and what is the safest first response?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> It knows aggregation detected an out-of-band update to Priya's correlated account on the configured source, and the payload identifies the added entitlement, the account, the source, and the correlated identity context. It does not know that the change was malicious, and it does not prove the change came from a specific human administrator unless another system supplies that evidence. The safest first response is to alert Security and the source owner with the source, native identity, account id, changed entitlement, and correlation state. Auto-revert is a separate decision. Use it only when the business rule is clear, the entitlement id is valid, the target effect is understood, and repeat execution will not create a loop or undo an approved emergency action.
+>
+> </details>
+
 ## A map of the rest, grouped by the job
 
 Here is the long tail, organized by the kind of moment each one reacts to. You do not need to memorize these. You need to know they exist and roughly where to look, so that when a task appears you can say "that sounds like an aggregation trigger" and go read the details. For the exact seed of any trigger, the builder shows you the JSON each one provides, and the official triggers documentation lists them all.
 
 Identity lifecycle. The joiner, mover, and leaver triggers we covered above, Identity Created, Identity Attributes Changed, Lifecycle State Changed and its Processed companion, and Identity Deleted, do most identity-lifecycle work. The remaining member of the family is the Machine Identity set, Created, Updated, and Deleted, for non-human identities such as service accounts. Reach here when the subject is a machine identity rather than a person.
 
-Accounts and native change. Account Created, Updated, and Deleted react to account-level events on your sources. The Native Change set, Account Created, Updated, and Deleted, reacts specifically to changes made directly on the target system outside of ISC, which is the heart of detecting unauthorized change. Account Inactivity Detected fires when an account has gone unused for a threshold number of days. Reach here when the subject is an account rather than the whole identity.
+Accounts. Account Created, Updated, and Deleted react to account-level events on your sources. As you just saw, the Native Change Account Created, Updated, and Deleted triggers are the drift-detection version of that account family, for changes made outside ISC and discovered during aggregation. Account Inactivity Detected fires when an account has gone unused for a threshold number of days. Reach here when the subject is an account rather than the whole identity.
 
 Aggregation and provisioning. We covered Account Aggregation Completed above, since the failure alert is such a common build. Its neighbors are Accounts Collected for Aggregation, which fires a step earlier once accounts are gathered and ready, and Provisioning Completed, which fires when a provisioning operation finishes. Reach here to react to the plumbing of ISC itself.
 
