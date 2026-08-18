@@ -15,11 +15,11 @@ Tenant, per day:
   after the threshold, executions continue at 5 per second for the rest of the day
 
 Individual workflow:
-  200,000 total executions, including loop executions -> warning and owner notification
-  300,000 total executions, including loop executions -> remaining executions are blocked
+  100,000 total executions, including loop executions -> warning and owner notification
+  150,000 total executions, including loop executions -> remaining executions are blocked
 ```
 
-Read those carefully because the two levels behave differently. At the tenant level, crossing the daily threshold does not stop workflows. It rate-limits remaining executions to 5 per second for the rest of the day. At the individual workflow level, loop executions count toward the workflow's total, and crossing 300,000 blocks that workflow's remaining executions.
+Read those carefully because the two levels behave differently. At the tenant level, crossing the daily threshold does not stop workflows. It rate-limits remaining executions to 5 per second for the rest of the day. At the individual workflow level, loop executions count toward the workflow's total, and crossing 150,000 blocks that workflow's remaining executions.
 
 This is the operational reason behind advice I have given you since Module 03. A loop over a large list can drive one workflow toward its own execution limit much faster than the number of trigger events suggests. At the same time, those loop iterations do not count toward the tenant-wide daily threshold. The two counters measure different things, so always ask which limit you are talking about.
 
@@ -71,7 +71,7 @@ Keep workflows modular. Let each workflow do one job. Recall from Module 02 that
 
 Document the why. Use the description field and give steps clear names. The reason a filter is shaped a certain way, or why a step waits three days, should be discoverable by the person who inherits the workflow later. Source-controlled JSON and change notes can carry the history the runtime UI is not designed to preserve forever.
 
-Monitor what you run. Use execution history to see failures while those records are available. Watch the high-execution warnings at 200,000 total executions for an individual workflow and act before the 300,000 block. Watch tenant execution usage so a noisy design does not push the tenant into the 5-per-second rate-limited state. And use operational workflows, such as an aggregation-failure alert, so automation tells a human when something important breaks.
+Monitor what you run. Use execution history to see failures while those records are available. Watch the high-execution warnings at 100,000 total executions for an individual workflow and act before the 150,000 block. Watch tenant execution usage so a noisy design does not push the tenant into the 5-per-second rate-limited state. And use operational workflows, such as an aggregation-failure alert, so automation tells a human when something important breaks.
 
 ## Before you move on
 

@@ -8,7 +8,7 @@ One idea runs through every section, so hold it from the start. A workflow does 
 
 ## Loops and performance
 
-Loops are the fastest way to turn a small workflow into an expensive one. Every pass is real work, and the costs stack in ways that are easy to underestimate. Recall the caps from Module 03, two hundred and fifty items for a parallel loop and a thousand for a serial one. Loop executions count toward the individual workflow's total execution count, which produces a warning at 200,000 and blocks remaining executions at 300,000.
+Loops are the fastest way to turn a small workflow into an expensive one. Every pass is real work, and the costs stack in ways that are easy to underestimate. Recall the caps from Module 03, two hundred and fifty items for a parallel loop and a thousand for a serial one. Loop executions count toward the individual workflow's total execution count, which produces a warning at 100,000 and blocks remaining executions at 150,000.
 
 Now add an external action on every loop pass and the design becomes even more sensitive to latency and timeouts. Do not assume one universal action timeout. HTTP Request is documented at 90 seconds, Get Identity at 1 minute, Manage Access at 30 minutes, and Manage Accounts at 1 hour. A loop that repeatedly calls an external or connector-backed action multiplies both the workload and the number of places a dependency can fail.
 
@@ -16,7 +16,7 @@ The design response is discipline about size. Filter before you loop so you iter
 
 ## Throttling and execution limits
 
-The limits from Module 08 interact in different ways. The tenant-wide daily rate limit is around 400,000 executions and does not include loop executions. After that threshold, executions continue at 5 per second for the rest of the day. The individual workflow count does include loop executions and warns at 200,000 total executions, then blocks remaining executions at 300,000.
+The limits from Module 08 interact in different ways. The tenant-wide daily rate limit is around 400,000 executions and does not include loop executions. After that threshold, executions continue at 5 per second for the rest of the day. The individual workflow count does include loop executions and warns at 100,000 total executions, then blocks remaining executions at 150,000.
 
 A noisy trigger can therefore hurt you in two directions. It can contribute to tenant-wide rate limiting, and if the workflow also loops heavily it can drive that individual workflow toward its own block.
 
