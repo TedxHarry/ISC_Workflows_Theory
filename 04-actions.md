@@ -62,7 +62,7 @@ Provisioning may still be running
 The target account may not yet reflect the change
 ```
 
-The same gap hides inside gentler actions. A Send Email step can go green while the recipient resolved to nothing, so the step succeeded and no human was actually told. An HTTP Request can return a perfectly successful response whose body does not contain the field you assumed. The habit that protects you is small and consistent: when the outcome matters, check the action's *output*, not the colour of its status. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
+The same gap hides inside gentler actions. A Send Email step can go green while the recipient resolved to nothing, so the step succeeded and no human was actually told. An HTTP Request can return a perfectly successful response whose body does not contain the field you assumed. The habit that protects you is small and consistent: when the outcome matters, check the action's *output*, not the color of its status. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
 
 > **Work It Out**
 >
