@@ -30,6 +30,17 @@ Picture Priya. Her identity is created, and moments later an attribute change oc
 
 The response is to reduce dependence on timing between separate workflows. Re-read current state before making a sensitive decision when necessary. Make operations safe to repeat where possible. Keep truly sequential operations inside one controlled flow rather than relying on the relative timing of independent event handlers.
 
+> **Work It Out**
+>
+> Acme's Joiner workflow sends a welcome email and opens a starter ticket on Identity Created. Two problems appear in production. Some new hires get a second welcome and a duplicate ticket, and for others the welcome arrives before their department and manager data has finished loading, so it reads oddly. What is happening, and how would you make the workflow robust to both?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The duplicates come from the workflow running more than once for what looks like one arrival, whether from a re-detection, a re-run, or overlapping events, so the side effects are not safe to repeat. Make them idempotent where it matters: before opening a ticket, check whether a starter ticket for this new hire already exists, and keep enough durable state to recognize that the welcome already went out. The odd-looking welcome is a data-readiness and timing problem: a configured attribute can be null or not yet populated when the identity is first detected, and source data can arrive late. Validate the fields the message depends on and fetch current data with Get Identity, and where the message truly needs settled data, drive it from a later, more complete moment rather than from first detection.
+>
+> </details>
+
 ## Partial failures and retries
 
 A workflow can complete some work and then fail later. That partial completion is often more dangerous than a clean failure at the start.
