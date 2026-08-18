@@ -94,6 +94,17 @@ The method underneath all of these is the same. Read the status. Find the first 
 >
 > </details>
 
+> **Work It Out**
+>
+> An aggregation-failure alert is supposed to message the source team when an aggregation fails. It never seems to fire, even though a source clearly failed to aggregate this morning. How do you tell whether it ran, and what are the most likely causes?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Start with the status question: is there an execution record at all? If there is none, the workflow never started, and the first suspect is the trigger filter. A filter such as `$[?(@.status == "Error")]` that is slightly wrong turns every event away in silence, and the workflow may also simply be disabled. If instead there is a record but the wrong thing happened, open the run and read the trigger input, where `status` and `source.name` tell you which source failed and whether the event really carried an Error status. Remember too that a run with warnings but no error reports status Success, so a genuine problem that only produced warnings would not match an Error filter at all.
+>
+> </details>
+
 ## Running it again, and the trap of the second run
 
 Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.
