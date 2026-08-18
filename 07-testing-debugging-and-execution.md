@@ -85,7 +85,7 @@ The method underneath all of these is the same. Read the status. Find the first 
 
 > **Work It Out**
 >
-> Priya's offboarding workflow ran and every step shows success, but a reviewer finds she still has access to a sensitive application the next day. Where do you look, and what are two likely explanations that a green run can hide?
+> Priya's offboarding workflow ran and every step shows success, but a reviewer finds she still has access to a sensitive application the next day. Where do you look, and what are three likely explanations that a green run can hide?
 >
 > <details>
 > <summary>Check your answer</summary>
