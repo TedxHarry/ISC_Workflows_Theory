@@ -32,12 +32,12 @@ The response is to reduce dependence on timing between separate workflows. Re-re
 
 > **Work It Out**
 >
-> Acme's Joiner workflow sends a welcome email and opens a starter ticket on Identity Created. Two problems appear in production. Some new hires get a second welcome and a duplicate ticket, and for others the welcome arrives before their department and manager data has finished loading, so it reads oddly. What is happening, and how would you make the workflow robust to both?
+> Acme's Joiner workflow sends a welcome email and opens a starter ticket. The workflow successfully opens the ticket but later fails, so an engineer runs the onboarding process again. Meanwhile, some new hires arrive with manager or department information that is not usable for the notification. What problems can this create, and how should the design handle both?
 >
 > <details>
 > <summary>Check your answer</summary>
 >
-> The duplicates come from the workflow running more than once for what looks like one arrival, whether from a re-detection, a re-run, or overlapping events, so the side effects are not safe to repeat. Make them idempotent where it matters: before opening a ticket, check whether a starter ticket for this new hire already exists, and keep enough durable state to recognize that the welcome already went out. The odd-looking welcome is a data-readiness and timing problem: a configured attribute can be null or not yet populated when the identity is first detected, and source data can arrive late. Validate the fields the message depends on and fetch current data with Get Identity, and where the message truly needs settled data, drive it from a later, more complete moment rather than from first detection.
+> A re-run can repeat business side effects that already succeeded, such as creating another starter ticket or sending another welcome. Make those operations idempotent where required by checking durable state or the target system before repeating them, for example confirming whether a starter ticket for this new hire already exists. Separately, validate the identity data the process requires. If manager or department is not usable, retrieve the current identity state with Get Identity and branch rather than assuming the value exists. If the business action truly requires data that becomes available later, choose a later event or lifecycle transition that corresponds to that requirement rather than acting on first creation.
 >
 > </details>
 
