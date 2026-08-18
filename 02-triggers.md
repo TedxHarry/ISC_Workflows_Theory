@@ -173,6 +173,17 @@ That filter matters more than it looks, and it ties straight back to the filter 
 
 The `stats` open a second, richer kind of automation once you are comfortable. Even on a `Success`, a sudden jump in `removed` accounts can mean a source misconfigured or a feed went wrong, so a more advanced workflow might inspect the numbers and raise a flag when they look off. Reach for Account Aggregation Completed whenever you want ISC to watch its own health and tell a human when attention is needed.
 
+> **Work It Out**
+>
+> Acme builds an aggregation-failure alert on Account Aggregation Completed so the source team hears about broken aggregations. The team reports two problems: the channel is noisy with messages about healthy runs, and a run that produced only warnings was never surfaced at all. What is happening, and how would you fix each?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The noise comes from a missing or wrong filter. The trigger fires on every aggregation, including successful ones, so without a filter such as `$[?(@.status == "Error")]` the workflow runs on healthy runs too. Add the filter so the workflow only starts when the status is Error. The missing warning is a different issue. The status is only Success or Error, and warnings are reported in a separate `warnings` array, so a run that produced warnings but no error still reports status Success and never matches an Error filter. If the team also cares about warnings, do not rely on status alone. Start the workflow more broadly and inspect the `warnings` array inside, or design a separate check, rather than assuming an Error status captures every run worth a human's attention.
+>
+> </details>
+
 ## A map of the rest, grouped by the job
 
 Here is the long tail, organized by the kind of moment each one reacts to. You do not need to memorize these. You need to know they exist and roughly where to look, so that when a task appears you can say "that sounds like an aggregation trigger" and go read the details. For the exact seed of any trigger, the builder shows you the JSON each one provides, and the official triggers documentation lists them all.
