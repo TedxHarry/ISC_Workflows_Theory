@@ -219,6 +219,8 @@ There is a partner native Workflow trigger, Access Request Decision. It marks a 
 }
 ```
 
+Some SailPoint Developer Event Trigger pages use approval-only shorthand when describing Access Request Decision, while the current native Workflow trigger documentation defines the final outcome as approved or denied. For native Workflow design, follow the native Workflow trigger contract.
+
 So Submitted and Decision are different boundaries. Use Access Request Submitted to begin the configured Adaptive Approval workflow. Use Approval Policy inside that workflow to conduct the governed review. Use Access Request Decision when a separate workflow needs to react to the final outcome. Do not invent an Access Request Completed Workflow trigger.
 
 For an approved request that proceeds to fulfillment, provisioning is a later boundary again. The native Workflow trigger is Provisioning Completed, documented as firing when a provisioning action completes on a source. A representative excerpt is:
@@ -266,6 +268,8 @@ For an approved request that proceeds to fulfillment, provisioning is a later bo
 Treat Provisioning Completed as evidence about ISC's provisioning stage, not as an independent readback from the target application. If the business requires proof that access is actually live and usable on the target, verify that state separately.
 
 There is also a real documentation conflict in `provisioningResult`. The current Workflow trigger sample uses `"committed"`, while SailPoint's current Developer Provisioning Completed event-trigger page uses `"SUCCESS"` in its sample. Do not normalize that conflict into one universal literal. Inspect the payload your tenant actually produces before you filter on this field.
+
+For request-lifecycle investigation outside Workflow executions, SailPoint Search audit events include Request Access Started, Request Access Approved, Request Access Rejected, Request Access Cancelled, Request Access Escalated, and Request Access Processed. SailPoint documents Request Access Processed as the event for actual provisioning of the requested item. These Search audit event names are observability evidence, not native Workflow trigger names. Do not turn Request Access Processed into an invented Access Request Completed Workflow trigger.
 
 One final naming trap: SailPoint Developer Event Triggers are a separate extensibility surface from native Workflow triggers. A Developer Event Trigger can use the same or similar display name, including Access Request Submitted, while having a different payload and contract. Do not copy a Developer Event Trigger payload into a native Workflow design. Likewise, do not teach Access Request Dynamic Approval as a native Workflow trigger unless the current Workflow builder or catalog lists it.
 
