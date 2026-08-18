@@ -40,6 +40,17 @@ This is Priya's first day. Her identity comes into being, and the workflow fires
 
 Reach for Identity Created whenever the trigger is "a new person now exists." Welcome emails, opening a starter ticket, notifying a manager, kicking off birthright access reviews. One caution to hold now and remember later: the payload includes identity attributes configured in the identity profile, but a field can still have a null or otherwise unusable value for the step you want to run. Do not treat presence in the payload as proof that every required value is ready for your process. Validate the fields your workflow depends on, and use a lookup when you need additional or current identity data.
 
+> **Work It Out**
+>
+> Acme's onboarding workflow runs on Identity Created. It emails the new hire's manager and expects the person to already have their birthright access. In production, some runs email nothing useful because the manager attribute is empty, and on other runs the person does not yet have the access the message claims. What two assumptions is this workflow making that it should not, and how would you handle each?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> First, it assumes every configured attribute is populated. The payload carries the attributes mapped in the identity profile, but a mapped value such as manager can still be null or not yet populated for a given identity, so validate the fields the message depends on and fetch or branch deliberately when one is missing rather than sending an empty value. Second, it assumes the identity is already an active, fully provisioned employee. A new identity enters the lifecycle state its Lifecycle State attribute maps to, which may be a pre-hire state before an active start date, and the access granted by a lifecycle state is provisioned when the identity enters that state, not by this notification workflow. So do not assume the person is active or fully provisioned at Identity Created time. If the message depends on active-state access, react to the move into the active state rather than to creation, and confirm your tenant's lifecycle configuration rather than assuming a timing.
+>
+> </details>
+
 ### Identity Attributes Changed, the mover
 
 Months later Priya moves from Sales to Finance. Her department attribute changes, and this trigger fires. Its seed has a shape you have not seen yet, and the shape is the whole lesson:
