@@ -48,15 +48,26 @@ Sometimes you want information. What systems does Priya need, what is the busine
 
 Sometimes you want a governed decision. Should this person be allowed this access, yes or no, made by the right reviewer, with reminders if they stall, escalation or expiry behavior, and a record of who decided what. That is an approval, and here is the trap: you can almost build an approval out of a plain form with a "yes or no" field, and you usually should not. ISC already has approval tooling built for governed decisions.
 
-The Approval Policy action is the main one for access-request approvals. It pairs with the Access Request Submitted trigger and lets you define how reviewers are selected and how the approval scheme works. Depending on the policy, you can use single reviewers, multiple reviewers, or quorum-style approval behavior, and the platform handles the approval process rather than forcing you to recreate it from a form.
+The Approval Policy action is the main one for access-request approvals, and it is the mechanism behind Adaptive Approval. When a requested item is configured to use an enabled Workflow as its Approval Type, the Access Request Submitted trigger routes that request into your workflow, and an Approval Policy action inside the workflow makes the governed decision. The documented reviewer categories are Access Item Owner, Governance Group, Identity (Other), and Manager. The policy can use Single, Multi-Step, or Quorum approval types, with Serial or Parallel schemes available for Multi-Step review. The platform handles the approval process rather than forcing you to recreate it from a form.
 
 For Priya, this is the mover moment. When her move to Finance leads to a request for Finance access, an Approval Policy can route that request through the appropriate approval process rather than treating the decision as an ordinary form submission.
 
-There is a sibling for task-based decisions that are not standard access requests. The Generic Approval Policy action handles approval of a named task with a description and configured reviewer behavior. This is where you go when the thing being approved is a workflow task rather than an access request.
+There is a sibling for task-based decisions that are not standard access requests. The Generic Approval Policy action handles approval of a named task with a description and configured reviewer behavior. Keep the boundary clear: Approval Policy belongs to governed access-request approval, while Generic Approval Policy is for approving a workflow or task that sits outside normal access-request governance. Do not reach for one where the other belongs, and do not use a Form to recreate a native governed access approval, because a form does not produce the same governed record, reviewer routing, reminders, or expiry behavior that the access-request approval process provides.
 
-Finally, when you need to act on a specific access request directly rather than route it through a policy, the Approve Access Request and Deny Access Request actions record that decision against the selected request. Those actions have their own documented timeout behavior, so treat them like other service-dependent actions and plan for failure.
+Finally, when you need to act on a specific access request directly rather than route it through a policy, the Approve Access Request and Deny Access Request actions record that decision against the selected request. There is a documentation and UI naming trap here worth knowing before it costs you an afternoon. The input field may be labeled Access Request ID, but the documentation describes the value it actually expects as the Approval ID. If an Approve or Deny action fails or appears to act on nothing, this mismatch is a prime suspect, so confirm which identifier the action truly needs and read it from the right place rather than trusting the field label. Those actions also have their own documented timeout behavior, so treat them like other service-dependent actions and plan for failure.
 
 So the judgment across this family is straightforward: use a form when you need information, use approval tooling when you need a governed yes or no, and use an Interactive Process when a user should launch and interact with a delegated workflow from the Launchpad.
+
+> **Work It Out**
+>
+> Priya requests a sensitive Finance access profile that Acme requires a governed approval for. An engineer proposes assigning a Form to the access owner with an Approve or Reject dropdown, reading the answer, and then having the workflow grant or skip the access. Which human-in-the-loop mechanism actually belongs here, and what is wrong with the form approach?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> A governed access-request approval belongs to approval tooling, not a form. Configure the access profile to use an enabled Workflow as its Approval Type so Access Request Submitted routes the request into the workflow, and make the decision with an Approval Policy action. Choose from the documented reviewer categories: Access Item Owner, Governance Group, Identity (Other), or Manager. The form approach recreates governance the platform already owns. It does not produce the same governed approval record, reviewer routing, reminders, or expiry behavior, and it tempts the workflow into granting access directly rather than letting ISC's native access-request and provisioning processes own fulfillment. Use a form when you need information from a person, and approval tooling when you need a governed yes or no. Reserve Generic Approval Policy for approving a workflow task that is not an access request.
+>
+> </details>
 
 ## Designing the form itself
 
