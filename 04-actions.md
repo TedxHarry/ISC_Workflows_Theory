@@ -22,6 +22,8 @@ You fetch it. Get Identity takes an identity id and returns identity data as JSO
 
 Get Identity matters even more for scheduled workflows. Remember that a scheduled workflow starts with no person attached, because nothing happened to anyone. It has to go and find its subjects, and Get Identity, along with its plural cousin Get List of Identities, is how it does that.
 
+You will meet this exact shape again when Priya *moves*. In Module 02 we saw that an Identity Attributes Changed event carries only what changed, so when her department flips to Finance the event hands you her new manager's id but not that manager's email address. To notify the manager you do precisely what you did here: Get Identity on the manager's id, then read the email from the result. Whenever the trigger gives you a reference but not the field you actually need, fetching is the move. The flip side is a small discipline worth building now: when the value is already sitting in the payload, reaching for Get Identity anyway just spends an execution and adds another step that can fail.
+
 One operational fact to carry: action timeouts are defined per action, not by one universal workflow timeout. Get Identity times out after 1 minute. That is normally plenty for a single lookup, but the general lesson matters: before relying on a long-running action, check that action's documented timeout rather than assuming every step has the same ceiling.
 
 ## Manage Access: change access
@@ -39,6 +41,39 @@ Because this action changes access, it is precisely the kind of step you do not 
 This action is also a small lesson in how the platform evolves, and it is worth teaching directly. Manage Access replaced two older actions, Create Request for Access and Request Access Removal. Those are deprecated now. Adding access is Manage Access with Add selected, and removing access is Manage Access with Remove selected. You may still open an older workflow someone built years ago and find those deprecated steps inside. When you do, you now know what they were and what to use instead. A good habit across all of ISC: when a step looks unfamiliar or is marked deprecated, check the current documentation rather than copying the old pattern forward.
 
 If your task is about accounts rather than access, there is a parallel action called Manage Accounts, which can delete, disable, enable, or unlock source accounts. Manage Accounts has its own timeout of 1 hour. Access and accounts are different layers, and the two Manage actions match that split.
+
+## Green does not mean done
+
+The Manage Access trap above is one instance of a bigger idea, and it is worth naming because you will meet it everywhere in ISC. A green step tells you the action satisfied *its own* success contract. It does not, by itself, tell you the business result actually happened. Hold these three as genuinely different states:
+
+```
+Workflow step succeeded   ≠   Request approved   ≠   Change live on the target system
+```
+
+Manage Access shows the full distance between them. The step goes green the moment ISC accepts the request, but from there the outcome can still be unfinished at every stage:
+
+```
+Manage Access accepted the request
+        ↓
+Approval may still be pending
+        ↓
+Provisioning may still be running
+        ↓
+The target account may not yet reflect the change
+```
+
+The same gap hides inside gentler actions. A Send Email step can go green while the recipient resolved to nothing, so the step succeeded and no human was actually told. An HTTP Request can return a perfectly successful response whose body does not contain the field you assumed. The habit that protects you is small and consistent: when the outcome matters, check the action's *output*, not the colour of its status. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
+
+> **Work It Out**
+>
+> A workflow reacts to Priya's move to Finance and should email her new manager. The build points the Send Email recipient at the manager's change entry, `$.trigger.changes[?(@.attribute == "manager")].newValue.email`. The test run is green, but no email ever arrives. What went wrong, and how would you fix it?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The manager value inside the `changes` array is an identity *reference*: it holds the id, name, and type, but not an email address. The path resolves to nothing, the recipient is empty, and the step still reports success. This is *green does not mean done* in miniature. The fix is to Get Identity on the manager's id (`...newValue.id`), then read the manager's email from that lookup's output and send to that.
+>
+> </details>
 
 ## HTTP Request: integrate with anything
 
