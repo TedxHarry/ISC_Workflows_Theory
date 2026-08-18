@@ -166,7 +166,7 @@ Not every trigger you use every day is about a person. One of the most common wo
 The `status` is the field you build on, and it is also a place where SailPoint's own materials currently disagree, which is worth seeing now. The trigger-specific guide documents two values, `Success` and `Error`, while the current generated trigger model exposes `Success`, `Failed`, and `Terminated`, and the trigger catalog describes the event as firing after an aggregation completed, terminated, or failed. So do not hard-code one non-success value as if it were the only one. When the requirement is simply to alert on any outcome that is not a clean success, a defensive filter is:
 
 ```
-$[?(@.status != "Success")]
+$[?($.status != "Success")]
 ```
 
 That expression catches whatever non-success value the event actually carries, rather than betting on a single spelling. Inspect the real event your tenant delivers and validate the filter against that payload with SailPoint's trigger-filter tooling before you rely on it.
@@ -182,7 +182,7 @@ The `stats` open a second, richer kind of automation once you are comfortable. E
 > <details>
 > <summary>Check your answer</summary>
 >
-> The noise comes from a missing or wrong filter. The trigger fires on every aggregation, including successful ones, so without a filter the workflow runs on healthy runs too. Filter for the outcomes you care about, and when the requirement is any non-success outcome, `$[?(@.status != "Success")]` is a defensive choice, because SailPoint's own materials currently disagree on the exact non-success value and this catches whatever the event actually carries. Validate it against your tenant's real trigger payload first. The missing warning is a different issue. Warnings are reported in a separate `warnings` array, and SailPoint's documented sample shows that an event with `status` set to `Success` can still contain warnings, so a status-only filter does not necessarily capture every condition the team wants to review. If warnings matter, start more broadly and inspect the `warnings` array inside, or design a separate check, rather than assuming the status field captures every run worth a human's attention.
+> The noise comes from a missing or wrong filter. The trigger fires on every aggregation, including successful ones, so without a filter the workflow runs on healthy runs too. Filter for the outcomes you care about, and when the requirement is any non-success outcome, `$[?($.status != "Success")]` is a defensive choice, because SailPoint's own materials currently disagree on the exact non-success value and this catches whatever the event actually carries. Validate it against your tenant's real trigger payload first. The missing warning is a different issue. Warnings are reported in a separate `warnings` array, and SailPoint's documented sample shows that an event with `status` set to `Success` can still contain warnings, so a status-only filter does not necessarily capture every condition the team wants to review. If warnings matter, start more broadly and inspect the `warnings` array inside, or design a separate check, rather than assuming the status field captures every run worth a human's attention.
 >
 > </details>
 
