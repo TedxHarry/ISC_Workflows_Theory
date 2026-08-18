@@ -108,34 +108,34 @@ The alert should name what the event actually proves: source, account name, nati
 
 The remediation branch is a separate decision. SailPoint documents Native Change Detection workflows and provides templates that revoke entitlement additions detected by Native Change Account Created or Updated, then email the source owner. That makes revocation a supported pattern, but it does not make it safe for every tenant or every entitlement. Auto-revert is reasonable only when the business rule is unambiguous, the entitlement id is present, the source supports the revoke action you are using, and a repeat run will not keep undoing a legitimate correction. Where those facts are not true, notify-only plus a ticket is usually the stronger engineering choice.
 
-The gotcha is loops. If a workflow revokes a group, the next aggregation can observe another change on the same account. If an administrator re-adds the group, the workflow may fire again. That may be exactly what you want, or it may flood Security and hide the incident. Use an idempotency key such as source id, account id, entitlement id, event type, and a time window in a durable system if duplicate suppression matters. Do not expect separate workflow executions to remember that one of them already sent the alert.
+The gotcha is loops. An ISC-initiated revocation should not be described as a new Native Change merely because a later aggregation reads the corrected target state. Native Change is reserved for out-of-band changes detected during aggregation. The repeat-event risk starts when another external actor or process changes the target again, for example when an administrator re-adds the entitlement after ISC removes it. That later external re-addition can be detected as another Native Change Account Updated event on a later aggregation. It may be exactly the signal you want, or it may flood Security if the same external change repeats. Use a durable incident key such as source id, account id, entitlement id, event type, and a time window when duplicate suppression matters. Do not expect separate workflow executions to remember that one of them already sent the alert. If you also monitor ordinary Account Updated events, keep that trigger family separate: SailPoint documents ordinary account updates as able to come from aggregation or provisioning.
 
 > **Work It Out**
->
-> Acme wants to auto-revoke `Finance Privileged Operators` whenever it is added directly in AD. Name the minimum facts you would verify before enabling that remediation path in production.
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Verify that the source is configured for Native Change Detection, Account Updates are monitored, and the AD group-membership entitlement attribute is monitored. Verify the event payload includes the entitlement in `entitlementChanges.added` with a valid entitlement id, because revocation needs an id it can act on. Verify the source and workflow action can remove that entitlement from the account in the tenant you are using. Verify the business rule says this direct addition must always be revoked, including emergency and maintenance cases, or define an exception path. Then verify repeat-run behavior so the workflow does not create a notification flood or remediation loop if the target state changes again after the first correction.
->
-> </details>
-
-**Outlier response.** ISC can flag an identity whose access looks anomalous, and a workflow can react. The trigger is Outlier Detected, which as Module 02 noted is a licensed capability, so it only appears if your tenant has it. The logic decides how serious the signal is, and the action routes it to a reviewer or opens a case. The gotcha is treating a signal as a verdict. An outlier is a hint, not proof, so the safe pattern is to notify and prompt a review rather than to automatically strip access, because false positives on automatic removal punish innocent people.
-
-## Integration
-
-**Chat and webhook integration.** Workflows are a natural bridge to the tools your people already live in. The trigger is whatever event matters, the logic shapes a message, and the action is a Send Slack Message or an HTTP Request to a webhook. Interactive Message belongs to an Interactive Process launched through the Launchpad, as Module 05 explains. The gotcha is security and dependence, straight from Module 08. Do not hard-code credentials into the HTTP call, and be careful never to spill sensitive personal data into a chat channel or a log, because a convenient notification is also a convenient leak.
-
-**Inbound automation from an external system.** Sometimes the event that should drive ISC lives entirely in another system, such as an HR platform announcing a new hire before anything exists in ISC. The External Trigger lets that system call in and start a workflow with its own data. The logic then acts on that payload, and the actions do whatever the inbound event calls for. The gotcha is trust and identity. The payload is whatever the caller sends, so validate it with Verify Data Type before you rely on it, as Modules 03 and 06 taught, and remember from Modules 07 and 08 that ids from another system may not line up with ISC ids, so you often must look up the real identity rather than assume the incoming id matches.
-
-## Evidence
-
-**Scheduled evidence.** Auditors ask for proof that a control ran, and a workflow can gather and file that evidence on a schedule. The trigger is a Scheduled Trigger, and because nothing happened to any one person, the logic must go and find its subject, using Get List of Identities or a search, exactly the shift Module 02 described for scheduled work. The actions assemble the findings and send them to an external system of record. The gotcha is retention and scope. Workflow execution records are available for up to 90 days, so evidence that must live longer needs to be retained somewhere outside the workflow execution history. A broad scheduled gather also has to respect the execution limits from Module 08.
-
-## Before you move on
-
-Take one pattern and prove you own it rather than just recognize it. Pick the leaver ticketing pattern and name its trigger, the one lookup its logic most likely needs, its main action, and the two production gotchas it shares with the wider course, one about the system it depends on and one about running it twice. Then do something harder: sketch how you would combine two patterns into one sensible workflow for Priya's departure, a notification and a ticket, and decide what each branch does if the ticket system is unreachable at that moment. And finally, look back at the aggregation-failure pattern and say, in one sentence, why the filter is not a detail but the whole point. If you can do that, these stop being recipes you follow and become patterns you command, and you are ready for Module 11, where we press on the hard edges and the failures these patterns have to survive.
-
----
-[← Previous: Module 09 When to Use Workflows and When Not](09-when-to-use-workflows.md) | [Course home](../README.md) | [Next: Module 11 Challenges and Edge Cases →](11-challenges-and-edge-cases.md)
++>
++> Acme wants to auto-revoke `Finance Privileged Operators` whenever it is added directly in AD. Name the minimum facts you would verify before enabling that remediation path in production.
++>
++> <details>
++> <summary>Check your answer</summary>
++>
++> Verify that the source is configured for Native Change Detection, Account Updates are monitored, and the AD group-membership entitlement attribute is monitored. Verify the event payload includes the entitlement in `entitlementChanges.added` with a valid entitlement id, because revocation needs an id it can act on. Verify the source and workflow action can remove that entitlement from the account in the tenant you are using. Verify the business rule says this direct addition must always be revoked, including emergency and maintenance cases, or define an exception path. Then verify repeat-run behavior so the workflow does not create a notification flood or remediation loop if the target state changes again after the first correction.
++>
++> </details>
++
++**Outlier response.** ISC can flag an identity whose access looks anomalous, and a workflow can react. The trigger is Outlier Detected, which as Module 02 noted is a licensed capability, so it only appears if your tenant has it. The logic decides how serious the signal is, and the action routes it to a reviewer or opens a case. The gotcha is treating a signal as a verdict. An outlier is a hint, not proof, so the safe pattern is to notify and prompt a review rather than to automatically strip access, because false positives on automatic removal punish innocent people.
++
++## Integration
++
++**Chat and webhook integration.** Workflows are a natural bridge to the tools your people already live in. The trigger is whatever event matters, the logic shapes a message, and the action is a Send Slack Message or an HTTP Request to a webhook. Interactive Message belongs to an Interactive Process launched through the Launchpad, as Module 05 explains. The gotcha is security and dependence, straight from Module 08. Do not hard-code credentials into the HTTP call, and be careful never to spill sensitive personal data into a chat channel or a log, because a convenient notification is also a convenient leak.
++
++**Inbound automation from an external system.** Sometimes the event that should drive ISC lives entirely in another system, such as an HR platform announcing a new hire before anything exists in ISC. The External Trigger lets that system call in and start a workflow with its own data. The logic then acts on that payload, and the actions do whatever the inbound event calls for. The gotcha is trust and identity. The payload is whatever the caller sends, so validate it with Verify Data Type before you rely on it, as Modules 03 and 06 taught, and remember from Modules 07 and 08 that ids from another system may not line up with ISC ids, so you often must look up the real identity rather than assume the incoming id matches.
++
++## Evidence
++
++**Scheduled evidence.** Auditors ask for proof that a control ran, and a workflow can gather and file that evidence on a schedule. The trigger is a Scheduled Trigger, and because nothing happened to any one person, the logic must go and find its subject, using Get List of Identities or a search, exactly the shift Module 02 described for scheduled work. The actions assemble the findings and send them to an external system of record. The gotcha is retention and scope. Workflow execution records are available for up to 90 days, so evidence that must live longer needs to be retained somewhere outside the workflow execution history. A broad scheduled gather also has to respect the execution limits from Module 08.
++
++## Before you move on
++
++Take one pattern and prove you own it rather than just recognize it. Pick the leaver ticketing pattern and name its trigger, the one lookup its logic most likely needs, its main action, and the two production gotchas it shares with the wider course, one about the system it depends on and one about running it twice. Then do something harder: sketch how you would combine two patterns into one sensible workflow for Priya's departure, a notification and a ticket, and decide what each branch does if the ticket system is unreachable at that moment. And finally, look back at the aggregation-failure pattern and say, in one sentence, why the filter is not a detail but the whole point. If you can do that, these stop being recipes you follow and become patterns you command, and you are ready for Module 11, where we press on the hard edges and the failures these patterns have to survive.
++
++---
++[← Previous: Module 09 When to Use Workflows and When Not](09-when-to-use-workflows.md) | [Course home](../README.md) | [Next: Module 11 Challenges and Edge Cases →](11-challenges-and-edge-cases.md)
