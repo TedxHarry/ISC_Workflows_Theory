@@ -62,6 +62,17 @@ Do not assume the workflow engine will automatically repair every failed busines
 >
 > </details>
 
+> **Work It Out**
+>
+> Acme's aggregation-failure alert works, but one source starts failing every hour and the alert fires on every cycle, flooding the channel until people mute it. The next week a different source fails and no one notices, because the channel is muted. How should the workflow have handled the repeated failure, and what should it do if the alert channel itself is unavailable when it tries to send?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Treat a continuing failure as one condition, not one alert per run. Suppress repeated alerts for the same ongoing failure, for example by recording that this source is already in a failed-and-notified state in durable storage that persists across executions, and only alerting again when the state changes or after a deliberate reminder interval, so an hourly failure does not train people to ignore the channel. For the alerting dependency itself, do not assume the send always succeeds. If the chat or email service is unavailable, route that failure to a deliberate path, such as a backup channel or a Failure that is itself monitored, rather than letting the notification vanish silently. A monitoring workflow that goes quiet when its own channel is down is the worst time to lose the signal.
+>
+> </details>
+
 ## Large payloads
 
 Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.

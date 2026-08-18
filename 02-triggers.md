@@ -163,15 +163,28 @@ Not every trigger you use every day is about a person. One of the most common wo
 }
 ```
 
-The `status` is the field you build on. A run that connects and collects reports `Success`, and a run that fails reports `Error`, with the `errors` array carrying the detail. So the classic failure alert is a workflow on this trigger with a filter that lets it run only on failures:
+The `status` is the field you build on, and it is also a place where SailPoint's own materials currently disagree, which is worth seeing now. The trigger-specific guide documents two values, `Success` and `Error`, while the current generated trigger model exposes `Success`, `Failed`, and `Terminated`, and the trigger catalog describes the event as firing after an aggregation completed, terminated, or failed. So do not hard-code one non-success value as if it were the only one. When the requirement is simply to alert on any outcome that is not a clean success, a defensive filter is:
 
 ```
-$[?(@.status == "Error")]
+$[?($.status != "Success")]
 ```
+
+That expression catches whatever non-success value the event actually carries, rather than betting on a single spelling. Inspect the real event your tenant delivers and validate the filter against that payload with SailPoint's trigger-filter tooling before you rely on it.
 
 That filter matters more than it looks, and it ties straight back to the filter lesson coming up. Because this trigger fires on every aggregation, a workflow with no filter runs on every successful aggregation too, which floods you with noise for the exact events you did not care about. The filter is what turns a firehose into a clean "only tell me when something broke."
 
 The `stats` open a second, richer kind of automation once you are comfortable. Even on a `Success`, a sudden jump in `removed` accounts can mean a source misconfigured or a feed went wrong, so a more advanced workflow might inspect the numbers and raise a flag when they look off. Reach for Account Aggregation Completed whenever you want ISC to watch its own health and tell a human when attention is needed.
+
+> **Work It Out**
+>
+> Acme builds an aggregation-failure alert on Account Aggregation Completed so the source team hears about broken aggregations. The team reports two problems: the channel is noisy with messages about healthy runs, and a run that carried warnings was not surfaced for review. What is happening, and how would you fix each?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The noise comes from a missing or wrong filter. The trigger fires on every aggregation, including successful ones, so without a filter the workflow runs on healthy runs too. Filter for the outcomes you care about, and when the requirement is any non-success outcome, `$[?($.status != "Success")]` is a defensive choice, because SailPoint's own materials currently disagree on the exact non-success value and this catches whatever the event actually carries. Validate it against your tenant's real trigger payload first. The missing warning is a different issue. Warnings are reported in a separate `warnings` array, and SailPoint's documented sample shows that an event with `status` set to `Success` can still contain warnings, so a status-only filter does not necessarily capture every condition the team wants to review. If warnings matter, start more broadly and inspect the `warnings` array inside, or design a separate check, rather than assuming the status field captures every run worth a human's attention.
+>
+> </details>
 
 ## A map of the rest, grouped by the job
 
