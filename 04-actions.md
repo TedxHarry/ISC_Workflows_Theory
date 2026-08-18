@@ -47,6 +47,34 @@ Manage Access has a 30 minute timeout. More importantly, understand what "succes
 
 There is also an important result-handling trap. A Manage Access step can complete successfully while some requested access changes are represented in `failedAccessRequests`. The workflow execution itself is not automatically marked failed just because that output contains failed requests. If your process requires every requested change to succeed, inspect `successfulAccessRequests` and `failedAccessRequests` and branch deliberately instead of treating a green Manage Access step as proof that every access change completed.
 
+Manage Access returns two result arrays, and the clearest way to understand them is a partial failure, where one item was submitted successfully and another was not:
+
+```json
+{
+  "successfulAccessRequests": [
+    { "id": "...", "name": "...", "type": "ROLE" }
+  ],
+  "failedAccessRequests": [
+    { "id": "...", "name": "...", "type": "ACCESS_PROFILE" }
+  ]
+}
+```
+
+Be precise about what `successfulAccessRequests` means, because the name can be misleading if you read it as final fulfillment. It does not mean the access was approved, provisioned, or confirmed live on the target. It means the Manage Access action treated those request submissions as successful. If approval is required, Manage Access continues after submitting the request rather than waiting for the decision, so a green step with entries in `successfulAccessRequests` can sit in front of an approval that has not happened yet. If a later approval decision matters to your process, the documented pattern is a separate workflow that reacts to Access Request Decision, not watching for the decision inside this same execution. If provisioning evidence matters, that is a separate concern again: Provisioning Completed and provisioning or account activity can tell you about ISC's provisioning stage, while target-specific verification is a separate check when the business requires independent confirmation.
+
+SailPoint also documents two practical boundaries that are easy to miss. Revoke requests for individual entitlements are limited to one entitlement per access request. And the documentation suggests adding a Wait after Manage Access if the workflow needs to allow time for a source-account update before later steps run. Treat that Wait as time, not evidence. A pause does not verify that the target changed; it only delays the next workflow step.
+
+> **Work It Out**
+>
+> A workflow uses Manage Access to add a sensitive Finance access profile to Priya. The step is green, and its output lists that access profile in `successfulAccessRequests` with an empty `failedAccessRequests`. An engineer tells the auditor the access is granted and live. That access profile requires approval, and no decision has been made yet. What has actually been proven, and what has not?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> What is proven is narrow: Manage Access submitted the request for that item and the action treated the submission as successful, which is why the item appears in `successfulAccessRequests`. What is not proven is almost everything the auditor cares about. Because the item requires approval, Manage Access continued after submitting the request rather than waiting, so no approval decision has been made, no provisioning has necessarily run, and nothing has independently confirmed the access is live on the Finance application. `successfulAccessRequests` does not mean approved, provisioned, or confirmed live. To observe the approval outcome, use a separate workflow on Access Request Decision. To inspect provisioning, look to Provisioning Completed and provisioning or account activity, and where certainty is required, verify the target itself. The engineer has reported a submitted request as though it were live access.
+>
+> </details>
+
 Because this action changes access, it is precisely the kind of step you do not want to fire by accident while testing. Module 07 covers simulated testing so you can exercise the workflow logic without allowing selected world-changing steps to execute. Build the instinct now: when a step changes the world, test it with the safety on.
 
 This action is also a small lesson in how the platform evolves, and it is worth teaching directly. Manage Access replaced two older actions, Create Request for Access and Request Access Removal. Those are deprecated now. Adding access is Manage Access with Add selected, and removing access is Manage Access with Remove selected. You may still open an older workflow someone built years ago and find those deprecated steps inside. When you do, you now know what they were and what to use instead. A good habit across all of ISC: when a step looks unfamiliar or is marked deprecated, check the current documentation rather than copying the old pattern forward.
@@ -55,23 +83,16 @@ If your task is about accounts rather than access, there is a parallel action ca
 
 ## Green does not mean done
 
-The Manage Access trap above is one instance of a bigger idea, and it is worth naming because you will meet it everywhere in ISC. A green step tells you the action satisfied *its own* success contract. It does not, by itself, tell you the business result actually happened. Hold these three as genuinely different states:
+The Manage Access trap above is one instance of a bigger idea, and it is worth naming because you will meet it everywhere in ISC. A green step tells you the action satisfied *its own* success contract. It does not, by itself, tell you the business result actually happened. For an access request, hold these four as genuinely different states:
 
 ```
-Workflow step succeeded   ≠   Request approved   ≠   Change live on the target system
+Workflow step succeeded
+    ≠  Access request approved
+    ≠  Provisioning completed successfully
+    ≠  Access independently confirmed live on target
 ```
 
-Manage Access shows the full distance between them. A successful Manage Access step does not mean the requested access has reached its final business state:
-
-```
-Manage Access completed successfully
-        ↓
-The access request may still require additional processing
-        ↓
-Provisioning may still be in progress
-        ↓
-The target account may not yet reflect the intended change
-```
+Each `≠` is a boundary you have not yet crossed. A successful Manage Access step means the request submission succeeded according to the action's own contract. It does not mean an approver said yes, it does not mean provisioning finished successfully, and it does not mean someone independently read the access back from the target application and confirmed it is live. Knowing exactly which boundary you have proven, and which you are only assuming, is the whole skill.
 
 The same gap can hide inside gentler actions too. An HTTP Request can return a successful response whose body does not contain the field you assumed. And a notification can leave a run looking healthy while the intended person was never actually reached. So when the outcome matters, do not stop at the status. Inspect the step's input and output, including the rendered recipient of a Send Email, rather than assuming a green run proves the message reached the right person. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
 
