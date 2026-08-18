@@ -62,16 +62,16 @@ Provisioning may still be running
 The target account may not yet reflect the change
 ```
 
-The same gap hides inside gentler actions. A Send Email step can go green while the recipient resolved to nothing, so the step succeeded and no human was actually told. An HTTP Request can return a perfectly successful response whose body does not contain the field you assumed. The habit that protects you is small and consistent: when the outcome matters, check the action's *output*, not the color of its status. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
+The same gap can hide inside gentler actions too. An HTTP Request can return a successful response whose body does not contain the field you assumed. And a notification can leave a run looking healthy while the intended person was never actually reached. So when the outcome matters, do not stop at the status. Inspect the step's input and output, including the rendered recipient of a Send Email, rather than assuming a green run proves the message reached the right person. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
 
 > **Work It Out**
 >
-> A workflow reacts to Priya's move to Finance and should email her new manager. The build points the Send Email recipient at the manager's change entry, `$.trigger.changes[?(@.attribute == "manager")].newValue.email`. The test run is green, but no email ever arrives. What went wrong, and how would you fix it?
+> A workflow reacts to Priya's move to Finance and should email her new manager. The build points the Send Email recipient at the manager's change entry, `$.trigger.changes[?(@.attribute == "manager")].newValue.email`. The test run looks successful, but no email ever arrives. What went wrong, and how would you fix it?
 >
 > <details>
 > <summary>Check your answer</summary>
 >
-> The manager value inside the `changes` array is an identity *reference*: it holds the id, name, and type, but not an email address. The path resolves to nothing, the recipient is empty, and the step still reports success. This is *green does not mean done* in miniature. The fix is to Get Identity on the manager's id (`...newValue.id`), then read the manager's email from that lookup's output and send to that.
+> The manager value inside the `changes` array is an identity *reference*: it holds the id, name, and type, but not an email address. The path resolves to nothing, so the recipient is empty and no message reaches the manager, even though the run may look otherwise healthy. This is *green does not mean done* in miniature. The fix is to Get Identity on the manager's id (`...newValue.id`), then read the manager's email from that lookup's output and send to that.
 >
 > </details>
 

@@ -74,12 +74,12 @@ The method underneath all of these is the same. Read the status. Find the first 
 
 > **Work It Out**
 >
-> A mover workflow is supposed to email Priya's new manager when she moves to Finance. The run shows a green Send Email step, but the manager reports that no message arrived. Where do you look, and what is the likely cause?
+> A mover workflow is supposed to email Priya's new manager when she moves to Finance. The run looks successful, but the manager reports that no message arrived. Where do you look, and what is the likely cause?
 >
 > <details>
 > <summary>Check your answer</summary>
 >
-> Open the execution and read the steps in order. On the step that fetches the manager, inspect its input and output to confirm it returned a manager with an email. Then open the Send Email step and inspect the rendered recipient. A green step with an empty rendered recipient is the tell: the path pointed at a value that was not there, so the message had nowhere to go while the step still reported success. The common cause is reading the manager's email straight from the trigger, which carries only the manager's id and name, instead of fetching the manager with Get Identity and reading the email from that result. As Module 04 put it, green does not mean done, so check the output, not the status color.
+> Open the execution and read the steps in order. On the step that fetches the manager, inspect its input and output to confirm it returned a manager with an email. Then open the Send Email step and inspect the rendered recipient. If that recipient rendered to nothing, the path pointed at a value that was not there, so the message had nowhere to go even though the run may look otherwise healthy. The common cause is reading the manager's email straight from the trigger, which carries only the manager's id and name, instead of fetching the manager with Get Identity and reading the email from that result. As Module 04 put it, green does not mean done, so inspect the step input and output rather than trusting the status alone.
 >
 > </details>
 
