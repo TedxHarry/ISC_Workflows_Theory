@@ -40,6 +40,17 @@ So design for the second run from the beginning. Make world-changing steps idemp
 
 Do not assume the workflow engine will automatically repair every failed business process for you. Recovery should be part of the design: a human may re-run a process, an API-driven recovery process may invoke it again, or another scheduled control may identify unfinished work. Whatever recovery method you use, it is only safe if the earlier steps tolerate repetition.
 
+> **Work It Out**
+>
+> Acme's Finance mover alert notifies the gaining team whenever someone moves into Finance. In production it occasionally sends two alerts for the same move, and once it sent none because the chat service was briefly down. What is happening in each case, and how would you make the workflow behave?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The double alert comes from the workflow running more than once for what looks like a single move, whether from repeated events or a re-run, so the notify step is not safe to repeat. Make it idempotent where it matters, for example by recording that an alert for this move already went out and checking that before sending, so a second run skips the duplicate. The missing alert comes from an unhandled dependency failure: the chat service was down and nothing caught it. Give that step an error path, so a failed send is routed to a deliberate Failure or a backup notification rather than vanishing. A notification workflow feels low-risk, but duplicate and dropped messages are exactly the partial-failure and external-dependence problems this module is about.
+>
+> </details>
+
 ## Large payloads
 
 Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.
