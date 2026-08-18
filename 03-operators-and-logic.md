@@ -37,7 +37,7 @@ A close cousin of this bug is comparing the wrong data type. If a value arrives 
 > <details>
 > <summary>Check your answer</summary>
 >
-> Compare Strings Equals is exact, so case matters. Priya's department arrives as "Finance" with a capital F, and the comparison tests against "finance" in lowercase, so the answer is no every time and the alert path is never taken. Fix it by comparing against the value in the case the data actually uses, or by normalizing the value first, for example trimming it and adjusting case where a supported operation allows it, so the two sides genuinely match. When a comparison should match but does not, suspect case and stray spaces before anything else.
+> Do not assume differently cased values will compare the way you expect. Priya's department may arrive as "Finance" with a capital F while the comparison tests against "finance" in lowercase, and if those are treated as different the answer is no every time and the alert path is never taken. Confirm the actual source value, test the comparison with representative data, and if the source can produce inconsistent casing, normalize the value with a supported operation before comparing. When a comparison should match but does not, suspect case and stray spaces before anything else.
 >
 > </details>
 
