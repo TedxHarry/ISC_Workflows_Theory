@@ -30,7 +30,52 @@ To make it work-ready, add two decisions to that shape. First, identify and rout
 
 ## Access governance
 
-**Access-request enrichment.** When someone submits an access request, a workflow can add context around it without taking over the decision. The trigger is Access Request Submitted, the logic pulls extra information, perhaps a Get Identity for the requester or an HTTP Request to a system of record, and the action notifies an owner, posts context, or records the request elsewhere. The gotcha is staying in your lane. Enrich and inform, but do not rebuild the approval itself out of a form, because as Module 05 showed, governed approvals belong to approval policies that already handle reviewers, reminders, and expiry. Lean on the access request service, and remember it can time out, so handle that.
+**Sensitive access approval with Adaptive Approval.** This is the canonical governed-access pattern, and it is worth understanding in full because it exercises every boundary the course has been building toward. Priya requests a sensitive Finance access profile through the ISC Request Center. Because that access profile is configured to use an enabled Workflow as its Approval Type, the request is routed into your workflow through Adaptive Approval, and the Access Request Submitted trigger fires. From Module 02, remember the seed is item-oriented: it carries a single `requestedItem` with its `operation`, along with `requestedBy`, `requestedFor`, and `accessRequestId`, so the workflow knows exactly who asked, for whom, and for which item.
+
+The logic reads that seed and then makes the governed decision with an Approval Policy action, routing the approval to the reviewers the business requires, for example the recipient's manager and then a security governance group. The workflow branches on the outcome:
+
+```
+Access Request Submitted
+        |
+        v
+Read requestedItem / requestedFor / requestedBy
+        |
+        v
+Approval Policy  (manager, then security governance group)
+        |
+        +---- APPROVED  ->  notify that the request was approved
+        |
+        +---- REJECTED  ->  notify that the request was rejected
+        |
+        v
+Workflow can still end successfully
+```
+
+Here is the part that trips people up, and it is one of the sharpest lessons in the course. A rejected request is a legitimate, handled business outcome. If the workflow correctly follows its rejection branch, notifies the right people, and ends, that execution is a success. A green run does not mean the access was granted. It means the workflow did its job, which in this case may well have been to record a rejection. This is green does not mean approved, and it is the strongest version of green does not mean done you will meet.
+
+Notice also what this workflow does not do. It does not itself provision the requested access. ISC's native access-request and provisioning processes own what happens after the decision. So even on the approved branch, the workflow reaching its end does not prove the access is live on the Finance application. It proves an approval decision was reached inside this execution, and nothing more.
+
+To observe the boundaries that come after, use separate events rather than stretching this one execution across all of them:
+
+```
+Access Request Submitted
+        ↓
+approval process
+        ↓
+Access Request Decision
+        |
+        +---- APPROVED  ->  provisioning  ->  Provisioning Completed
+        |                                      ↓
+        |                              possible target verification
+        |
+        +---- DENIED    ->  no access grant from this request
+```
+
+Access Request Decision is a separate event that fires on the final approved or denied decision, so a distinct workflow can react to the outcome, for example to record it or to start downstream steps. On an approved path, provisioning can follow and Provisioning Completed can represent that later provisioning boundary. On a denied path, the request does not proceed to an access grant. Even Provisioning Completed is not independent proof that the access is confirmed live on the target. If the business needs that final certainty, target-specific verification is a separate step beyond these workflow events.
+
+The gotcha, then, is boundary confusion. The most common production mistake with this pattern is treating one green execution as proof of the whole chain: submitted, approved, provisioned, and live. Those are four separate facts on four separate boundaries, and this workflow, by design, owns only the approval decision. Keep the workflow in its lane, let native governance and provisioning own theirs, and use the later events to observe the rest.
+
+Enrichment can still belong inside this Adaptive Approval workflow, but it does not replace the governed decision. For example, fetch identity or system-of-record context for branching, notification, or other surrounding logic before or after the Approval Policy action, while still letting Approval Policy resolve the access request. Do not configure a workflow as an access item's Approval Type and teach it as an enrichment-only path that never reaches the approval mechanism. The safe pattern is enrich where useful, govern with Approval Policy, and let ISC's native access-request and provisioning processes own the rest.
 
 **Certification kickoff.** A workflow can start an access review in response to an event, for example launching a targeted certification when a sensitive change happens. The trigger might be a mover change or a scheduled cadence, the logic decides whether a review is warranted, and the actions are Create Certification Campaign and Activate Certification Campaign from Module 04. The gotcha is weight. A certification is a heavy, human-intensive process, so you do not want to fire one on every small event. Gate it carefully, and be sure the thing you are reviewing genuinely needs a full campaign rather than a lighter notification.
 

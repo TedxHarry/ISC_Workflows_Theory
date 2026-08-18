@@ -84,6 +84,43 @@ Do not assume the workflow engine will automatically repair every failed busines
 >
 > </details>
 
+## Access requests across separate boundaries and executions
+
+Access requests stretch across several boundaries that are handled at different times, and most access-request edge cases come from forgetting that. Hold the approved and denied paths apart:
+
+```
+submitted  ->  final decision
+                 |-> approved  ->  provisioning  ->  provisioning result recorded by ISC  ->  target independently observed
+                 |-> rejected  ->  no access grant from this request
+```
+
+A request waiting on approval is normal after Manage Access. If the requested item requires approval, Manage Access submits the request and the workflow continues without waiting for the final decision. A green Manage Access step therefore does not prove approval happened.
+
+Adaptive Approval is different. A workflow started by Access Request Submitted uses Approval Policy as the approval process itself. Logic after that Approval Policy can branch on the result once the configured approval criteria are met and the action completes. That workflow can still end before provisioning finishes, but do not describe it as though the approval decision is still pending after the workflow has already branched on the Approval Policy result.
+
+A final rejection is also a normal, handled outcome. When a request is denied, the correct workflow behavior is to follow its rejection path and end, and that execution can be a success even though no access was granted. This is the green does not mean approved lesson from Module 10: a green execution can mean a correctly handled rejection, so never read overall status as evidence of the business decision.
+
+A partial Manage Access failure is the multi-item version of the same trap. A single Manage Access step can return a nonempty `failedAccessRequests` alongside `successfulAccessRequests` and still complete green, as Module 04 showed. If every requested item must succeed, inspect both arrays and branch, rather than trusting the step status.
+
+Provisioning is a separate boundary on the approved path. An approved decision does not mean provisioning finished, and Provisioning Completed firing does not by itself prove the access is confirmed live on the target. A denied request does not proceed to an access grant from that request. Where certainty matters on an approved path, treat the target-system check as its own step.
+
+Re-runs and duplicate requests need real caution here, because submitting an access request is a world-changing operation. Do not assume Manage Access is idempotent; its Workflow documentation does not promise that property. Separately, SailPoint's Access Requests API documents asynchronous submission and warns that duplicate requests submitted in quick succession may not return an error. That API behavior does not prove which internal endpoint Manage Access uses, but it supports the defensive design lesson: before replaying a workflow that submits access, check whether equivalent work is already pending or whether the access is already held instead of blindly repeating the request.
+
+These lifecycle signals can appear in separate workflow executions, so do not design a dependency on cross-workflow timing or ordering unless SailPoint explicitly documents that guarantee. Treat each execution as its own event context. If a later workflow needs authoritative status, re-read current state or use the data carried by the event that represents that boundary rather than assuming another execution already finished.
+
+Finally, be careful with multi-item requests and fan-out. A person can submit a basket of several items in the Request Center, but do not treat that basket as one atomic unit, and do not invent exact fan-out mechanics that SailPoint does not document. What is safe to rely on is that access-request items can be processed and provisioned individually, and that the Adaptive Approval Workflow seed for Access Request Submitted carries a singular `requestedItem`, so your workflow reasons about the item represented by that event. Do not turn that into an undocumented guarantee of exactly one workflow execution per basket item. If the precise fan-out behavior matters to your design, validate it against your tenant's real executions rather than assuming.
+
+> **Work It Out**
+>
+> Acme's workflow runs on Access Request Submitted for a sensitive access profile, makes the decision with an Approval Policy, and notifies on both branches. Two incidents come in. First, a manager says a request was "approved by the workflow" but the person still has no access two hours later. Second, an auditor flags that a run for a denied request is marked successful and asks whether the denial was actually enforced. Explain both.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Both come from confusing the workflow's boundary with the whole chain. In the first incident, the workflow owns the approval decision, not provisioning. An approved decision inside this execution does not mean provisioning has finished or that the access is live on the target, so the two-hour gap does not prove the approval workflow failed. Check the provisioning stage through Provisioning Completed and provisioning or account activity, and if certainty is required, verify the target itself. In the second incident, a successful execution for a denied request is correct, not a defect. The workflow's job on a denial is to follow its rejection branch and end, so green means the denial path was handled successfully, which is exactly green does not mean approved. Confirm the business decision from the request's final denied outcome, not from the workflow's overall status. If the separate question is whether the person already had equivalent access for some other reason, inspect current access or the target state rather than looking for a provisioning record from this denied request.
+>
+> </details>
+
 ## Large payloads
 
 Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.
