@@ -8,7 +8,7 @@ One idea runs through every section, so hold it from the start. A workflow does 
 
 ## Loops and performance
 
-Loops are the fastest way to turn a small workflow into an expensive one. Every pass is real work, and the costs stack in ways that are easy to underestimate. Recall the caps from Module 03, two hundred and fifty items for a parallel loop and a thousand for a serial one. Loop executions count toward the individual workflow's total execution count, which produces a warning at 200,000 and blocks remaining executions at 300,000.
+Loops are the fastest way to turn a small workflow into an expensive one. Every pass is real work, and the costs stack in ways that are easy to underestimate. Recall the caps from Module 03, two hundred and fifty items for a parallel loop and a thousand for a serial one. Loop executions count toward the individual workflow's total execution count, which produces a warning at 100,000 and blocks remaining executions at 150,000.
 
 Now add an external action on every loop pass and the design becomes even more sensitive to latency and timeouts. Do not assume one universal action timeout. HTTP Request is documented at 90 seconds, Get Identity at 1 minute, Manage Access at 30 minutes, and Manage Accounts at 1 hour. A loop that repeatedly calls an external or connector-backed action multiplies both the workload and the number of places a dependency can fail.
 
@@ -16,7 +16,7 @@ The design response is discipline about size. Filter before you loop so you iter
 
 ## Throttling and execution limits
 
-The limits from Module 08 interact in different ways. The tenant-wide daily rate limit is around 400,000 executions and does not include loop executions. After that threshold, executions continue at 5 per second for the rest of the day. The individual workflow count does include loop executions and warns at 200,000 total executions, then blocks remaining executions at 300,000.
+The limits from Module 08 interact in different ways. The tenant-wide daily rate limit is around 400,000 executions and does not include loop executions. After that threshold, executions continue at 5 per second for the rest of the day. The individual workflow count does include loop executions and warns at 100,000 total executions, then blocks remaining executions at 150,000.
 
 A noisy trigger can therefore hurt you in two directions. It can contribute to tenant-wide rate limiting, and if the workflow also loops heavily it can drive that individual workflow toward its own block.
 
@@ -39,6 +39,17 @@ Suppose Priya's offboarding workflow removed access, opened a ticket, and then f
 So design for the second run from the beginning. Make world-changing steps idempotent where practical by checking before acting or using operations whose repeated execution has a safe result. Order steps thoughtfully so cheap validations happen before expensive or irreversible actions. Preserve enough information to tell whether a prior attempt already completed a step.
 
 Do not assume the workflow engine will automatically repair every failed business process for you. Recovery should be part of the design: a human may re-run a process, an API-driven recovery process may invoke it again, or another scheduled control may identify unfinished work. Whatever recovery method you use, it is only safe if the earlier steps tolerate repetition.
+
+> **Work It Out**
+>
+> Acme's Finance mover alert notifies the gaining team whenever someone moves into Finance. In production it occasionally sends two alerts for the same move, and once it sent none because the chat service was briefly down. What is happening in each case, and how would you make the workflow behave?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The double alert comes from the workflow running more than once for what looks like a single move, whether from repeated events or a re-run, so the notify step is not safe to repeat. Make it idempotent where it matters. If duplicate suppression is a business requirement, keep a durable marker or idempotency key in a system that persists across separate workflow executions, and check that state before sending again, so a repeat skips the duplicate. Do not rely on the workflow remembering on its own that it already sent the alert, because separate executions do not share memory. The missing alert comes from an unhandled dependency failure: the chat service was down and nothing caught it. Give that step an error path, so a failed send is routed to a deliberate Failure or a backup notification rather than vanishing. A notification workflow feels low-risk, but duplicate and dropped messages are exactly the partial-failure and external-dependence problems this module is about.
+>
+> </details>
 
 ## Large payloads
 

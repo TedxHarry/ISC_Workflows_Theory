@@ -63,6 +63,28 @@ $.changes[?(@.attribute == "cloudLifecycleState" && @.newValue == "terminated")]
 
 The important engineering rule is not to memorize syntax in isolation. Know which JSONPath environment you are in, use expressions documented for that environment, and test them against the real payload.
 
+> **Work It Out**
+>
+> Priya's move triggers an Identity Attributes Changed event whose `changes` array holds two entries, because her manager was reassigned at the same time:
+>
+> ```json
+> {
+>   "changes": [
+>     { "attribute": "manager", "oldValue": { "id": "a1", "name": "sonia.reed" }, "newValue": { "id": "b2", "name": "marcus.hale" } },
+>     { "attribute": "department", "oldValue": "Sales", "newValue": "Finance" }
+>   ]
+> }
+> ```
+>
+> Using this payload, what does `$.trigger.changes[0].newValue` return, why is that a problem for a mover alert that cares about department, and how would you select the department change without depending on its position?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Here `$.trigger.changes[0].newValue` returns the manager object, not the department, because the manager change happens to sit first in the array. Any logic that assumes department is item zero breaks the moment the order shifts, which is exactly the fragile indexing this section warns about. Select the department change by matching the attribute rather than the position, for example with a predicate such as `$.trigger.changes[?(@.attribute == "department")].newValue`, and test it against the real payload before relying on it.
+>
+> </details>
+
 ## Two JSONPath implementations
 
 This is the distinction earlier modules kept flagging.
@@ -88,6 +110,8 @@ The Variable Selector lets you choose a prior step and one of its available valu
 The most common workflow bug is often not a dramatic crash. It is a path that points at a field that is missing or empty, leaving a later step with no useful value.
 
 Real identity data is incomplete more often than demos suggest. As Module 02 explains, an Identity Created payload can include an attribute configured in the identity profile while that particular value is null or otherwise unusable for the step you want to run. Not everyone has a manager, and an external response can also omit a field. So a workflow should validate the values it depends on rather than assuming that presence in the payload means the value is ready for use.
+
+It helps to separate three states that look alike and behave differently. A field can be present but null, as when `manager` is in the data with a value of null. It can be present but empty, as when `department` is an empty string. Or it can be absent entirely, when the key is not in the payload at all. The Verify Data Type operator tells missing apart from null directly, but an empty string is neither missing nor null, so catching that case may still need a string comparison against the empty value. Knowing which of the three you are dealing with decides which guard you reach for.
 
 The defenses are simple. Verify important values before you rely on them. The Verify Data Type operator from Module 03 can confirm that a value exists or is the type you expect. Branch on absence instead of letting a blank continue into an email or an action. Provide a fallback when the business process has a sensible one. If you need information that the trigger did not provide, or you need to read current identity data, fetch it deliberately rather than guessing.
 

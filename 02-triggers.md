@@ -65,6 +65,8 @@ Look at what you get. Not just the new value, but a `changes` array, and each ch
 
 Reach for Attributes Changed when the automation is about transitions: department moves, title changes, a manager reassignment, a lifecycle-relevant attribute flipping.
 
+Priya's move also gives us the filter we will lean on later. If Acme only cares about people moving into Finance, you narrow this trigger with a filter such as `$.changes[?(@.attribute == "department" && @.newValue == "Finance")]`, so the workflow starts only for that specific transition rather than on every attribute change. Hold that expression loosely for now. The filter section later in this module explains why a small mistake in it fails in complete silence.
+
 ### Lifecycle State Changed, and Identity Deleted, the leaver
 
 When Priya leaves Acme, there is not one single "leaver" trigger, and the choice between the options is a real piece of engineering judgment, so let us slow down here.
@@ -187,6 +189,17 @@ You might notice that the first example reaches through a "trigger" segment whil
 Here is where people lose an afternoon, so I want you to see it now. Filters fail silently. If you write a filter that is slightly wrong, points at a field that is not there, misspells an attribute, compares against the wrong value, the expression simply returns nothing, and the workflow does exactly what it is supposed to do when nothing matches: it does not run. No error appears. No history entry shows up, because from the platform's point of view there was nothing to do. You sit there certain the workflow is broken, when in truth the workflow never got the go-ahead to start.
 
 So build the habit early. When a workflow "does not fire," suspect the filter first. Loosen it or remove it and test again. If the workflow suddenly runs, your filter was the gate that was quietly turning every event away. This one instinct will make you look like you have been doing this for years.
+
+> **Work It Out**
+>
+> You build a mover workflow to alert on moves into Finance, with the filter `$.changes[?(@.attribute == "department" && @.newValue == "Finance")]`. Priya moves to Finance, but the workflow never runs and no execution appears. Name the first thing to suspect, and two concrete things you would check.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Suspect the filter first, because a filter that matches nothing turns the event away with no error and no execution record. Two things to check: whether the real payload stores the department value with the exact case you wrote, since the data may hold "finance" rather than "Finance", and whether the attribute name and path match the trigger's own seed rather than your memory of it. Loosen or remove the filter and test again. If the workflow then runs, the filter was the silent gate.
+>
+> </details>
 
 One more note to file away. The path language inside a trigger filter comes from a slightly different engine than the paths your steps use to read data later. They look almost the same and mostly behave the same, which is why I am only flagging it here. Module 06 explains the difference and when it bites. For now, treat "the path in a filter" as a close cousin of "the path in a step," and always test a filter rather than trusting that it reads correctly in English.
 

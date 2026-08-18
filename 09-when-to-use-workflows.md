@@ -40,7 +40,7 @@ Notice that the workflow is not the first answer. That order is the lesson. Reac
 
 The mega-workflow tries to do everything in one enormous canvas, all of onboarding, provisioning, notification, ticketing, and cleanup at once. It is hard to test, hard to change, and one failure can drag unrelated behavior into the same incident. The fix is modularity from Module 08.
 
-The bulk processor loops over a huge population on a schedule. Loop iterations count toward an individual workflow's total executions, which produces a warning at 200,000 and blocks remaining executions at 300,000. A large scheduled job can also contribute to the tenant-wide daily rate limit of around 400,000 non-loop executions, after which executions continue at 5 per second for the rest of the day. Bulk work belongs in a tool designed for bulk processing, not in a workflow pretending to be one.
+The bulk processor loops over a huge population on a schedule. Loop iterations count toward an individual workflow's total executions, which produces a warning at 100,000 and blocks remaining executions at 150,000. A large scheduled job can also contribute to the tenant-wide daily rate limit of around 400,000 non-loop executions, after which executions continue at 5 per second for the rest of the day. Bulk work belongs in a tool designed for bulk processing, not in a workflow pretending to be one.
 
 The attribute-shaper uses Get Identity, Define Variable, and perhaps an HTTP call to compute one attribute that should be owned by a transform. It is slower, harder to reason about, and spends workflow executions to do a transform's quiet job.
 
@@ -56,7 +56,7 @@ And two you have already met: rebuilding governed approvals out of ordinary form
 
 A confident engineer knows the ceiling of every tool they use.
 
-They are not built for bulk volume. At the tenant level, around 400,000 daily executions triggers rate limiting to 5 executions per second for the remainder of the day, and that tenant counter does not include loop executions. At the individual workflow level, loop executions do count: 200,000 total executions produces a warning and 300,000 blocks remaining executions for that workflow.
+They are not built for bulk volume. At the tenant level, around 400,000 daily executions triggers rate limiting to 5 executions per second for the remainder of the day, and that tenant counter does not include loop executions. At the individual workflow level, loop executions do count: 100,000 total executions produces a warning and 150,000 blocks remaining executions for that workflow.
 
 Actions have timeouts, but there is no single universal timeout. Get Identity is documented at 1 minute, HTTP Request at 90 seconds, Manage Access at 30 minutes, and Manage Accounts at 1 hour. The correct engineering habit is to check the action you are actually using rather than carrying one timeout number around in your head.
 

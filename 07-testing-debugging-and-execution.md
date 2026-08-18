@@ -18,6 +18,19 @@ The second is a sandbox tenant. The safest place to test is a separate non-produ
 
 One more practical point about testing. The test panel provides sample input, but the ids and values must match objects that actually exist in your tenant if enabled steps depend on them. Real triggers hand real technical ids, so meaningful tests use input shaped like the real trigger payload and populated with values that make sense in the test tenant.
 
+For a concrete example, a mover workflow that reacts to Priya moving into Finance can be tested with input shaped like its real trigger:
+
+```json
+{
+  "identity": { "type": "IDENTITY", "id": "<SANDBOX_IDENTITY_ID>", "name": "workflow.test" },
+  "changes": [
+    { "attribute": "department", "oldValue": "Sales", "newValue": "Finance" }
+  ]
+}
+```
+
+Replace `<SANDBOX_IDENTITY_ID>` with the id of a dummy identity that actually exists in your sandbox, so any enabled step that looks the identity up finds a real test object rather than failing on an id that is not there.
+
 ## Reading what happened: the execution history
 
 Every time a workflow runs, whether a test or a real event, it leaves an execution record. This is your black box recorder, and learning to read it is most of debugging.
@@ -58,6 +71,17 @@ If a comparison sent the workflow down the wrong path, inspect the rendered valu
 If a step failed because of permission or authentication, the workflow tried to do something it was not allowed to do or a credential it depends on is wrong, unavailable, or expired. If an action timed out, check that specific action's documented timeout. Timeouts are action-specific: Get Identity is 1 minute, HTTP Request is 90 seconds, Manage Access is 30 minutes, and Manage Accounts is 1 hour. Do not debug with a fictional universal timeout in mind.
 
 The method underneath all of these is the same. Read the status. Find the first step that failed or produced an unexpected value. Inspect the real input and output. Form one hypothesis. Fix one thing. Test again with dangerous steps simulated where appropriate. Debugging is not cleverness. It is disciplined observation.
+
+> **Work It Out**
+>
+> A mover workflow is supposed to email Priya's new manager when she moves to Finance. The run looks successful, but the manager reports that no message arrived. Where do you look, and what is the likely cause?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Open the execution and read the steps in order. On the step that fetches the manager, inspect its input and output to confirm it returned a manager with an email. Then open the Send Email step and inspect the rendered recipient. If that recipient rendered to nothing, the path pointed at a value that was not there, so the message had nowhere to go even though the run may look otherwise healthy. The common cause is reading the manager's email straight from the trigger, which carries only the manager's id and name, instead of fetching the manager with Get Identity and reading the email from that result. As Module 04 put it, green does not mean done, so inspect the step input and output rather than trusting the status alone.
+>
+> </details>
 
 ## Running it again, and the trap of the second run
 
