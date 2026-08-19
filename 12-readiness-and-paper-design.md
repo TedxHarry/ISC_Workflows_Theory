@@ -78,6 +78,39 @@ The answer follows the lifecycle without collapsing it. Campaign Activated means
 
 Finally, the answer handles replay. Create Certification Campaign is not documented as idempotent, so a retry or operator rerun must not blindly create another campaign. Use durable correlation or reconciliation to determine whether the intended campaign already exists. A repeated campaign name alone is not duplicate suppression. The safe test plan uses a sandbox identity and simulates campaign-changing actions where practical, because ordinary Workflow testing can create real certification campaigns.
 
+Design an Outlier Response for Priya after ISC emits this event:
+
+```json
+{
+  "score": 0.82,
+  "_meta": {
+    "triggerType": "FIRE_AND_FORGET",
+    "subscriptionId": "e5fa2a32-3f33-436d-bac8-af4c53122eed",
+    "invocationId": "b246f3c8-e706-4cfa-9254-360fc6de0ef1"
+  },
+  "outlierType": "LOW_SIMILARITY",
+  "identity": {
+    "id": "2c91808568c529c60168cca6f90c1313",
+    "displayName": "Priya Patel",
+    "type": "IDENTITY"
+  }
+}
+```
+
+Acme has an approved policy that routes scores at or above `0.7` and below `0.9` into a certification review. That band intentionally matches the current SailPoint certification-template example for this exercise. It is Acme policy in the scenario, not a universal threshold.
+
+A strong answer starts with **Outlier Detected** and uses only fields the trigger actually provides: `score`, `_meta`, `outlierType`, and `identity`. It knows that current trigger documentation supports `LOW_SIMILARITY` and that the raw Workflow event score is on a `0.0-1.0` scale. It does not copy an 82-style value from the Identity Outliers Product UI into Workflow logic, because the Product UI describes its score on a `0-100` scale. It also does not invent the richer UI risk factors as trigger fields.
+
+The design evaluates Acme policy against the raw event value, then enriches only what it needs. If the manager is the reviewer or notification recipient, Get Identity retrieves the current identity and manager reference, and a manager lookup supplies current manager details when required. The certification uses Priya's ISC `identity.id` as the identity to certify, assigns the intended reviewer, and preserves the returned campaign id for later evidence.
+
+A strong answer also refuses to collapse the later lifecycle. Create Certification Campaign proves creation, not review. Campaign Generated and Campaign Activated are later campaign boundaries when the design uses them. Certification Signed Off is reviewer-certification evidence. Campaign Ended is campaign completion. Remediation and target observation remain separate proof when a reviewer revokes access.
+
+Replay is part of the paper design. Outliers are recalculated, an ignored identity can be rediscovered after significant entitlement change, and an operator can rerun after an ambiguous outcome. Those facts do not promise duplicate delivery, but they make repeat-safe engineering necessary. Before creating another campaign, reconcile whether the intended governance work already exists. Create Certification Campaign is not documented as idempotent.
+
+The test plan simulates Create Certification Campaign and other world-changing steps while validating the `0.82` branch with realistic input. If an enabled lookup requires a real identity, use a sandbox technical id. A normal Workflow test is not assumed harmless.
+
+Now change only one fact: `score = 0.93`. SailPoint currently provides a high-score template that disables accounts and notifies the manager. A strong answer does not jump from that template to "always disable." It asks what Acme policy authorizes, which identities and accounts are in scope, how exceptions and recovery work, and what evidence will prove the intended containment occurred. If the implementation uses Get Accounts and Manage Accounts, it accounts for the documented 250-account maximum on Get Accounts, uses the intended account ids with Account Action set to Disable, inspects `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`, and remembers the 1-hour Manage Accounts timeout. The destructive step is simulated during logic testing, and target state is verified when the control requires certainty.
+
 Design a Native Change response for Priya's AD account being added directly to `Finance Privileged Operators`. A strong answer uses Native Change Account Updated, not Identity Attributes Changed or Access Request Submitted. It names the source setup: Native Change Detection enabled, Account Updates monitored, group membership or all entitlement attributes monitored, and aggregation run after the target change. It reads `accountChangeTypes`, `entitlementChanges.added`, `source`, `account.nativeIdentity`, and `account.correlated`. It alerts Security and the source owner without claiming the change was malicious. If it proposes auto-revocation, it states the extra proof required: valid entitlement id, clear policy, supported action, exception handling, and idempotency so repeat events do not create a loop.
 
 Design an inbound HR integration where an external HR service tells ISC that worker `W-18422` has a high-priority separation event. A strong answer uses External Trigger because the initiating event lives outside ISC. It defines a small contract such as `eventId`, `eventType`, `workerId`, and `effectiveAt`; validates that required fields exist and have the expected types; then validates allowed business values before any world-changing action. It does not assume `workerId` is an ISC identity id. It resolves that external identifier through a deliberate mapping strategy and stops or routes to investigation when the match is missing or ambiguous. It carries a stable `eventId` and names the replay-safety mechanism: check or record that key in durable state before repeating a side effect, use it as a downstream idempotency key when the remote API documents that capability, or reconcile with the downstream system before retrying an operation whose earlier outcome is ambiguous. Merely carrying `eventId` does not suppress a duplicate across separate workflow executions. If the workflow calls another API with HTTP Request, it gives that action an error path, remembers the 90-second timeout, validates the JSON response it actually needs, and keeps credentials in supported secure parameter storage rather than in the workflow body.
@@ -101,6 +134,8 @@ You can separate ordinary account events from Native Change account events, expl
 You can treat an External Trigger payload as caller-supplied data: authenticate the caller, validate the fields and allowed values, map external identifiers deliberately, and make replayed requests safe before a workflow changes access, accounts, or another system.
 
 You can design a certification workflow without collapsing campaign creation, generation, activation, certification sign-off, campaign completion, and remediation into one state, and you can make campaign creation safe to recover without blindly creating duplicate reviews.
+
+You can explain what Outlier Detected proves and what it does not, interpret the raw `0.0-1.0` trigger score without confusing it with the Product UI `0-100` display, distinguish the sparse trigger seed from richer UI context, design a policy-driven notification, certification, or containment response, debug the score and response boundaries, and make destructive containment safe to test and repeat.
 
 You can read and write JSONPath against a real payload, reach into arrays safely, and distinguish trigger-filter paths from paths used inside workflow steps.
 
