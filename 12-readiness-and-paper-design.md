@@ -72,6 +72,8 @@ Design the sensitive Finance access approval workflow. A strong answer names wha
 
 Design a Native Change response for Priya's AD account being added directly to `Finance Privileged Operators`. A strong answer uses Native Change Account Updated, not Identity Attributes Changed or Access Request Submitted. It names the source setup: Native Change Detection enabled, Account Updates monitored, group membership or all entitlement attributes monitored, and aggregation run after the target change. It reads `accountChangeTypes`, `entitlementChanges.added`, `source`, `account.nativeIdentity`, and `account.correlated`. It alerts Security and the source owner without claiming the change was malicious. If it proposes auto-revocation, it states the extra proof required: valid entitlement id, clear policy, supported action, exception handling, and idempotency so repeat events do not create a loop.
 
+Design an inbound HR integration where an external HR service tells ISC that worker `W-18422` has a high-priority separation event. A strong answer uses External Trigger because the initiating event lives outside ISC. It defines a small contract such as `eventId`, `eventType`, `workerId`, and `effectiveAt`; validates that required fields exist and have the expected types; then validates allowed business values before any world-changing action. It does not assume `workerId` is an ISC identity id. It resolves that external identifier through a deliberate mapping strategy and stops or routes to investigation when the match is missing or ambiguous. It carries `eventId` as a durable idempotency key so a caller retry or operator replay does not repeat an already completed side effect. If the workflow calls another API with HTTP Request, it gives that action an error path, remembers the 90-second timeout, validates the JSON response it actually needs, and keeps credentials in supported secure parameter storage rather than in the workflow body.
+
 Design a leaver offboarding that removes access, opens a ticket, and notifies, and survives a partial failure. A strong answer uses the lifecycle change trigger rather than Identity Deleted, orders the steps thoughtfully, validates important outputs such as `failedAccessRequests`, makes repeat execution safe, and gives external actions error paths.
 
 Design something that should not be a workflow at all and explain why. A strong answer picks a case like formatting an attribute, granting standard birthright access, or running a nightly bulk recompute, and names the right tool instead from Module 09.
@@ -87,6 +89,8 @@ You can explain the workflow model in your own words: one trigger, operators tha
 You can pick the right trigger for a described event, including the judgment calls around joiner, mover, leaver, schedule, form, and external events, and you can explain what the trigger filter is buying you.
 
 You can separate ordinary account events from Native Change account events, explain that native changes are detected during aggregation on configured sources, and design the first response without assuming the change was malicious or safe to auto-revert.
+
+You can treat an External Trigger payload as caller-supplied data: authenticate the caller, validate the fields and allowed values, map external identifiers deliberately, and make replayed requests safe before a workflow changes access, accounts, or another system.
 
 You can read and write JSONPath against a real payload, reach into arrays safely, and distinguish trigger-filter paths from paths used inside workflow steps.
 
