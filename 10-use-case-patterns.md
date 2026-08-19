@@ -127,7 +127,62 @@ The gotcha is loops. An ISC-initiated revocation should not be described as a ne
 
 **Chat and webhook integration.** Workflows are a natural bridge to the tools your people already live in. The trigger is whatever event matters, the logic shapes a message, and the action is a Send Slack Message or an HTTP Request to a webhook. Interactive Message belongs to an Interactive Process launched through the Launchpad, as Module 05 explains. The gotcha is security and dependence, straight from Module 08. Do not hard-code credentials into the HTTP call, and be careful never to spill sensitive personal data into a chat channel or a log, because a convenient notification is also a convenient leak.
 
-**Inbound automation from an external system.** Sometimes the event that should drive ISC lives entirely in another system, such as an HR platform announcing a new hire before anything exists in ISC. The External Trigger lets that system call in and start a workflow with its own data. The logic then acts on that payload, and the actions do whatever the inbound event calls for. The gotcha is trust and identity. The payload is whatever the caller sends, so validate it with Verify Data Type before you rely on it, as Modules 03 and 06 taught, and remember from Modules 07 and 08 that ids from another system may not line up with ISC ids, so you often must look up the real identity rather than assume the incoming id matches.
+**Inbound automation from an external system.** Sometimes the initiating event belongs to another system. Suppose Acme's HR service records a high-priority separation before ISC has any native event that represents that moment. External Trigger is the right boundary when Acme wants that HR service to call ISC and start an orchestration workflow.
+
+Define the payload as an integration contract instead of accepting an unstructured blob. A realistic contract could be:
+
+```json
+{
+  "eventId": "hr-2026-08-19-00421",
+  "eventType": "SEPARATION_FILED",
+  "workerId": "W-18422",
+  "effectiveAt": "2026-08-19T15:00:00Z",
+  "reasonCode": "VOLUNTARY"
+}
+```
+
+Those fields are caller-supplied data. The workflow can read them with JSONPath such as `$.trigger.eventId` and `$.trigger.workerId`. Because External Trigger input is dynamic, SailPoint does not provide those fields through the normal variable selector. That makes the contract you write with the upstream team part of the engineering work, not optional documentation.
+
+Treat validation as layers:
+
+```
+External Trigger
+        |
+        v
+Verify required fields exist and have expected types
+        |
+        v
+Validate allowed eventType / reasonCode values
+        |
+        v
+Resolve workerId to the intended ISC object
+        |
+        v
+Check whether eventId was already handled
+        |
+        +---- duplicate / invalid -> stop or investigate
+        |
+        +---- valid new event     -> perform the intended orchestration
+```
+
+Verify Data Type helps with the first layer only. It can prove that a field exists or has a basic type such as string, number, boolean, timestamp, or null. It does not prove that `SEPARATION_FILED` is an allowed business event, that `W-18422` identifies the intended ISC identity, or that the requested action is authorized. Those are separate checks.
+
+Identifier mapping is the production trap. An HR worker id, email address, ticket number, or vendor object id is not automatically an ISC technical id. Resolve the external key through a deliberate tenant-supported mapping or lookup strategy, and reject or route the event when the match is missing or ambiguous. Do not feed an external id into an ISC action merely because both systems call their field `id`.
+
+Replay safety belongs in the contract too. Carry a stable `eventId` supplied by the caller and use durable state outside the individual workflow execution when duplicate suppression matters. The caller may retry after a timeout, an operator may replay a failed integration, or the upstream platform may resend an event. Those are normal distributed-system recovery paths. They are not a SailPoint guarantee of duplicate delivery, but the workflow still has to be safe if the same business event arrives twice.
+
+External Trigger is inbound. HTTP Request is the outbound partner. If this workflow needs to create a case in an external incident system, give that HTTP Request an error branch, validate the JSON response fields the next steps actually need, and remember its 90-second timeout. Keep supported credentials in Parameter Storage rather than placing secrets in the request body or workflow definition.
+
+> **Work It Out**
+>
+> Acme receives the separation payload above twice with the same `eventId`. The first execution already created a security case. The second execution has a valid OAuth caller and every field has the right JSON type. Why is it still unsafe to run the world-changing steps again, and what checks are missing?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Authentication proves the caller presented valid credentials, and Verify Data Type proves only the basic shape of the selected fields. Neither proves that this is a new business event or that `workerId` maps to the intended ISC identity. Resolve the external worker key deliberately, validate the allowed business values, and check durable state for `eventId` before creating another case or changing anything. If the event was already completed, treat the replay as a no-op or update the existing record according to the integration contract rather than repeating the side effect.
+>
+> </details>
 
 ## Evidence
 
