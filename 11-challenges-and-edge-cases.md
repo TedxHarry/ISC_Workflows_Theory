@@ -115,6 +115,77 @@ The unsupported-source edge case is ordinary, not exotic. If no event arrives, d
 >
 > </details>
 
+## Outlier detection is a risk signal, not a verdict
+
+Outlier Detected sits at a different security boundary from a confirmed policy violation. SailPoint describes the event as identifying an identity with unusual access compared with peers. Current Developer documentation says outliers are calculated daily, the score ranges from `0.0` through `1.0`, higher values mean the identity is more likely to be an outlier, and `LOW_SIMILARITY` is currently the only supported event type. None of those facts proves malicious intent or identifies one entitlement as unauthorized.
+
+The first production edge is score representation. The native event uses the decimal scale above. The Product Identity Outliers UI describes its displayed score on a `0-100` scale. Treat that as a cross-surface representation difference. Do not copy a UI threshold literal into Workflow logic and do not describe `0.82` as `0.82 percent`. Inspect the trigger input and use the event representation that the Workflow actually received. Unless SailPoint explicitly documents a conversion rule, do not invent one.
+
+The second edge is context. The Product UI can show factors such as Peer Access Similarity, Standalone Entitlements, Rare Access, Roles with a Single Entitlement, Entitlement Count, and Access Profile and Role Uniqueness. The documented Workflow seed does not contain those factor fields. It contains `score`, `_meta`, `outlierType`, and `identity`. A workflow that branches on `$.trigger.rareAccess` is not using the documented contract. Enrich through a documented lookup when the workflow needs more identity context, and leave UI-only investigation context in the UI unless a documented API or action supplies it.
+
+Manager routing is one concrete example. The Outlier trigger does not contain a manager object. Get Identity can return the current identity and its manager reference. If a manager notification requires the manager's email, retrieve the manager identity and inspect that result. A missing manager or missing usable email needs an explicit path rather than an invented trigger field.
+
+The third edge is policy. SailPoint currently publishes three template response bands: above `0.5` and below `0.7` for manager notification, at or above `0.7` and below `0.9` for certification, and at or above `0.9` for account disablement plus manager notification. These are documented template designs, not mandatory enterprise thresholds. A tenant must decide which populations are in scope, what evidence is sufficient for each response, what exceptions apply, and who authorizes destructive containment.
+
+Boundary precision matters. Under the current template descriptions, `0.69` is in the notification example, `0.70` and `0.89` are in the certification example, and `0.90` is in the account-disable example. Do not create accidental gaps or overlaps by rounding, switching `>` to `>=`, or copying a title without checking the documented condition.
+
+The high-score path deserves more scrutiny because the blast radius is much larger. SailPoint providing a `0.9+` disable template proves that automated containment is a supported design pattern. It does not mean every tenant should disable every account for every identity at that score. Production policy should define the authorized population, intended accounts, exception process, safe test method, recovery path, and evidence required after containment. If a custom design uses Get Accounts followed by Manage Accounts, remember that Get Accounts documents a maximum of 250 returned accounts. Manage Accounts supports Disable and has a 1-hour timeout. Its documented sample output includes `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Inspect those fields and the target state that matters. Do not collapse "the containment branch ran" into "every expected account is unusable."
+
+The fourth edge is repeat behavior. Developer documentation says outliers are recalculated daily. Product documentation says an ignored identity can be rediscovered as an outlier after a significant entitlement change. Those facts do not define an exactly-once event-delivery contract. They do establish that the same identity can become relevant again as its access changes. Operator reruns and ambiguous action outcomes create another repetition path. Before sending another notification, creating another campaign, or applying containment again, determine what already happened and what the current state is.
+
+Certification is especially sensitive to replay because it creates durable governance work. Create Certification Campaign is not documented as idempotent. If the first Outlier response already created the intended campaign, replaying the detector does not repair a later activation or reviewer problem. Correlate by the campaign technical id and use the certification lifecycle from the previous section.
+
+The fifth edge is feature readiness. Outlier functionality currently depends on Access Insights, a configured source with loaded account data, and onboarding that account data into AI-Driven Identity Security. Identity Outliers also has regional availability limits. When the trigger never fires, confirm those prerequisites before treating the workflow filter as the primary suspect.
+
+The final edge is evidence. Keep these boundaries separate:
+
+```
+Outlier Detected
+        -> ISC emitted the documented risk signal
+
+policy branch
+        -> the organization selected a response for that signal
+
+notification
+        -> a message action completed according to its contract
+
+Create Certification Campaign
+        -> governance work was created
+
+Certification Signed Off / Campaign Ended
+        -> later governance boundaries were reached
+
+Manage Accounts Disable
+        -> inspect the account-action result for the accounts actually targeted
+
+remediation / target observation
+        -> the business outcome is independently evidenced
+```
+
+Green does not mean risk resolved. It means the Workflow completed the steps it owned. The meaning of those steps still depends on the boundary they represent.
+
+> **Work It Out**
+>
+> Acme receives an Outlier Detected event for Priya with `outlierType = LOW_SIMILARITY` and `score = 0.82`. Acme policy maps that band to a certification review. The Outlier workflow is green and Create Certification Campaign returned a campaign id. Security closes the incident as "risky access removed." Which facts are proven, and which are still missing?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The event proves ISC emitted an Outlier Detected risk signal for Priya with the documented type and raw score. Acme policy then selected a certification response, and the green Create Certification Campaign step proves the campaign creation boundary according to that action's contract. None of that proves a reviewer signed off, any item was revoked, remediation completed, or the target changed. Follow the campaign id through generation and activation as the design requires, then Certification Signed Off and Campaign Ended, and finally remediation and target evidence for any revoke decision. Detection, policy response, governance state, and target state are different facts.
+>
+> </details>
+
+> **Work It Out**
+>
+> Using the current SailPoint template conditions, classify these raw Workflow event scores: `0.69`, `0.70`, `0.89`, and `0.90`.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> `0.69` is in the notification example because it is above `0.5` and below `0.7`. `0.70` and `0.89` are in the certification example because that band is at or above `0.7` and below `0.9`. `0.90` is in the account-disable example because that branch begins at or above `0.9`. These classifications describe the current SailPoint template examples. They do not create Acme policy automatically.
+>
+> </details>
+
 ## Access requests across separate boundaries and executions
 
 Access requests stretch across several boundaries that are handled at different times, and most access-request edge cases come from forgetting that. Hold the approved and denied paths apart:
