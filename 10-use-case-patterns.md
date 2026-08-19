@@ -220,7 +220,94 @@ The gotcha is loops. An ISC-initiated revocation should not be described as a ne
 >
 > </details>
 
-**Outlier response.** ISC can flag an identity whose access looks anomalous, and a workflow can react. The trigger is Outlier Detected, which as Module 02 noted is a licensed capability, so it only appears if your tenant has it. The logic decides how serious the signal is, and the action routes it to a reviewer or opens a case. The gotcha is treating a signal as a verdict. An outlier is a hint, not proof, so the safe pattern is to notify and prompt a review rather than to automatically strip access, because false positives on automatic removal punish innocent people.
+**Outlier response.** Identity Outliers is part of Access Insights. The native Workflow trigger is **Outlier Detected**. SailPoint describes the underlying condition as an identity having access that is significantly different from its peers. Treat that as a risk signal, not as proof that the identity is malicious or that a particular entitlement is unauthorized.
+
+The native Workflow seed is intentionally small. A realistic event for Priya is:
+
+```json
+{
+  "score": 0.82,
+  "_meta": {
+    "triggerType": "FIRE_AND_FORGET",
+    "subscriptionId": "e5fa2a32-3f33-436d-bac8-af4c53122eed",
+    "invocationId": "b246f3c8-e706-4cfa-9254-360fc6de0ef1"
+  },
+  "outlierType": "LOW_SIMILARITY",
+  "identity": {
+    "id": "2c91808568c529c60168cca6f90c1313",
+    "displayName": "Priya Patel",
+    "type": "IDENTITY"
+  }
+}
+```
+
+Current Developer documentation defines `score` on this event from `0.0` through `1.0`, with a higher value meaning the identity is more likely to be an outlier. It currently documents `LOW_SIMILARITY` as the only supported `outlierType`. Do not import other outlier model values into this trigger unless the trigger-specific documentation changes.
+
+The score has a cross-surface representation trap. The Identity Outliers Product UI describes its displayed score on a `0-100` scale, while the Workflow event supplies a decimal on a `0.0-1.0` scale. Do not copy a UI literal such as `82` or `80` directly into logic that reads `$.trigger.score`. Inspect the actual trigger value and build the comparison against the representation the event supplies. Also do not claim an exact conversion rule unless current SailPoint documentation explicitly defines one.
+
+The UI also shows richer context such as peer similarity, standalone entitlements, rare access, entitlement count, and access-profile or role uniqueness. Those factors are not fields in the documented Outlier Detected seed above. If the response needs identity or manager context, enrich deliberately. **Get Identity** can retrieve the current identity and its manager reference. If the workflow needs the manager's current email or other identity data, retrieve that manager identity rather than inventing a `manager` object under the trigger.
+
+Response is a policy decision. SailPoint currently publishes three Outlier workflow template families that demonstrate different responses:
+
+- Above `0.5` and below `0.7`: retrieve identity and manager information and send a manager notification.
+- At or above `0.7` and below `0.9`: retrieve identity and manager information, create a certification campaign, and notify the manager.
+- At or above `0.9`: retrieve identity information, disable the identity's accounts, and notify the manager.
+
+Those are SailPoint template examples, not universal security thresholds. A production tenant needs an approved policy that defines which population uses which bands, what each band authorizes, and what exceptions or recovery paths apply.
+
+For this course scenario, Acme deliberately adopts a review band that matches the current SailPoint certification-template example. Priya's raw Workflow score is `0.82`, so the response is governed review rather than automatic containment:
+
+```
+Outlier Detected
+        |
+        v
+Inspect score / outlierType / identity.id
+        |
+        v
+Get Identity for current identity and manager context
+        |
+        v
+Acme policy: score >= 0.7 and score < 0.9
+        |
+        v
+Create Certification Campaign for Priya
+        |
+        v
+Notify the manager
+        |
+        v
+Workflow ends
+```
+
+A representative certification configuration is:
+
+```text
+Reviewer Type:               Individual
+Reviewer Identity:           manager resolved from current identity data
+Certification Type:          Identity Certification
+Identities to Certify:       $.trigger.identity.id
+Start Campaign when Created: follow Acme certification design
+Undecided Access Items:      follow Acme certification policy
+```
+
+This is where the certification slice earlier in this module becomes useful. A successful Create Certification Campaign action is only the creation boundary. It does not prove the campaign was activated, the reviewer signed off, a revoke decision was made, remediation completed, or the target changed. Preserve the campaign id and follow Campaign Generated, Campaign Activated, Certification Signed Off, Campaign Ended, remediation evidence, and target observation according to the design already taught.
+
+The high-score containment path has a different blast radius. SailPoint provides a `0.9+` template that disables accounts, so the course should not teach that automated containment is categorically unsupported or always wrong. It should teach that containment needs explicit authorization, source capability, and evidence. If Acme implements a custom containment branch with **Get Accounts** followed by **Manage Accounts** with Account Action set to Disable, account discovery is not the capability check: an account appearing in Get Accounts proves ISC knows about the account, not that its source can perform an automatic Disable. Before treating an account as automatically containable, verify that its source and connector configuration support the required Disable/provisioning operation. Sources that cannot perform that operation need an alternate manual containment or escalation path instead of being counted as successfully covered by the automatic branch. For accounts that pass the capability gate, remember that Get Accounts documents a maximum of 250 returned accounts and Manage Accounts has a 1-hour timeout. Its documented sample output includes `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Inspect those results and verify the expected target state instead of translating one green execution into "every account is disabled." Also define the intended account scope before production. "Disable the identity" is not a substitute for knowing which accounts the workflow is actually targeting.
+
+Replay is part of the policy too. SailPoint documents that outliers are calculated daily, and Product documentation says an ignored identity can be rediscovered after a significant entitlement change. That does not establish duplicate event delivery, but it does mean the same identity can become relevant again over time. Operators can also rerun workflows after ambiguous failures. Before creating another certification, sending another case, or repeating containment, reconcile what already happened. Create Certification Campaign is not documented as idempotent, and a destructive response should never depend on an undocumented exactly-once assumption.
+
+Finally, check feature readiness when no event arrives. Current Outlier documentation requires Access Insights, a configured source with loaded account data, and onboarding that account data into AI-Driven Identity Security. Identity Outliers also has regional availability limits. If the trigger never fires, verify those prerequisites before spending an afternoon rewriting JSONPath.
+
+> **Work It Out**
+>
+> The Identity Outliers UI shows Priya with an 82-style score. An engineer writes a Workflow condition that expects `$.trigger.score >= 70`, so the `0.82` event never reaches the certification branch. After the comparison is fixed, Create Certification Campaign is green and Security says, "The risky access is removed now." Identify both reasoning errors.
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The first error is mixing score representations. The Product UI describes a `0-100` score, while Outlier Detected supplies a raw decimal from `0.0` through `1.0`, so the branch must compare the event value using the event's representation. The second error is collapsing governance boundaries. A green Create Certification Campaign action proves campaign creation according to that action's contract. It does not prove review, sign-off, remediation, or target-state change. Follow the campaign id through the later certification events and remediation evidence, then verify the target when the business requires proof that access actually changed.
+>
+> </details>
 
 ## Integration
 
