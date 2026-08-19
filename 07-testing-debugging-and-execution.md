@@ -175,6 +175,33 @@ The single question underneath both patterns is the same: which boundary has act
 >
 > </details>
 
+## Debugging certification campaign workflows
+
+Certification incidents are easier when you follow one campaign id across its lifecycle instead of treating every green workflow execution as the same kind of success.
+
+Start with the workflow that creates the campaign. If Acme's Finance mover should create a targeted review, inspect the Identity Attributes Changed trigger input first and prove that the `changes` array contains the department transition the workflow was designed to handle. Then inspect Create Certification Campaign. Confirm the reviewer type, certification type, `Identities to Certify`, campaign duration, undecided-item setting, and **Start Campaign when Created** value that actually rendered at runtime. The identity value must be the intended ISC identity id.
+
+Next, inspect the Create action output and preserve its campaign id as the correlation value for later evidence. Create Certification Campaign has a documented 36-hour timeout, so a timeout here is not the same failure boundary as Get Certification Campaign, which times out after 1 minute, or Activate Certification Campaign, which times out after 2 hours.
+
+If the design deliberately stages campaigns before activation, do not expect the original mover execution to receive a later Campaign Generated trigger. One workflow has one trigger, and separate event-driven workflows have separate execution contexts. The Campaign Generated execution should carry the generated campaign under `campaign`, including its id and the documented sample status `STAGED`. If another workflow is responsible for activation, inspect that execution and prove that Activate Certification Campaign received the same campaign id. A `Campaign Activated` event later represents the active boundary and its documented sample status is `ACTIVE`.
+
+After activation, split reviewer evidence from campaign evidence. Certification Signed Off is about a certification reviewed by a reviewer. Its seed includes a `certification` object with fields such as `id`, `campaignRef`, `completed`, `hasErrors`, `decisionsMade`, `decisionsTotal`, `signed`, and reviewer information. It is not the Campaign End event. Campaign Ended is the campaign-level event and its documented sample status is `COMPLETED`.
+
+That distinction matters when the incident is "the reviewer revoked access, but the user still has it." SailPoint documents that signed-off revoke decisions initiate remediation, but remediation can be automatic or manual depending on the source. Do not stop at Certification Signed Off or Campaign Ended. Inspect the campaign remediation evidence, provisioning or account activity where applicable, and the target state when the business requires confirmation.
+
+Replay is a debugging concern too. If Create Certification Campaign returned an ambiguous result or an operator is considering a rerun, first determine whether a campaign already exists for that business event. The action documentation does not promise idempotent creation. Replaying blindly can create a duplicate campaign and duplicate reviewer work. Use the durable correlation record or reconciliation mechanism defined by the production design before deciding to create again.
+
+> **Work It Out**
+>
+> The Finance mover execution is green and its Create Certification Campaign output contains campaign id `2c91808576f886190176f88cac5a0010`. A separate Campaign Generated execution exists for `2c91808576f886190176f88cac5a0010`, but no Campaign Activated execution exists. An engineer proposes rerunning the mover workflow. What should you inspect first, and why is rerunning the wrong first move?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The existing campaign already crossed the creation and generation boundaries, so recreating it does not address the missing activation. Open the Campaign Generated execution, confirm it is the expected campaign and inspect its `campaign.id` and status. Then inspect the workflow that should activate staged campaigns. Confirm its filter or correlation check accepted `2c91808576f886190176f88cac5a0010`, and confirm Activate Certification Campaign received that exact campaign id. If the activation action failed, inspect its error rather than creating another campaign. Rerunning the mover workflow first risks a duplicate certification because Create Certification Campaign is not documented as idempotent.
+>
+> </details>
+
 ## Debugging External Trigger and HTTP integrations
 
 An external integration has two systems to inspect, so start at the boundary between them instead of starting in the middle of the workflow.
