@@ -172,7 +172,7 @@ Finally, remember that certification actions have unusually different timeouts: 
 
 > **Work It Out**
 >
-> Acme receives two incidents after a Finance mover certification. One reviewer signed off with a revoke decision, while another reviewer has not finished. The campaign later shows `COMPLETED`, but the revoked access is still present on a manually managed source. Which assumptions would make an engineer misdiagnose this?
+> Acme receives two incidents after a Finance mover certification. One reviewer signed off with a revoke decision, while another reviewer has not finished. An administrator later completes the campaign, which shows `COMPLETED`, but the revoked access is still present on a manually managed source. Which assumptions would make an engineer misdiagnose this?
 >
 > <details>
 > <summary>Check your answer</summary>
