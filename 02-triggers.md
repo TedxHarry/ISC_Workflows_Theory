@@ -326,10 +326,12 @@ while the later workflow step reads `$.trigger.eventId`. Do not confuse the API 
 The current external execution endpoint is:
 
 ```text
-POST /v2025/workflows/execute/external/{workflowId}
+POST /v2025/workflows/execute/external/{id}
 ```
 
-External Trigger has its own credential setup. After adding the trigger, select **New Access Token** and save the generated Client ID, Client URL, and Client Secret securely. SailPoint documents that the Client Secret cannot be retrieved after the configuration page is closed. Use the generated OAuth instructions to obtain an OAuth 2.0 token for the calling system. If you later generate a new access token, the previous token is overwritten, so coordinate that rotation with the external caller.
+Product documentation for configuring External Trigger in the Workflow builder teaches a trigger-specific OAuth client path. After adding the trigger, select **New Access Token** and save the generated Client ID, Client URL, and Client Secret securely. SailPoint documents that the Client Secret cannot be retrieved after the configuration page is closed. Use the generated OAuth instructions to obtain an OAuth 2.0 token for the calling system. If you later generate a new access token, the previous token is overwritten, so coordinate that rotation with any caller that uses this generated credential.
+
+Current v2025 Developer API documentation for the external execution endpoint also advertises OAuth2 authorization using either Personal Access Token or Client Credentials, with scope `sp:workflow-execute:external`. Preserve that Product-versus-Developer documentation difference. Do not teach the trigger-generated OAuth client as the universally exclusive authentication path. Implementers should follow the invocation instructions generated for their workflow and verify the authentication method and required scope against the current API documentation for the integration being built.
 
 Authentication is necessary, but it is not payload validation. A valid caller can still send a missing field, the wrong business event, an external id that maps to nobody, or an event that was already processed. Validate in layers before any world-changing action:
 
