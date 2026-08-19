@@ -193,12 +193,12 @@ Replay is a debugging concern too. If Create Certification Campaign returned an 
 
 > **Work It Out**
 >
-> The Finance mover execution is green and its Create Certification Campaign output contains campaign id `C-1042`. A separate Campaign Generated execution exists for `C-1042`, but no Campaign Activated execution exists. An engineer proposes rerunning the mover workflow. What should you inspect first, and why is rerunning the wrong first move?
+> The Finance mover execution is green and its Create Certification Campaign output contains campaign id `2c91808576f886190176f88cac5a0010`. A separate Campaign Generated execution exists for `2c91808576f886190176f88cac5a0010`, but no Campaign Activated execution exists. An engineer proposes rerunning the mover workflow. What should you inspect first, and why is rerunning the wrong first move?
 >
 > <details>
 > <summary>Check your answer</summary>
 >
-> The existing campaign already crossed the creation and generation boundaries, so recreating it does not address the missing activation. Open the Campaign Generated execution, confirm it is the expected campaign and inspect its `campaign.id` and status. Then inspect the workflow that should activate staged campaigns. Confirm its filter or correlation check accepted `C-1042`, and confirm Activate Certification Campaign received that exact campaign id. If the activation action failed, inspect its error rather than creating another campaign. Rerunning the mover workflow first risks a duplicate certification because Create Certification Campaign is not documented as idempotent.
+> The existing campaign already crossed the creation and generation boundaries, so recreating it does not address the missing activation. Open the Campaign Generated execution, confirm it is the expected campaign and inspect its `campaign.id` and status. Then inspect the workflow that should activate staged campaigns. Confirm its filter or correlation check accepted `2c91808576f886190176f88cac5a0010`, and confirm Activate Certification Campaign received that exact campaign id. If the activation action failed, inspect its error rather than creating another campaign. Rerunning the mover workflow first risks a duplicate certification because Create Certification Campaign is not documented as idempotent.
 >
 > </details>
 
