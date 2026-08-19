@@ -175,6 +175,33 @@ The single question underneath both patterns is the same: which boundary has act
 >
 > </details>
 
+## Debugging External Trigger and HTTP integrations
+
+An external integration has two systems to inspect, so start at the boundary between them instead of starting in the middle of the workflow.
+
+For an inbound External Trigger, first inspect what the caller received from the external workflow execution API. Current Developer documentation lists `200`, `400`, `401`, `403`, `429`, and `500` outcomes, and the success response model can include a `workflowExecutionId` plus a `message` when an error occurred. Do not stop at the HTTP status. Read the response body too. A bad request points toward the request shape. `401` or `403` points toward authentication or authorization. `429` is rate limiting. A server error belongs on a retry or operator path defined by the calling integration rather than being guessed at inside ISC.
+
+Then ask whether an execution exists. If none exists, verify the caller used the External Trigger invocation details generated for the correct enabled workflow and that the external-trigger credentials are current. Generating a new External Trigger access token overwrites the previous one, so an upstream service still using the old credential can fail after a rotation.
+
+If an execution does exist, inspect the trigger input before later steps. External Trigger data is dynamic, so SailPoint does not expose its caller-defined fields through the normal variable selector. Confirm the real payload and the JSONPath you wrote, for example `$.trigger.eventId` or `$.trigger.workerId`. Then inspect the validation steps. Verify Data Type can confirm existence and basic types, but a correctly typed value can still be an unknown event type, an unmapped external identifier, or a replay of an event already processed.
+
+SailPoint also exposes a dedicated External Trigger test endpoint whose purpose is to validate that a workflow can receive the supplied input intact. Use that boundary test when you need to prove the caller-to-trigger payload shape. Do not confuse it with the ordinary Test Workflow operation. The ordinary workflow test can execute enabled actions for real, so continue to simulate dangerous actions or use a safe sandbox when testing the workflow itself.
+
+For an outbound HTTP Request, open the action and read the error branch data. Workflow error handling exposes `workflowErrorMessage` and `workflowStatusCode` for the failed action. Check authentication, request URL, headers, rendered body, and the external response. Remember the documented 90-second timeout. Also remember that an external response must be JSON for this action. If a later step expects a field such as `caseId`, inspect the actual HTTP Request output and prove that field exists before debugging the later JSONPath.
+
+Rate limiting is another specific clue. HTTP Request documents handling for common rate-limit response headers, including `Retry-After` and several reset-header variants. Do not invent a retry count or assume every remote error is retried. Read the actual error and the remote API's contract.
+
+> **Work It Out**
+>
+> Acme's HR service says it called the separation workflow successfully, but no security case was opened. The HR logs show an External Trigger API response, and ISC has a workflow execution. What do you check, in order?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Start with the caller response and confirm the workflow execution id and any message. Because an ISC execution exists, open it and inspect the trigger input next. Confirm `eventId`, `eventType`, and `workerId` arrived in the shape the workflow expects. Then inspect the validation and identifier-mapping steps before the HTTP call. If those passed, inspect the HTTP Request input, rendered body, and output or error branch. Check `workflowStatusCode` and `workflowErrorMessage` on an error path, remember the 90-second timeout, and confirm the external system returned the JSON field the downstream logic expects. Do not jump straight to the case system until you know which boundary failed.
+>
+> </details>
+
 ## Running it again, and the trap of the second run
 
 Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.
