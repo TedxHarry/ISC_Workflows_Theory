@@ -152,6 +152,35 @@ Finally, be careful with multi-item requests and fan-out. A person can submit a 
 >
 > </details>
 
+## Certification campaigns are long-lived governance state
+
+A certification campaign is not a one-step side effect. Creating it starts a governance object that can move through generation, activation, reviewer sign-off, campaign completion, and remediation. That makes campaign workflows especially sensitive to duplicate creation and boundary confusion.
+
+The first edge case is duplicate campaigns. A mover event can be replayed, an engineer can rerun a failed workflow, or a later recovery process can discover the same business condition again. Those are possible recovery paths, not a claim that SailPoint delivers duplicate events. The important design fact is that Create Certification Campaign is not documented as idempotent. If duplicate review work would be harmful, keep a durable business correlation key outside the individual workflow execution and check whether the intended campaign already exists before creating a new one. A repeated campaign name is useful evidence for a human, but it is not proof that creation will deduplicate.
+
+The second edge case is cross-workflow state. A workflow that starts on Identity Attributes Changed cannot later receive Campaign Generated, Campaign Activated, Certification Signed Off, or Campaign Ended inside the same execution. Those are separate triggers and therefore separate workflows when you react to them. Carry the campaign technical id as the correlation value, and re-read current campaign state with Get Certification Campaign when a later execution needs an authoritative status. Do not make correctness depend on undocumented timing or ordering between independent workflow executions.
+
+The third edge case is confusing a certification with a campaign. A campaign is a set of reviews. Certification Signed Off represents one certification moving to its signed-off end state, not the whole campaign ending. Its payload carries `campaignRef` so you can connect that review back to the campaign. Campaign Ended is the campaign-level completion event. If a campaign has multiple reviewer certifications, one signed-off event is not evidence that every other reviewer is finished.
+
+The fourth edge case is remediation. SailPoint documents that revoke decisions that are not signed off are not applied. Once a reviewer signs off, revoked access enters the remediation process. A directly connected source that can provision changes can use automated remediation; a source that ISC cannot write to uses manual remediation work. The campaign reaching `COMPLETED` does not erase that dependency boundary. Where removal matters, use remediation status and target evidence rather than reading campaign completion as proof that every revoked entitlement disappeared.
+
+Undecided access deserves an explicit policy too. Current certification documentation strongly recommends maintaining undecided access when a campaign is completed because reinstating access after an automatic revoke can be difficult. The Workflow action exposes an **Undecided Access Items** setting. Treat that as a governance policy decision, not a convenient default hidden inside automation.
+
+Campaign composition can also surprise an engineer. The campaign is a snapshot of the access selected when it is generated, and certification inclusion depends on campaign type and access structure. For example, current Search campaign documentation explains that an entitlement granted through a role or access profile is not treated the same as a standalone entitlement for selection. Do not promise that "certify this entitlement" automatically reviews every indirect grant path. Validate the campaign preview or generated contents against the governance question you are trying to answer.
+
+Finally, remember that certification actions have unusually different timeouts: 36 hours for Create Certification Campaign, 2 hours for Activate Certification Campaign, and 1 minute for Get Certification Campaign. A long Create timeout should not be mistaken for permission to wait indefinitely, and an action timeout should not trigger an automatic blind recreate.
+
+> **Work It Out**
+>
+> Acme receives two incidents after a Finance mover certification. One reviewer signed off with a revoke decision, while another reviewer has not finished. The campaign later shows `COMPLETED`, but the revoked access is still present on a manually managed source. Which assumptions would make an engineer misdiagnose this?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> First, Certification Signed Off is certification-level evidence, so one reviewer signing off does not prove all certifications in the campaign are complete. Second, a revoke decision must be signed off before remediation begins. Third, campaign `COMPLETED` is a campaign boundary, not proof that the target changed. On a source ISC cannot write to, remediation is manual, so inspect the remediation task or Campaign Remediation Status Report and then verify the target according to Acme's control. Also inspect how undecided items were configured when the campaign was completed. Do not translate campaign completion into target-state certainty.
+>
+> </details>
+
 ## External input crosses a trust boundary
 
 External Trigger changes who controls the starting data. ISC starts the workflow only after the invocation is authenticated and authorized by a supported method, but the values in the payload still come from that caller. SailPoint Product documentation teaches admins to generate trigger-specific OAuth client information with **New Access Token**. Current v2025 Developer API documentation for the external execution endpoint also advertises Personal Access Token and Client Credentials authorization with scope `sp:workflow-execute:external`. Do not collapse those official documentation paths into a claim that every caller must use the trigger-generated credential. Follow the invocation instructions generated for the workflow and verify the authentication method and required scope against the current API documentation for the integration being built.
