@@ -284,11 +284,90 @@ One final naming trap: SailPoint Developer Event Triggers are a separate extensi
 >
 > </details>
 
-### External Trigger, the door for other systems
+### External Trigger, crossing into ISC from another system
 
-Everything so far started inside ISC. The External Trigger is the way something outside ISC starts a workflow, by calling a URL that ISC gives you. Your HR system, a custom app, a script, any system that can make a web request can hand ISC a piece of JSON and set a workflow running. The seed is whatever that caller sends.
+External Trigger is the inbound integration boundary for a third-party system that needs to start an ISC workflow. The initiating event lives outside ISC, the external system authenticates to ISC, and the caller supplies the workflow's starting data.
 
-Reach for the External Trigger when the real world event lives in another system and you want ISC to react to it. It is the inbound counterpart to the HTTP Request action from Module 04, which is how a workflow reaches out. One is other systems calling you, the other is you calling them.
+Suppose Acme's HR platform records a high-priority separation event before any native ISC trigger represents that moment. The HR service could send a small contract like this:
+
+```json
+{
+  "eventId": "hr-2026-08-19-00421",
+  "eventType": "SEPARATION_FILED",
+  "workerId": "W-18422",
+  "effectiveAt": "2026-08-19T15:00:00Z"
+}
+```
+
+This payload shape belongs to the integration contract between Acme and the calling system. SailPoint does not define those custom fields for you. Because External Trigger input varies by caller and API, SailPoint documents that the normal variable selector cannot expose its dynamic fields. Read them with JSONPath instead:
+
+```text
+$.trigger.eventId
+$.trigger.eventType
+$.trigger.workerId
+$.trigger.effectiveAt
+```
+
+There are two representations to keep separate. The external API request has its own request envelope. The current v2025 Developer API for external workflow execution models the request body under an `input` property. Inside the workflow, the caller-supplied fields are available as trigger data. So a current API request can conceptually look like:
+
+```json
+{
+  "input": {
+    "eventId": "hr-2026-08-19-00421",
+    "eventType": "SEPARATION_FILED",
+    "workerId": "W-18422",
+    "effectiveAt": "2026-08-19T15:00:00Z"
+  }
+}
+```
+
+while the later workflow step reads `$.trigger.eventId`. Do not confuse the API transport envelope with the workflow's trigger path. When implementing the caller, use the External Trigger's generated **Provide Workflow Input** instructions and the current API documentation rather than reconstructing the request from memory.
+
+The current external execution endpoint is:
+
+```text
+POST /v2025/workflows/execute/external/{workflowId}
+```
+
+External Trigger has its own credential setup. After adding the trigger, select **New Access Token** and save the generated Client ID, Client URL, and Client Secret securely. SailPoint documents that the Client Secret cannot be retrieved after the configuration page is closed. Use the generated OAuth instructions to obtain an OAuth 2.0 token for the calling system. If you later generate a new access token, the previous token is overwritten, so coordinate that rotation with the external caller.
+
+Authentication is necessary, but it is not payload validation. A valid caller can still send a missing field, the wrong business event, an external id that maps to nobody, or an event that was already processed. Validate in layers before any world-changing action:
+
+```
+authenticated caller
+        |
+        v
+required fields exist and have expected basic types
+        |
+        v
+allowed business values are valid
+        |
+        v
+external identifiers map to the intended ISC objects
+        |
+        v
+replay / duplicate check when required
+        |
+        v
+perform the intended orchestration
+```
+
+Verify Data Type can help with the first validation layer. It can test whether a selected value exists or is a documented basic type such as string, number, boolean, timestamp, or null. It does not prove that `SEPARATION_FILED` is an approved business operation, and it does not prove that `W-18422` is an ISC identity id.
+
+That identifier distinction is one of the most important integration habits in the course. External systems have their own identifiers. An HR worker id, ticket id, email address, or vendor object id is not automatically the technical id an ISC action expects. Resolve the external key through a deliberate mapping strategy, and take a failure or investigation path if the result is missing or ambiguous. Never feed one system's id into another system merely because the field is also named `id`.
+
+Finally, design the payload for recovery. A stable `eventId` gives the workflow and any external system of record something durable to use for duplicate suppression. SailPoint does not document an exactly-once business-delivery guarantee for this integration, so do not invent one. Callers and operators can retry or replay after failures. Make the second delivery safe before the first production run.
+
+> **Work It Out**
+>
+> Acme's HR service authenticates successfully and sends the separation payload above. `workerId` is a string, `eventType` is a string, and every Verify Data Type check passes. The workflow then feeds `W-18422` directly into an ISC action that expects an identity id. What is wrong with the design, and what should happen before that action?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Type validation proved only that `workerId` is a string. It did not prove that the value is an ISC technical identity id or that it identifies the intended person. Resolve the HR worker id through the tenant's deliberate mapping or lookup strategy, confirm the result is unambiguous, and use the resulting ISC technical id only after that mapping succeeds. Also validate that the business event itself is allowed and check the durable `eventId` before repeating a world-changing action on a replay.
+>
+> </details>
 
 ### Account Aggregation Completed, the operations workhorse
 
