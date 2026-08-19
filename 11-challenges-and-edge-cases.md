@@ -154,7 +154,9 @@ Finally, be careful with multi-item requests and fan-out. A person can submit a 
 
 ## External input crosses a trust boundary
 
-External Trigger changes who controls the starting data. ISC starts the workflow only after the caller authenticates through the configured external-trigger OAuth flow, but the values in the payload still come from that caller. Authentication answers "which credential called this endpoint." It does not prove that the caller's `workerId`, `eventType`, effective date, or requested business action is correct.
+External Trigger changes who controls the starting data. ISC starts the workflow only after the invocation is authenticated and authorized by a supported method, but the values in the payload still come from that caller. SailPoint Product documentation teaches admins to generate trigger-specific OAuth client information with **New Access Token**. Current v2025 Developer API documentation for the external execution endpoint also advertises Personal Access Token and Client Credentials authorization with scope `sp:workflow-execute:external`. Do not collapse those official documentation paths into a claim that every caller must use the trigger-generated credential. Follow the invocation instructions generated for the workflow and verify the authentication method and required scope against the current API documentation for the integration being built.
+
+Authentication, regardless of mechanism, answers only whether the request is authorized to call the endpoint. It does not prove that the caller's `workerId`, `eventType`, effective date, or requested business action is correct.
 
 Treat inbound data in layers. First verify required fields exist and have the expected basic types. Verify Data Type is useful here, but its documented contract stops at existence and basic types such as string, number, boolean, timestamp, and null. Then validate business values. Then resolve external identifiers to the ISC objects the workflow actually intends to affect. Only after those checks should a world-changing action run.
 
@@ -164,7 +166,7 @@ Replay is the second boundary. SailPoint does not document External Trigger as a
 
 Outbound calls have a related failure mode. A remote ticketing API can create the ticket and then the connection can fail before the workflow receives a usable response. A blind retry can create a second ticket. If the remote API supports an idempotency key, use a stable key according to that API's contract. Otherwise, design a lookup or reconciliation step that can determine whether the earlier side effect already happened before creating it again. This is integration idempotency, not just workflow idempotency.
 
-Credential rotation is operational work too. For External Trigger, SailPoint documents that the generated client secret cannot be retrieved after the configuration overlay is closed, and generating a new access token overwrites the previous token. Treat rotation as a coordinated cutover with the calling system, not as a casual builder edit.
+Credential rotation is operational work too. When an integration uses the trigger-specific credential path from Product documentation, SailPoint documents that the generated client secret cannot be retrieved after the configuration overlay is closed, and generating a new access token overwrites the previous token. Treat rotation of that generated credential as a coordinated cutover with the calling system. If the caller uses another authorization method advertised by the current Developer API documentation, follow that credential's own rotation procedure and required scope instead.
 
 > **Work It Out**
 >
