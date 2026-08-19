@@ -77,7 +77,106 @@ The gotcha, then, is boundary confusion. The most common production mistake with
 
 Enrichment can still belong inside this Adaptive Approval workflow, but it does not replace the governed decision. For example, fetch identity or system-of-record context for branching, notification, or other surrounding logic before or after the Approval Policy action, while still letting Approval Policy resolve the access request. Do not configure a workflow as an access item's Approval Type and teach it as an enrichment-only path that never reaches the approval mechanism. The safe pattern is enrich where useful, govern with Approval Policy, and let ISC's native access-request and provisioning processes own the rest.
 
-**Certification kickoff.** A workflow can start an access review in response to an event, for example launching a targeted certification when a sensitive change happens. The trigger might be a mover change or a scheduled cadence, the logic decides whether a review is warranted, and the actions are Create Certification Campaign and Activate Certification Campaign from Module 04. The gotcha is weight. A certification is a heavy, human-intensive process, so you do not want to fire one on every small event. Gate it carefully, and be sure the thing you are reviewing genuinely needs a full campaign rather than a lighter notification.
+**Event-driven certification campaign.** A certification is a governance process, not a stronger notification. Use it when the business needs a reviewer to make explicit access decisions and sign off, with remediation following revoked decisions. Acme uses this after a move into Finance: the existing Identity Attributes Changed pattern identifies a real department transition, then a certification reviews Priya's access after the move.
+
+Reuse the mover seed rather than inventing a new person lookup:
+
+```json
+{
+  "identity": {
+    "type": "IDENTITY",
+    "id": "2c91808568c529c60168cca6f90c1313",
+    "name": "priya.patel"
+  },
+  "changes": [
+    {
+      "attribute": "department",
+      "oldValue": "Sales",
+      "newValue": "Finance"
+    }
+  ]
+}
+```
+
+The trigger proves that an ISC identity attribute changed. The `identity.id` is the ISC technical identity id that the certification action can use. The workflow still has to confirm that the department change is the transition Acme cares about. It should not create a campaign for every title, manager, or unrelated attribute change.
+
+For this scenario, Acme wants the Finance Access Governance group to review Priya's access. A realistic Create Certification Campaign configuration is:
+
+```text
+Reviewer Type:               Governance Group
+Governance Group:            Finance Access Governance
+Certification Type:          Identity Certification
+Identities to Certify:       $.trigger.identity.id
+Start Campaign when Created: enabled
+Undecided Access Items:      follow Acme certification policy
+```
+
+SailPoint documents Governance Group as a supported reviewer type and Identity Certification as a supported certification type for that reviewer. The value under `Identities to Certify` is Priya's ISC identity id, not an employee number, email address, or source-native account id.
+
+There is an important documentation conflict around activation. The Create Certification Campaign description currently says the campaign must be activated separately. The same action documentation also exposes **Start Campaign when Created** and says enabling it activates the campaign after creation. Do not silently choose one sentence and pretend the conflict does not exist. If Acme uses the enabled option above, validate the behavior in the tenant and inspect the action output. If Acme requires a deliberate preview boundary, disable the option and activate later with **Activate Certification Campaign**.
+
+The explicit staged path is a separate lifecycle:
+
+```text
+Identity Attributes Changed
+        |
+        v
+Create Certification Campaign
+(Start Campaign when Created disabled)
+        |
+        v
+Campaign Generated
+campaign.status = STAGED
+        |
+        v
+Activate Certification Campaign
+using campaign.id
+        |
+        v
+Campaign Activated
+campaign.status = ACTIVE
+```
+
+`Campaign Generated` is its own trigger. It fires after generation reaches the preview-ready boundary, and the documented sample carries `campaign.id`, `campaign.name`, `campaignOwner`, and `status` with the sample value `STAGED`. A separate workflow that activates staged campaigns must use that campaign id. It must also identify campaigns owned by this automation through a deliberate correlation mechanism. A name prefix is useful for operations, but a name by itself is not an idempotency mechanism or an authorization boundary.
+
+Do not stretch one execution across the whole review lifecycle. The later events represent different facts:
+
+```text
+Campaign Generated
+        -> campaign is ready for preview
+
+Campaign Activated
+        -> campaign is active for review
+
+Certification Signed Off
+        -> one certification was signed off by its reviewer
+           and revoked decisions can enter remediation
+
+Campaign Ended
+        -> the campaign is complete
+
+remediation evidence / target observation
+        -> revoked access is actually resolved
+```
+
+The distinction between **Certification Signed Off** and **Campaign Ended** matters. A campaign contains certifications. A reviewer signing off one certification does not prove the whole campaign ended. SailPoint also documents that revoke decisions that are not signed off are not applied. When a signed certification contains revoked access, ISC can remediate automatically on a directly connected source that can provision changes, or create manual remediation work when it cannot.
+
+Green does not mean reviewed, and completed does not mean remediated. A successful Create Certification Campaign action proves that action completed according to its contract. It does not prove the campaign was activated, a reviewer signed off, every decision was made, or every revoked item was removed from its target. `Campaign Ended` with campaign status `COMPLETED` proves the campaign reached its completion boundary. SailPoint still provides remediation status reporting because access removal can remain a separate operational concern.
+
+The production gotcha is replay. Creating a campaign changes governance state and can create work for real reviewers. SailPoint does not document Create Certification Campaign as idempotent. If the mover event is replayed or an operator reruns the workflow after an ambiguous failure, blindly creating again can produce a second campaign for the same business event. Where duplicate suppression matters, keep a durable correlation record outside the individual workflow execution and reconcile whether the intended campaign already exists before creating another one. A stable campaign name alone does not suppress duplicates.
+
+The action timeouts also make failure diagnosis specific. Create Certification Campaign has a documented 36-hour timeout, Activate Certification Campaign has a 2-hour timeout, and Get Certification Campaign has a 1-minute timeout. Do not debug them with one fictional workflow timeout.
+
+> **Work It Out**
+>
+> Acme's Finance mover workflow created a certification for Priya. The Create Certification Campaign step is green, but a week later Security says no review happened. What facts do you need before deciding whether the workflow failed?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Start with the Create action input and output. Confirm the workflow created the intended campaign for Priya's ISC identity id, the reviewer configuration was correct, and the **Start Campaign when Created** setting matched the design. Then follow the campaign id across the later boundaries. If the campaign was staged, look for Campaign Generated and verify whether a separate activation workflow actually activated that exact campaign. If it was active, confirm Campaign Activated occurred and inspect current campaign state with Get Certification Campaign when necessary. Then distinguish reviewer progress from campaign completion: Certification Signed Off is certification-level, while Campaign Ended is campaign-level. Finally, if the incident is really that revoked access still exists, move past campaign completion to remediation status and target evidence. Do not recreate the campaign merely because one execution looks ambiguous, because a replay can create duplicate reviewer work.
+>
+> </details>
 
 ## Security response
 
