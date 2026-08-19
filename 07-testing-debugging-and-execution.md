@@ -202,6 +202,37 @@ Replay is a debugging concern too. If Create Certification Campaign returned an 
 >
 > </details>
 
+## Debugging outlier response workflows
+
+Outlier debugging starts at the detection boundary, then follows the response that policy selected. Do not start by assuming a missing review or still-active account means the trigger was wrong.
+
+If there is no execution, verify that the tenant can produce the event before editing workflow logic. Current Outlier documentation requires Access Insights, a configured source with loaded account data, and onboarding that account data into AI-Driven Identity Security. Identity Outliers also has regional availability limits. The Developer documentation says outliers are calculated daily, so this trigger is not instant target-system telemetry.
+
+If an execution exists, inspect the real trigger input first. Confirm `identity.id`, `identity.displayName`, `outlierType`, and the raw numeric `score`. Current trigger-specific documentation supports `LOW_SIMILARITY` and defines score from `0.0` through `1.0`. The Product Identity Outliers UI describes its displayed score on a `0-100` scale. A branch that compares a raw event value such as `0.82` with a literal such as `70` is debugging the wrong representation, not the wrong identity.
+
+Then inspect the policy branch. Write down the exact lower and upper bounds and prove which branch accepted the runtime value. If Acme follows the SailPoint certification-template example, `0.70` belongs in the review band and `0.90` does not, because that example uses `score >= 0.7` and `score < 0.9`. Treat those values as Acme policy only if Acme actually adopted them. Do not infer enterprise policy from a template title.
+
+Next inspect enrichment. Outlier Detected does not document manager data or the richer risk-factor detail shown in the Product UI. If the workflow uses manager routing, inspect Get Identity and prove it returned the intended manager reference. If a later step needs the manager's current email, inspect the separate manager lookup. A blank recipient is an enrichment problem, not evidence that the Outlier event was incomplete.
+
+For a certification branch, inspect Create Certification Campaign exactly as the certification section above teaches. Confirm `Identities to Certify` resolves to the event's ISC `identity.id`, confirm the reviewer, and preserve the returned campaign id. From there, follow Campaign Generated, Campaign Activated, Certification Signed Off, Campaign Ended, remediation evidence, and target state as separate boundaries. Do not rerun the Outlier response merely because a later campaign boundary is missing.
+
+For a containment branch, debug the account action separately from the score decision. If the design uses Get Accounts, confirm the expected account appears in its output and remember that the action documents a maximum of 250 returned accounts. Then inspect Manage Accounts. Confirm Account Action is Disable and confirm the exact account ids that rendered into the action input. Inspect the documented sample result fields `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Manage Accounts has a 1-hour timeout, so a timeout here is an account-action incident, not proof that the Outlier trigger or threshold was wrong. When business certainty matters, confirm the expected target state after the action.
+
+Replay deserves its own check. Outliers are recalculated, an ignored identity can be rediscovered after a significant entitlement change, and an operator can rerun a workflow after an ambiguous result. None of those facts promises duplicate event delivery. They do mean that a state-changing response can be encountered again. Before creating another campaign or repeating containment, determine what already happened and reconcile the current state.
+
+Test these paths with the same safety rule as every other world-changing workflow. Ordinary Workflow testing can execute enabled actions for real. In Simulated Testing, turn **Enable Step** off for Create Certification Campaign, Manage Accounts, Send Email, or any other step that should not change real state while you validate the score branch. Use a sandbox identity when an enabled lookup or action needs a real technical id.
+
+> **Work It Out**
+>
+> An Outlier Detected execution arrives with `score = 0.93`. Acme policy sends that value to a containment branch. The execution is green, but one account Security expected to be disabled is still active. Where do you investigate next?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The trigger and branch decision are already proven, so do not start by changing the threshold or replaying the detector. Inspect the account discovery step and confirm the expected account was actually returned and selected. Then inspect the Manage Accounts input and prove that the expected account id was sent with Account Action set to Disable. Read `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails` in the action result instead of trusting the overall execution color. Finally, verify the target state when the control requires that certainty. If the account was never selected, debug account discovery and scope. If it was selected but appears in a failure result, debug that account action. If the result says it succeeded but the target still appears active, investigate the target or later state boundary rather than blindly repeating the whole Outlier response.
+>
+> </details>
+
 ## Debugging External Trigger and HTTP integrations
 
 An external integration has two systems to inspect, so start at the boundary between them instead of starting in the middle of the workflow.
