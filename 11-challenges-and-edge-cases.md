@@ -152,6 +152,31 @@ Finally, be careful with multi-item requests and fan-out. A person can submit a 
 >
 > </details>
 
+## External input crosses a trust boundary
+
+External Trigger changes who controls the starting data. ISC starts the workflow only after the caller authenticates through the configured external-trigger OAuth flow, but the values in the payload still come from that caller. Authentication answers "which credential called this endpoint." It does not prove that the caller's `workerId`, `eventType`, effective date, or requested business action is correct.
+
+Treat inbound data in layers. First verify required fields exist and have the expected basic types. Verify Data Type is useful here, but its documented contract stops at existence and basic types such as string, number, boolean, timestamp, and null. Then validate business values. Then resolve external identifiers to the ISC objects the workflow actually intends to affect. Only after those checks should a world-changing action run.
+
+The identifier boundary is easy to miss because both systems often use a field named `id`. An HR worker id such as `W-18422` is not an ISC technical identity id merely because both are identifiers. The integration needs a documented mapping strategy, and a missing or ambiguous match is a failure or investigation path, not permission to guess.
+
+Replay is the second boundary. SailPoint does not document External Trigger as an exactly-once business-delivery mechanism, and you should not invent that guarantee. A caller can retry after a network timeout, an operator can replay a failed message, or an upstream platform can resend an event under its own retry policy. Carry a stable external event id or request id and use durable state when duplicate suppression matters. Separate workflow executions do not share memory.
+
+Outbound calls have a related failure mode. A remote ticketing API can create the ticket and then the connection can fail before the workflow receives a usable response. A blind retry can create a second ticket. If the remote API supports an idempotency key, use a stable key according to that API's contract. Otherwise, design a lookup or reconciliation step that can determine whether the earlier side effect already happened before creating it again. This is integration idempotency, not just workflow idempotency.
+
+Credential rotation is operational work too. For External Trigger, SailPoint documents that the generated client secret cannot be retrieved after the configuration overlay is closed, and generating a new access token overwrites the previous token. Treat rotation as a coordinated cutover with the calling system, not as a casual builder edit.
+
+> **Work It Out**
+>
+> Acme's HR service calls an External Trigger with event id `hr-00421`. The workflow validates every field and calls a case-management API. That API creates case `SEC-8821`, but the connection drops before the HTTP Request receives a usable response. The HR service later retries `hr-00421`. What can go wrong, and what would a production design do before creating another case?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The second execution can create a duplicate case even though both inbound payloads are valid, because the first remote side effect may have completed before the response was lost. Use `hr-00421` as a durable integration key. If the case-management API supports an idempotency key, send the stable key according to that API's documented contract. Otherwise, check durable integration state or query the case system for an existing case tied to that event before creating another one. The recovery question is not only "did the HTTP step fail?" It is "did the external business action already happen before the failure became visible?"
+>
+> </details>
+
 ## Large payloads
 
 Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.
