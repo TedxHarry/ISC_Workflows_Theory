@@ -129,7 +129,7 @@ The third edge is policy. SailPoint currently publishes three template response 
 
 Boundary precision matters. Under the current template descriptions, `0.69` is in the notification example, `0.70` and `0.89` are in the certification example, and `0.90` is in the account-disable example. Do not create accidental gaps or overlaps by rounding, switching `>` to `>=`, or copying a title without checking the documented condition.
 
-The high-score path deserves more scrutiny because the blast radius is much larger. SailPoint providing a `0.9+` disable template proves that automated containment is a supported design pattern. It does not mean every tenant should disable every account for every identity at that score. Production policy should define the authorized population, intended accounts, exception process, safe test method, recovery path, and evidence required after containment. If a custom design uses Get Accounts followed by Manage Accounts, remember that Get Accounts documents a maximum of 250 returned accounts. Manage Accounts supports Disable and has a 1-hour timeout. Its documented sample output includes `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Inspect those fields and the target state that matters. Do not collapse "the containment branch ran" into "every expected account is unusable."
+The high-score path deserves more scrutiny because the blast radius is much larger. SailPoint providing a `0.9+` disable template proves that automated containment is a supported design pattern. It does not mean every tenant should disable every account for every identity at that score, and it does not mean every discovered account is automatically containable. Production policy should define the authorized population, intended accounts, exception process, safe test method, recovery path, evidence required after containment, and the source-capability gate. If a custom design uses Get Accounts followed by Manage Accounts, treat Get Accounts as discovery only. Before sending an account to the automatic Disable path, verify that its source and connector configuration support the required Disable/provisioning operation. SailPoint sources can be read-only, and Quick Compliance sources cannot be used for provisioning, so accounts on sources without the required capability need an alternate manual containment or escalation path. For accounts that pass the capability gate, remember that Get Accounts documents a maximum of 250 returned accounts. Manage Accounts supports Disable and has a 1-hour timeout. Its documented sample output includes `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Inspect those fields and the target state that matters. Do not collapse "the containment branch ran" into "every expected account is unusable."
 
 The fourth edge is repeat behavior. Developer documentation says outliers are recalculated daily. Product documentation says an ignored identity can be rediscovered as an outlier after a significant entitlement change. Those facts do not define an exactly-once event-delivery contract. They do establish that the same identity can become relevant again as its access changes. Operator reruns and ambiguous action outcomes create another repetition path. Before sending another notification, creating another campaign, or applying containment again, determine what already happened and what the current state is.
 
@@ -146,6 +146,9 @@ Outlier Detected
 policy branch
         -> the organization selected a response for that signal
 
+source capability gate
+        -> the account is eligible for automatic Disable, or it is routed to a manual path
+
 notification
         -> a message action completed according to its contract
 
@@ -156,7 +159,10 @@ Certification Signed Off / Campaign Ended
         -> later governance boundaries were reached
 
 Manage Accounts Disable
-        -> inspect the account-action result for the accounts actually targeted
+        -> inspect the account-action result for the capable accounts actually targeted
+
+manual containment / escalation
+        -> unsupported sources remain visible and owned instead of being counted as automatic success
 
 remediation / target observation
         -> the business outcome is independently evidenced
