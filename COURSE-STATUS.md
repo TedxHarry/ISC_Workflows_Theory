@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 06 — Forms, Approvals & Interactive Workflows
+**Current target:** Module 07 — Testing, Debugging & Execution
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, and 05 are final accepted. Module 06 remains unchanged until its module-by-module review begins.
+Modules 00, 01, 02, 03, 04, 05, and 06 are final accepted. Module 07 is the current target.
 
 ---
 
@@ -110,7 +110,7 @@ Existing language says an unnecessary Get Identity "spends an execution." Verify
 
 Adaptive Approval, Approval Policy, Generic Approval Policy, Form action, Interactive Workflow, Approve/Deny Access Request, and identifier semantics require current-source verification during module review.
 
-**Status:** Pending
+**Status:** Resolved in the final accepted Module 06 through current-source technical review, mechanism-specific non-response handling, current Interactive Process terminology, Adaptive Approvals boundaries, and verified direct Approve/Deny identifier semantics.
 
 ## Module 08 — Operations additions
 
@@ -154,8 +154,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 02 source file pending coordinated renumbering |
 | 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 03 source file pending coordinated renumbering |
 | 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 04 source file pending coordinated renumbering |
-| 06 Forms / Approvals / Interactive | NOT STARTED | Current target; built from current Module 05 |
-| 07 Testing / Debugging | NOT STARTED | Reorganize around diagnostic method |
+| 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 05 source file pending coordinated renumbering |
+| 07 Testing / Debugging | NOT STARTED | Current target; reorganize around diagnostic method |
 | 08 Operations / Limits / Governance | NOT STARTED | Add ownership, sizes, overlap, lifecycle |
 | 09 When to Use Workflows | NOT STARTED | Add decision framework |
 | 10 Real-World Patterns | NOT STARTED | Add difficulty classification |
