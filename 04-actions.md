@@ -1,182 +1,1464 @@
-# Module 04: Actions
+# Module 05: Actions & Error Handling
 
-Everything a workflow can actually do.
+How a running Workflow performs work, reads the result honestly, and handles action errors deliberately.
 
-If operators are the thinking of a workflow, actions are the hands. An action is any step that reaches out and affects something: it sends a message, it fetches data, it changes access, it calls another system, it pauses. Every time a workflow touches the world, an action is doing the touching. That also makes actions the place where most real failures happen, because reaching outside your workflow means depending on things you do not fully control. So we will teach the actions you use constantly in real depth, learn where they break, and then map the rest by family so you can place any action you meet.
+Module 04 ended here:
 
-There is a clean way to hold the whole set in your head. Almost everything a workflow does is one of five verbs: notify, fetch, change, integrate, and pause. Learn one action for each verb and you can build most of what Acme needs. Priya will walk us through them.
-
-## Send Email: notify
-
-We met this one informally in Module 01. Now let us look at it properly. Send Email needs three things: recipients, a subject, and a body. You rarely type real values into these. You point at data, exactly as you learned, so the recipient is a JSONPath to an email address and the body weaves in variables like the first name. Written once, it works for every new hire.
-
-There is one small quirk worth knowing before it puzzles you. The body can contain formatting, but the characters that mean "start of a tag" and "end of a tag," the less-than and greater-than signs, have to be surrounded by spaces to be treated as plain text. If you paste in tightly packed markup and the email comes out looking broken, this spacing rule is the usual reason. It is a tiny thing, and it is exactly the kind of tiny thing that eats an afternoon if you do not know it.
-
-Reach for Send Email whenever a human needs to be told something. If your organization lives in chat instead, there is a Send Slack Message action that plays the same notification role. Interactive Message is different: it displays progress information inside an Interactive Process, which we will cover in Module 05.
-
-## Get Identity: fetch what the trigger did not hand you
-
-Here is a problem you will hit early, and it teaches an important habit. Back in Module 02 we saw that a trigger hands you only some of the data about a person. Priya's joiner seed carried her name, email, and department, but not, say, her manager or her full attribute set. Suppose the welcome email needs to also notify her manager. The manager is not in the seed. So where do you get it?
-
-You fetch it. Get Identity takes an identity id and returns identity data as JSON, including default and custom attributes. You feed it the id you already have, typically `$.trigger.identity.id`, and in the steps that follow you read from its output with JSONPath the same way you read the trigger. This is the tool that turns "the trigger only gave me a little" into "now I have the identity data I need."
-
-Get Identity matters even more for scheduled workflows. Remember that a scheduled workflow starts with no person attached, because nothing happened to anyone. It has to go and find its subjects, and Get Identity, along with its plural cousin Get List of Identities, is how it does that.
-
-You will meet this exact shape again when Priya *moves*. In Module 02 we saw that an Identity Attributes Changed event carries only what changed, so when her department flips to Finance the event hands you her new manager's id but not that manager's email address. To notify the manager you do precisely what you did here: Get Identity on the manager's id, then read the email from the result. Whenever the trigger gives you a reference but not the field you actually need, fetching is the move. The flip side is a small discipline worth building now: when the value is already sitting in the payload, reaching for Get Identity anyway just spends an execution and adds another step that can fail.
-
-One operational fact to carry: action timeouts are defined per action, not by one universal workflow timeout. Get Identity times out after 1 minute. That is normally plenty for a single lookup, but the general lesson matters: before relying on a long-running action, check that action's documented timeout rather than assuming every step has the same ceiling.
-
-## Manage Access: change access
-
-Notifying and fetching are gentle. Manage Access is where a workflow changes real things about real people, so it deserves respect. It does exactly what its name says: it adds access to identities or removes access from them. You give it three things: who, the identity or identities to act on; what, the access items, which can be roles, access profiles, or entitlements; and which direction, add or remove.
-
-For Priya this can be both a joiner and a leaver tool. On day one you might add access that is appropriate for a workflow-driven exception. On her last day you might remove specific access as part of an offboarding process. Remember from Module 09 that standard birthright access is better modeled through roles, access profiles, and lifecycle configuration rather than handed out one person at a time by a workflow.
-
-> **Work It Out**
->
-> An engineer proposes a Joiner workflow that, on Identity Created, uses Manage Access to grant each new hire the standard birthright access for their department, one identity at a time. It works in a demo. Why is this usually the wrong design, and what should own that access instead?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Standard birthright access is exactly what the access model is built to own. Lifecycle states can grant configured access profiles and enable source accounts when an identity enters the state, while roles can automatically assign access based on identity criteria such as department, and access profiles provide the entitlement bundles granted through those mechanisms. So the platform already grants birthright access consistently for everyone without a workflow. Rebuilding that in a workflow, one identity at a time, duplicates a control the platform owns, drifts out of sync as the model changes, and adds executions and failure points for no gain. Prefer the automated role and lifecycle access model for standard, repeatable birthright access, and use Manage Access when the Joiner workflow intentionally needs supplemental or exception access the access model does not cover.
->
-> </details>
-
-Manage Access has a 30 minute timeout. More importantly, understand what "success" means here. The action submits access requests and continues based on that submission. If approval is required, the workflow does not wait for the approval decision. If approval is not required, the workflow still does not wait for confirmation that the target source has finished updating the account.
-
-There is also an important result-handling trap. A Manage Access step can complete successfully while some requested access changes are represented in `failedAccessRequests`. The workflow execution itself is not automatically marked failed just because that output contains failed requests. If your process requires every requested change to succeed, inspect `successfulAccessRequests` and `failedAccessRequests` and branch deliberately instead of treating a green Manage Access step as proof that every access change completed.
-
-Manage Access returns two result arrays, and the clearest way to understand them is a partial failure, where one item was submitted successfully and another was not:
-
-```json
-{
-  "successfulAccessRequests": [
-    { "id": "...", "name": "...", "type": "ROLE" }
-  ],
-  "failedAccessRequests": [
-    { "id": "...", "name": "...", "type": "ACCESS_PROFILE" }
-  ]
-}
+```text
+The Workflow has started.
+The data has been inspected.
+The conditions have been evaluated.
+The path has been chosen.
 ```
 
-Be precise about what `successfulAccessRequests` means, because the name can be misleading if you read it as final fulfillment. It does not mean the access was approved, provisioned, or confirmed live on the target. It means the Manage Access action treated those request submissions as successful. If approval is required, Manage Access continues after submitting the request rather than waiting for the decision, so a green step with entries in `successfulAccessRequests` can sit in front of an approval that has not happened yet. If a later approval decision matters to your process, the documented pattern is a separate workflow that reacts to Access Request Decision, not watching for the decision inside this same execution. If provisioning evidence matters, that is a separate concern again: Provisioning Completed and provisioning or account activity can tell you about ISC's provisioning stage, while target-specific verification is a separate check when the business requires independent confirmation.
+Now the Workflow has to **do something**.
 
-SailPoint also documents two practical boundaries that are easy to miss. Revoke requests for individual entitlements are limited to one entitlement per access request. And the documentation suggests adding a Wait after Manage Access if the workflow needs to allow time for a source-account update before later steps run. Treat that Wait as time, not evidence. A pause does not verify that the target changed; it only delays the next workflow step.
+That gives us the next engineering questions:
 
-> **Work It Out**
->
-> A workflow uses Manage Access to add a sensitive Finance access profile to Priya. The step is green, and its output lists that access profile in `successfulAccessRequests` with an empty `failedAccessRequests`. An engineer tells the auditor the access is granted and live. That access profile requires approval, and no decision has been made yet. What has actually been proven, and what has not?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> What is proven is narrow: Manage Access submitted the request for that item and the action treated the submission as successful, which is why the item appears in `successfulAccessRequests`. What is not proven is almost everything the auditor cares about. Because the item requires approval, Manage Access continued after submitting the request rather than waiting, so no approval decision has been made, no provisioning has necessarily run, and nothing has independently confirmed the access is live on the Finance application. `successfulAccessRequests` does not mean approved, provisioned, or confirmed live. To observe the approval outcome, use a separate workflow on Access Request Decision. To inspect provisioning, look to Provisioning Completed and provisioning or account activity, and where certainty is required, verify the target itself. The engineer has reported a submitted request as though it were live access.
->
-> </details>
-
-Because this action changes access, it is precisely the kind of step you do not want to fire by accident while testing. Module 07 covers simulated testing so you can exercise the workflow logic without allowing selected world-changing steps to execute. Build the instinct now: when a step changes the world, test it with the safety on.
-
-This action is also a small lesson in how the platform evolves, and it is worth teaching directly. Manage Access replaced two older actions, Create Request for Access and Request Access Removal. Those are deprecated now. Adding access is Manage Access with Add selected, and removing access is Manage Access with Remove selected. You may still open an older workflow someone built years ago and find those deprecated steps inside. When you do, you now know what they were and what to use instead. A good habit across all of ISC: when a step looks unfamiliar or is marked deprecated, check the current documentation rather than copying the old pattern forward.
-
-If your task is about accounts rather than access, there is a parallel action called Manage Accounts, which can delete, disable, enable, or unlock source accounts. Manage Accounts has its own timeout of 1 hour. Access and accounts are different layers, and the two Manage actions match that split.
-
-## Green does not mean done
-
-The Manage Access trap above is one instance of a bigger idea, and it is worth naming because you will meet it everywhere in ISC. A green step tells you the action satisfied *its own* success contract. It does not, by itself, tell you the business result actually happened. For an access request, hold these four as genuinely different states:
-
-```
-Workflow step succeeded
-    ≠  Access request approved
-    ≠  Provisioning completed successfully
-    ≠  Access independently confirmed live on target
+```text
+What work must happen?
+        ↓
+Which action belongs on this path?
+        ↓
+What does successful completion actually prove?
+        ↓
+What output should I inspect?
+        ↓
+What happens if the action errors?
 ```
 
-Each `≠` is a boundary you have not yet crossed. A successful Manage Access step means the request submission succeeded according to the action's own contract. It does not mean an approver said yes, it does not mean provisioning finished successfully, and it does not mean someone independently read the access back from the target application and confirmed it is live. Knowing exactly which boundary you have proven, and which you are only assuming, is the whole skill.
+Operators decide.
 
-The same gap can hide inside gentler actions too. An HTTP Request can return a successful response whose body does not contain the field you assumed. And a notification can leave a run looking healthy while the intended person was never actually reached. So when the outcome matters, do not stop at the status. Inspect the step's input and output, including the rendered recipient of a Send Email, rather than assuming a green run proves the message reached the right person. The idea has a name now, and it comes back when we read execution history in Module 07, build patterns in Module 10, and design for failure in Module 11.
+Actions perform work.
 
-> **Work It Out**
->
-> A workflow reacts to Priya's move to Finance and should email her new manager. The build points the Send Email recipient at the manager's change entry, `$.trigger.changes[?(@.attribute == "manager")].newValue.email`. The test run looks successful, but no email ever arrives. What went wrong, and how would you fix it?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The manager value inside the `changes` array is an identity *reference*: it holds the id, name, and type, but not an email address. The path resolves to nothing, so the recipient is empty and no message reaches the manager, even though the run may look otherwise healthy. This is *green does not mean done* in miniature. The fix is to Get Identity on the manager's id (`...newValue.id`), then read the manager's email from that lookup's output and send to that.
->
-> </details>
+Some actions notify a person. Some fetch information. Some request changes. Some call another system. Some pause execution.
 
-> **Work It Out**
->
-> A leaver workflow is deliberately managing part of Priya's offboarding for a source not covered by lifecycle-state configuration: it removes access with Manage Access and disables the source account with Manage Accounts. Both steps finish successfully. Is that part of her offboarding truly complete, and what would you check before trusting that it is?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Not necessarily, because a green step reports the action's own success, not the final target state, and the two actions behave differently. Manage Access is asynchronous: it submits the removal request and continues, so a successful step means the request was accepted, not that provisioning has finished on the target, and if approval is required the workflow continues without waiting for the decision. Inspect its `successfulAccessRequests` and `failedAccessRequests`. Manage Accounts reports its own results, so inspect `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. This is green does not mean done at higher stakes, because leftover access after a departure is a real security gap, so for a security-critical control, verify the final account and access state on the target rather than relying on the green status alone.
->
-> </details>
+Many of those actions cross a boundary the Workflow does not fully control:
 
-## HTTP Request: integrate with anything
-
-Sooner or later you will need a workflow to talk to a system ISC has no built-in action for. HTTP Request is the universal answer, and it is one of the most powerful actions in the toolbox because it lets a workflow reach almost anywhere.
-
-You configure it like any web call: a URL to hit, a method such as GET to read or POST to send, headers, a body, and authentication so the far system trusts the request. When the call comes back, the response is placed into the workflow's data flow as JSON, and you read it in later steps with JSONPath, just like everything else. So HTTP Request is both a way to push information out and a way to pull information in.
-
-Picture it with Priya. Suppose Acme calls an internal directory service to find her desk, and the call comes back with:
-
-```json
-{
-  "employeeId": "priya.patel",
-  "building": "HQ-2",
-  "deskId": "2-141"
-}
+```text
+Workflow
+   ↓
+ISC service / request process / source / external API / time
 ```
 
-If you named the step getDeskInfo, a later step reads the values straight out of that response with JSONPath, for example `$.getDeskInfo.building` and `$.getDeskInfo.deskId`, and drops them into the welcome email. The important part is that the shape of this response is decided by the system you called, not by ISC. That is exactly why the caution coming next matters so much.
+That is why an action is more than a box with a green check mark.
 
-Notice the symmetry with Module 02. The External Trigger was how an outside system reaches into ISC to start a workflow. HTTP Request is how a workflow reaches out to an outside system. One is inbound, one is outbound, and together they let ISC sit in the middle of your wider environment.
+Every useful action has a **contract**.
 
-HTTP Request times out after 90 seconds. The moment you call another system, you have taken on a dependency you do not control. It can be slow. It can be down. It can return an error, or return success but in a shape you did not expect. A workflow that assumes the call always works and always returns the same thing is a workflow that will fail in ways your testing never showed you. So treat HTTP Request with care: plan for the response to be missing or malformed, use error handling so a failed call takes a deliberate path, and never hard-code a password or token into the request. Use the authentication parameters provided by ISC, including Parameter Storage where supported, which we cover in Module 08.
-
-## Wait: pause
-
-Not every step does something. Sometimes the right move is to do nothing, on purpose, for a while. The Wait action can pause the workflow for a duration or until a specific future date and time.
-
-For Wait For, the configured duration must be at least 60 seconds and can be up to 30 days. Wait Until can target a date up to 180 days in the future. The Wait step itself times out if it takes longer than 182 days to complete.
-
-This is useful when another process needs time to catch up, when you want a delayed reminder, or when you deliberately need to stagger work. Wait is how a workflow spans time rather than finishing in one burst.
-
-It comes with its own kind of caution. A workflow with a Wait in it is a long-running workflow. It is alive for hours or days, holding its place, which has consequences for how you think about testing and recovery. You cannot practically sit and watch a three day wait during a normal test, so a Wait is one of the places where testing cannot prove the whole production path, a limit we take seriously in Modules 07 and 11.
-
-## A map of the rest, grouped by family
-
-Those five verbs cover the majority of real work. Here is the rest of the catalog, grouped so you can find the right tool by the kind of job, without memorizing a list. As always, the builder shows each action's exact inputs and the JSON it adds, and the official actions documentation is the full reference.
-
-Notifications. Alongside Send Email you have Send Slack Message for direct Slack notifications. Interactive Message belongs to the Interactive Process family and displays a progress message to the user who launched that process. Reach here to tell a human something, but choose the action that matches where that human is interacting.
-
-Get data. Beyond Get Identity, there is Get List of Identities for many at once, Get Accounts for account records, Get Access to read access items, and Get Identity History to see how an identity changed over time. Reach here when you need more information than your trigger handed you. These lookup actions commonly have short, action-specific timeouts, so check the current action documentation when the exact limit matters.
-
-Manage data. Manage Access changes access, and Manage Accounts changes the accounts themselves. Reach here when the workflow must change something rather than just read it.
-
-Access request. This family lets a workflow take part in the request and approval process: Approve Access Request and Deny Access Request to act on a request, Get Pending Access Requests to see what is waiting, Get Access Request Recommendations to pull in guidance, and the Approval Policy and Generic Approval Policy actions to route approvals. The deprecated Create Request for Access and Request Access Removal also lived here, now folded into Manage Access. Reach here to automate around requests and approvals.
-
-Certification. Create Certification Campaign, Activate Certification Campaign, and Get Certification Campaign let a workflow start and manage access reviews. Reach here to automate the certification cycle, which we sketch as a use case in Module 10.
-
-Ticketing. Manage ServiceNow Ticket opens and updates tickets in ServiceNow directly, without you having to build the call by hand with HTTP Request. Reach here when your process runs on ServiceNow.
-
-Connector and privileged task automation. There are actions that act directly on platforms such as Active Directory, Microsoft Entra ID, and Windows Server for privileged tasks. These depend on the matching setup being in place, so if one does not appear or does not work, check the required capability and connection rather than assuming the workflow logic is wrong.
-
-Forms and interaction. The Form action can assign a form to a specific user and pause until it is completed or the deadline is reached. Interactive Form and Interactive Message are different actions used inside an Interactive Process launched by a user. Module 05 separates those patterns clearly.
-
-## The thread that ties the failures together
-
-Step back and notice something. Almost every caution in this module came from the same root: actions reach outside the workflow, and the outside is not fully under your control. The external API might not answer. A Manage Access request might be submitted but later denied or fail. An account action can take much longer than an identity lookup. The waiting workflow can live for days. This is not a flaw in the actions, it is the nature of doing real work. The skill is not avoiding these steps. It is knowing each action's contract, timeout, output, and failure behavior, then building the next step around what the action actually guarantees.
-
-## Before you move on
-
-Design Priya's offboarding as a sequence of actions, using only this module. When her lifecycle state changes to terminated, what is the first action you would run to make sure you have her full details in hand, and why might the trigger alone not be enough? Which action removes her access, and which single setting on it decides that it removes rather than grants? After Manage Access reports success, what output would you inspect if your process requires every requested access change to have been accepted successfully? If offboarding also has to close out a record in a system ISC has no built-in action for, which action reaches that system, and what is its timeout? And if you wanted to wait a day before sending a final confirmation, which action buys you that day, and what does adding it cost you in how the workflow now lives and how you can test it? If those answers come readily, you can make a workflow act, and you are ready for Module 05, where a human steps into the middle of the flow through forms.
+Your job as the engineer is to know where that contract ends.
 
 ---
-[← Previous: Module 03 Operators and Logic](03-operators-and-logic.md) | [Course home](../README.md) | [Next: Module 05 Forms and Interactive Workflows →](05-forms-and-interactive-workflows.md)
+
+## 1. Read an action as a contract
+
+Before we look at individual action names, use the same questions for all of them.
+
+```text
+1. Job
+   What work am I asking this action to perform?
+
+2. Input
+   What data or reference does it need?
+
+3. Success boundary
+   What does normal successful completion actually prove?
+
+4. Output
+   What result should later logic inspect?
+
+5. Error
+   What does it mean if the action takes its native Error path?
+
+6. Next decision
+   Continue, inspect, recover, use a valid fallback,
+   or end the Workflow in Failure?
+```
+
+If you inherit a Workflow with an action you have never used, this model is more useful than memorizing an action catalog.
+
+Start with the contract.
+
+### Action completion and business completion are different questions
+
+You have already seen this style of reasoning with triggers.
+
+Module 03 asked:
+
+> What event boundary did the trigger actually prove?
+
+Now ask the action version:
+
+> What completion boundary did this action actually prove?
+
+Those two questions share the same engineering discipline:
+
+```text
+name of feature
+≠
+permission to infer everything nearby
+```
+
+An action called “Manage Access” does not make every later access boundary automatically true.
+
+A Wait finishing does not mean the system you were waiting on finished.
+
+A successful notification step does not prove the person read the message.
+
+The action proves its own contract.
+
+Your business requirement may need more evidence.
+
+---
+
+## 2. A five-verb map for choosing the job
+
+You do not need the whole action menu in your head.
+
+For this course, use a simple teaching map:
+
+```text
+NOTIFY
+Tell a person something.
+Example: Send Email
+
+FETCH
+Retrieve data the Workflow genuinely needs.
+Example: Get Identity
+
+CHANGE
+Request or perform an ISC-managed change.
+Examples: Manage Access, Manage Accounts
+
+INTEGRATE
+Call a supported external HTTP service.
+Example: HTTP Request
+
+PAUSE
+Move the Workflow across a time boundary.
+Example: Wait
+```
+
+This is a **learning map**, not SailPoint's official action taxonomy.
+
+Its purpose is to help you start with:
+
+> What kind of job is this?
+
+rather than:
+
+> Which menu item looks familiar?
+
+We will use one or two representative actions from each family.
+
+---
+
+## 3. Notify: Send Email
+
+A notification is a good first action because the contract is easier to see than a provisioning or access boundary.
+
+Suppose Priya moves into Finance and Acme wants her manager notified.
+
+A **Send Email** action needs the message inputs that matter to the notification, such as:
+
+- recipient;
+- subject;
+- body.
+
+Those inputs may come from data already available in the running Workflow.
+
+Before adding another step, inspect what you have.
+
+If the recipient address is already present and usable, use it.
+
+If it is not, solve that data problem first.
+
+### What does Send Email success prove?
+
+Keep the claim narrow.
+
+A successful Send Email action does **not** provide evidence that:
+
+```text
+the human read the message
+or
+the human acted on the message
+```
+
+Those are later human outcomes.
+
+Do not turn the absence of read/acknowledgement evidence into a made-up mailbox-delivery contract either.
+
+The safe engineering statement is:
+
+> **Send Email success is not proof of human receipt, reading, or action.**
+
+If the business process merely requires the Workflow to perform its documented notification action, that may be enough.
+
+If Acme needs acknowledgement from a person, you have crossed into a human-interaction requirement.
+
+Module 06 handles that family of problems.
+
+### Input problems are not something to guess about
+
+Suppose the configured recipient points to data that is not actually present.
+
+You already know how to reason about that from Module 02:
+
+```text
+expected path
+        ↓
+inspect real available data
+        ↓
+is the value actually there and usable?
+```
+
+Do not invent a universal rule about whether one particular empty or unresolved recipient configuration will make the action succeed or error.
+
+Inspect the actual data and the action behavior.
+
+The broader lesson is stable:
+
+> **Wrong input means you have not established a reliable notification design.**
+
+### Working Engineer: current product quirks are lookup facts
+
+Send Email has current formatting and timeout details that can matter in a real build.
+
+They are not Core memory targets.
+
+When the exact formatting rule or timeout matters, check the current action documentation.
+
+What you should keep in your head is:
+
+> Action-specific implementation details change. The action contract and the evidence you need are the engineering problem.
+
+---
+
+## 4. Fetch: use what you have before Get Identity
+
+Fetch actions are useful.
+
+They are also easy to add when you do not actually need them.
+
+Before using **Get Identity**, ask:
+
+> What value is missing?
+
+That question protects you from building lookup-heavy Workflows by habit.
+
+### Priya's manager reference
+
+Return to the mover data you already know.
+
+An Identity Attributes Changed event contains an identity reference and a `changes` array.
+
+For a manager change, the manager `newValue` can be an identity reference containing information such as:
+
+```text
+id
+name
+type
+```
+
+That reference is useful.
+
+It is not the same thing as having every manager attribute.
+
+If Acme needs the manager's email address and that address is not present in the reference, **Get Identity** is a natural fetch action to evaluate.
+
+The reasoning is:
+
+```text
+manager reference available
+        ↓
+required manager email not supplied there
+        ↓
+Get Identity using the manager identity ID
+        ↓
+inspect the returned identity data
+        ↓
+use the required attribute
+```
+
+Notice what we did **not** say:
+
+> “The trigger contains only what changed.”
+
+That is too broad.
+
+The trigger contains other event data as well.
+
+The relevant point is narrower:
+
+> **The manager change gives you an identity reference, and that reference does not itself contain the manager email in the documented example.**
+
+### Do not fetch data you already have
+
+Suppose the value you need is already present in the trigger or an earlier action output.
+
+Adding Get Identity anyway gives you:
+
+- another action/service lookup;
+- more latency;
+- more returned data;
+- another place the Workflow can fail.
+
+It does **not** create another Workflow execution merely because the Get Identity action ran.
+
+That distinction matters.
+
+> **Engineering Habit:** Before adding a fetch action, point to the exact value you need and prove that the Workflow does not already have it.
+
+### What does Get Identity success prove?
+
+Get Identity retrieves identity data according to its action contract.
+
+That does not automatically mean:
+
+- every attribute your later logic wants is present;
+- every attribute is non-null;
+- every attribute is usable for your business rule.
+
+You already know the next move from Module 04:
+
+```text
+action output
+        ↓
+inspect / validate
+        ↓
+operator logic
+```
+
+A successful fetch can still give you data that needs to be checked before you depend on it.
+
+That is another form of **Green Does Not Mean Done**.
+
+---
+
+## 5. Change: access and accounts are different jobs
+
+Now we cross into actions where the difference between **action completion** and **business completion** becomes much more visible.
+
+Acme may need to manage:
+
+```text
+ACCESS
+roles / access profiles / entitlements
+
+or
+
+ACCOUNT STATE
+disable / enable / unlock / supported delete operation
+```
+
+Those are different layers.
+
+The representative actions are:
+
+```text
+Manage Access
+→ access changes
+
+Manage Accounts
+→ account operations
+```
+
+Do not choose between them because both sound like “change something for Priya.”
+
+Ask what object the requirement is actually about.
+
+---
+
+## 6. Manage Access: the action boundary is not the final access boundary
+
+Suppose Acme has a legitimate Workflow-owned requirement to request a specific access change for Priya.
+
+**Manage Access** can add or remove supported access.
+
+This is where you need to slow down and separate several boundaries that can all sound like “the access change worked.”
+
+### What does Manage Access success prove?
+
+Manage Access submits access requests for processing.
+
+If approval is required, the Workflow continues after request submission rather than waiting for the approval decision.
+
+If approval is not required, the action still does not wait for confirmation from the source that the access was updated.
+
+So hold these as separate facts:
+
+```text
+Manage Access action succeeded
+        ≠
+Access request approved
+        ≠
+Provisioning completed
+        ≠
+Target state independently confirmed
+```
+
+This is not edge-case trivia.
+
+This is the contract.
+
+A successful action tells you something meaningful.
+
+It just does not tell you *everything*.
+
+### Inspect the normal output
+
+Manage Access exposes result data including:
+
+```text
+successfulAccessRequests
+failedAccessRequests
+```
+
+A Workflow can have entries in `failedAccessRequests` without those entries automatically making the Workflow execution fail.
+
+That gives you an important distinction:
+
+```text
+native action completed on its normal path
+        ↓
+normal output contains information
+that your business rule may dislike
+```
+
+That is **not automatically the same thing** as:
+
+```text
+action took its native Error branch
+```
+
+If Acme requires every submitted access item to be accepted by the Manage Access action, later operator logic should inspect the normal output and make a deliberate decision.
+
+Do not stare only at the green action box.
+
+Read the result.
+
+### What does `successfulAccessRequests` mean?
+
+Do not translate the field name into:
+
+> “The access is live.”
+
+The safe meaning is narrower:
+
+> The Manage Access action treated those request submissions as successful.
+
+The field does not by itself prove:
+
+- approval;
+- provisioning completion;
+- independent target state.
+
+If the process later cares about approval, that is a later boundary.
+
+Module 06 teaches the human and governed-decision mechanisms.
+
+For now, your job is simply not to smuggle that later boundary into the word *successful*.
+
+### A short architecture reminder
+
+The existence of Manage Access does not mean Workflow should own every access-assignment requirement.
+
+Module 09 will teach the full tool-selection decision.
+
+For Module 05, keep only this discipline:
+
+> **Choose an action only after you have already decided that this work belongs in Workflow.**
+
+---
+
+## 7. Manage Accounts: normal output can contain mixed item results
+
+**Manage Accounts** is the account-layer counterpart.
+
+Current operations include account actions such as:
+
+- Disable;
+- Enable;
+- Unlock;
+- supported Delete behavior.
+
+You do not need that operation list as a memorization test.
+
+The deeper lesson is the result boundary.
+
+Current Manage Accounts output can include:
+
+```text
+successfulAccounts
+failedAccounts
+accountsErrorDetails
+```
+
+and documented normal output can contain both successful and failed account items.
+
+That means this pattern is possible conceptually:
+
+```text
+Manage Accounts
+        ↓
+normal action output
+        ↓
+some items described as successful
+some items described as failed
+```
+
+Again:
+
+```text
+item-level failure information in normal output
+≠
+native action Error branch
+```
+
+Do not infer one universal overall Workflow status from a particular mix of those output arrays unless the current action contract says so.
+
+Inspect what the action returned.
+
+Then decide what your business requirement says to do with that result.
+
+### Access success and account success still do not equal target verification
+
+A green Manage Accounts action is not documented as an independent target read-back verification mechanism.
+
+If the business control requires proof of final target state, that is a separate evidence question.
+
+This is the same engineering habit you are building across the course:
+
+> **Do not promote action status into stronger evidence than the contract provides.**
+
+---
+
+# Green Does Not Mean Done
+
+You have now seen enough actions to name the principle directly.
+
+A green action means:
+
+> **The action satisfied its documented success/completion contract.**
+
+It does not automatically mean:
+
+> **The business outcome you ultimately care about is proven.**
+
+For Manage Access, the ladder is explicit:
+
+```text
+Workflow action succeeded
+        ≠
+Access request approved
+        ≠
+Provisioning completed
+        ≠
+Target state independently confirmed
+```
+
+Each line is a separate boundary.
+
+Do not collapse them.
+
+### The same principle appears in every action family
+
+#### Notify
+
+```text
+Send Email action succeeded
+        ≠
+human read the message
+        ≠
+human acted on it
+```
+
+#### Fetch
+
+```text
+Get Identity succeeded
+        ≠
+every required attribute is present
+        ≠
+every returned value is usable
+```
+
+#### Change
+
+```text
+Manage Access succeeded
+        ≠
+every requested business outcome completed
+
+Manage Accounts returned normal output
+        ≠
+every account item necessarily succeeded
+        ≠
+independent target state was verified
+```
+
+#### Integrate
+
+```text
+HTTP Request action completed on its normal path
+        ≠
+response data automatically proves your business rule
+```
+
+#### Pause
+
+```text
+Wait completed
+        ≠
+external work was verified complete
+```
+
+This is why “green” is useful evidence, but not the last question.
+
+The last question is:
+
+> **What boundary do I still need to prove?**
+
+---
+
+## 8. Integrate: HTTP Request and the dependency you do not control
+
+Sooner or later, a requirement may need a Workflow to call an external HTTP service.
+
+**HTTP Request** is a general-purpose Workflow action for supported HTTP integrations when that integration genuinely belongs inside the Workflow.
+
+That wording matters.
+
+It is not:
+
+> “the universal answer for anything external.”
+
+An HTTP integration still has to fit:
+
+- the action's supported HTTP contract;
+- the external system's interface and authentication;
+- the Workflow's architectural role;
+- the scale and operational needs of the process.
+
+Module 09 will handle the larger “should Workflow own this?” decision.
+
+### Request in, response out
+
+Conceptually:
+
+```text
+Workflow data
+        ↓
+HTTP Request
+        ↓
+external HTTP service
+        ↓
+JSON response when provided
+        ↓
+action output becomes available to later Workflow logic
+```
+
+The external system controls the meaning and shape of its response.
+
+Do **not** memorize a guessed response path such as:
+
+```text
+$.getDeskInfo.building
+```
+
+as though every HTTP Request output is flattened that way.
+
+Use the engineering habit you already know:
+
+```text
+inspect actual HTTP Request output
+        ↓
+use the current Variable Selector / execution data
+        ↓
+reference the structure actually produced
+```
+
+The response shape is evidence, not something to invent from the API's example body.
+
+### External dependency changes the failure surface
+
+Once your Workflow calls another system, that system can be:
+
+- unavailable;
+- slow;
+- rejecting the request;
+- returning data your later logic does not expect.
+
+That does not make HTTP Request a bad action.
+
+It means the action boundary needs a deliberate design.
+
+Do not hard-code secrets into the Workflow definition.
+
+Module 08 owns the production secret/credential-management details.
+
+For this module, carry the principle:
+
+> **External calls introduce dependencies you do not fully control. Build the next path from the actual result or error, not from optimism.**
+
+### Do not invent a universal HTTP-status-to-Error rule
+
+`workflowStatusCode` exists on the generic native Error path.
+
+Its name does not make it universally an HTTP response status code.
+
+Likewise, do not teach a fixed rule such as:
+
+```text
+HTTP 4xx/5xx
+→ always this exact Workflow behavior
+```
+
+unless the current action contract explicitly establishes it.
+
+When the exact HTTP behavior matters, verify the current action documentation and inspect the action's actual result.
+
+---
+
+## 9. Pause: Wait gives time, not evidence
+
+**Wait** moves the Workflow across a time boundary.
+
+It can wait for a configured duration or until a configured time.
+
+That can be useful when the design intentionally needs a delay.
+
+But the contract is simple:
+
+```text
+Wait completed
+=
+the configured time boundary passed
+```
+
+It does **not** prove:
+
+```text
+provisioning finished
+external API work finished
+source account changed
+human completed a task
+target state is correct
+```
+
+Time is not verification.
+
+If you use Wait after an asynchronous process because the product guidance recommends allowing time for an update, treat the Wait as exactly that:
+
+> **time allowance**
+
+not:
+
+> **evidence that the update occurred**
+
+This is one of the cleanest examples of **Green Does Not Mean Done**.
+
+### Timeouts are action-specific lookup facts
+
+Actions have different timeout behavior.
+
+The exact values are implementation details you should verify when they matter.
+
+Do not memorize a table of timeouts from this module.
+
+Keep the stronger habit:
+
+> **Before relying on an action that may run for a meaningful amount of time, check that action's current documented timeout and failure behavior.**
+
+One caution survives the current documentation boundary:
+
+- a timeout is a failure condition;
+- current documentation does **not** establish a universal guarantee that every timeout will always route through an enabled native Error branch.
+
+If your design depends on that exact routing behavior, verify it for the action you are using.
+
+---
+
+# 10. When an Action Fails: native Error Handling
+
+So far we have mostly talked about the action's **normal result**.
+
+Now we need a different boundary:
+
+> What if the action itself encounters an error?
+
+Current Workflows support native error handling on actions.
+
+When error handling is enabled, the action has separate:
+
+```text
+Success
+and
+Error
+```
+
+branches.
+
+Conceptually:
+
+```text
+                ACTION
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+     Success              Error
+     branch               branch
+        │                   │
+normal result          native action error
+```
+
+Without error handling enabled, an action error stops the Workflow in a failed state.
+
+With error handling enabled, the Error branch can contain additional Workflow logic or actions.
+
+That is a major design change:
+
+> **An action error can become a deliberate engineering decision instead of an implicit stop.**
+
+### Success branch does not mean “business success”
+
+The branch is called **Success** because the action followed its normal successful path.
+
+Do not confuse that with proof that the final business outcome is complete.
+
+Manage Access already showed why:
+
+```text
+native Success branch
+        ↓
+normal Manage Access output
+        ↓
+maybe inspect failedAccessRequests
+        ↓
+approval / provisioning / target-state boundaries still separate
+```
+
+Native branch status and business evidence are different questions.
+
+---
+
+## 10.1 Four outcomes that beginners often collapse together
+
+This distinction is worth making explicit.
+
+### 1. Valid business branch
+
+Operator logic says:
+
+> “No action is needed for this case.”
+
+Example:
+
+```text
+Priya's move is not Finance
+→ take another valid path
+```
+
+Nothing failed technically.
+
+A business rule simply chose a different route.
+
+### 2. Normal action result contains a problem signal
+
+The action followed its normal result path, but the output says something the business cares about.
+
+Examples:
+
+```text
+Manage Access
+→ failedAccessRequests contains items
+```
+
+or:
+
+```text
+Manage Accounts
+→ normal output includes failedAccounts
+```
+
+That result may require operator logic.
+
+It is not automatically the native Error branch.
+
+### 3. Native action error
+
+The action itself hits an error condition.
+
+With native error handling enabled:
+
+```text
+action
+→ Error branch
+```
+
+Now the Workflow can decide what to do.
+
+Without error handling enabled, the action error stops the Workflow failed.
+
+### 4. Downstream business outcome is still unproven
+
+The action may be green.
+
+The normal output may even look clean.
+
+But a later boundary still has not been established.
+
+Example:
+
+```text
+Manage Access success
+≠
+approval
+≠
+provisioning
+≠
+target verification
+```
+
+These four situations need different reasoning.
+
+If you call all of them “failure,” you will design the wrong response to at least one of them.
+
+---
+
+## 10.2 Read the native error information
+
+On the native Error branch, current generic error information includes:
+
+```text
+workflowErrorMessage
+workflowStatusCode
+```
+
+Treat them according to their documented meaning.
+
+`workflowErrorMessage` gives the error message.
+
+`workflowStatusCode` is a numeric error status code.
+
+Do **not** rename it mentally to:
+
+```text
+httpStatusCode
+```
+
+and assume it always means an HTTP response status.
+
+It is generic Workflow error information.
+
+### Preserve useful error information
+
+If an action fails, replacing every error with:
+
+```text
+"Something went wrong."
+```
+
+throws away information you may need later.
+
+A better design asks:
+
+```text
+What error did the action expose?
+What context will an operator need?
+What can the next step safely use?
+```
+
+Module 07 will teach how to investigate execution history systematically.
+
+Module 05 only needs the habit:
+
+> **Do not hide useful native error evidence unless you have a reason to.**
+
+---
+
+## 10.3 An Error branch does not have to fail immediately
+
+A native Error branch can contain more Workflow steps.
+
+That means this is valid in principle:
+
+```text
+primary action errors
+        ↓
+Error branch
+        ↓
+operator decision
+        ↓
+acceptable recovery / compensating action
+        ↓
+continue
+```
+
+The existence of an error does not force the next box to be Failure.
+
+The correct question is:
+
+> **Can the process still satisfy the requirement honestly?**
+
+If yes, a recovery path may be valid.
+
+If no, pretending otherwise only makes the execution look healthier than the process really is.
+
+---
+
+## 10.4 Fallback is a design pattern, not a SailPoint action
+
+This course will use the word **fallback** in its normal engineering sense.
+
+It means:
+
+> an alternate path that still satisfies the requirement when the primary path cannot.
+
+It is not the name of a Workflow action called `Fallback`.
+
+Suppose an external ticket API is unavailable.
+
+A theoretical fallback might be valid only if Acme has an approved alternate mechanism that still creates the required operational record.
+
+This is **not** a fallback:
+
+```text
+ticket creation failed
+        ↓
+send a cheerful email
+        ↓
+mark everything successful
+```
+
+if Acme's business requirement was:
+
+> “A ticket must exist.”
+
+The alternate path has to satisfy the requirement, not merely avoid a red execution.
+
+Use this test:
+
+```text
+Primary action failed.
+        ↓
+Does the alternate path still fulfill
+the business requirement?
+     ↙ yes              ↘ no
+valid fallback        not a fallback
+```
+
+---
+
+## 10.5 Success and Failure end steps tell the truth about execution status
+
+Every Workflow branch ultimately ends.
+
+The **Success** and **Failure** end steps have specific execution-status semantics.
+
+```text
+Success
+→ stops the Workflow
+→ marks the execution successful
+
+Failure
+→ stops the Workflow
+→ marks the execution failed
+```
+
+That is what those end steps prove.
+
+They do **not** automatically prove the final business outcome outside the Workflow.
+
+This keeps **Green Does Not Mean Done** consistent even at the end of the execution.
+
+### Failure is sometimes the most accurate design
+
+Suppose a required external ticket action fails.
+
+The Error branch tries the only approved fallback.
+
+That fallback also cannot create the required record.
+
+If the ticket is mandatory, continuing to a Success end step would misrepresent what happened.
+
+A deliberate Failure may be the truthful outcome:
+
+```text
+required action failed
+        ↓
+no acceptable recovery
+        ↓
+End Step - Failure
+```
+
+Failure is not something to avoid for cosmetic reasons.
+
+It is a status that should tell the truth about the Workflow execution.
+
+### Failure Details carries the explanation
+
+If the Failure path needs explanatory information, use the **Failure Details** concept for the explanation.
+
+Do not treat **Failure Name** as the human-readable failure reason.
+
+The current product uses Failure Name as the step name used for linking.
+
+That is exactly the kind of implementation detail worth being precise about because a misleading field name can lead to poor design.
+
+---
+
+## 10.6 Technical failure versus valid business outcome
+
+A technically successful Workflow does not mean every branch had to “do something.”
+
+And a business answer of “no” is not a technical failure.
+
+Suppose Acme's rule says:
+
+```text
+If Priya did not move into a department
+that requires this follow-up,
+do nothing and end normally.
+```
+
+That can be a completely valid successful execution.
+
+Compare:
+
+```text
+BUSINESS OUTCOME
+Rule says no action required.
+→ valid branch
+→ may end Success
+```
+
+with:
+
+```text
+TECHNICAL ERROR
+Required action could not perform its job.
+→ Error branch or unhandled failure
+```
+
+Do not use Failure merely because a condition evaluated false.
+
+And do not use Success merely because you would prefer not to see a failed execution.
+
+Choose the end status that accurately represents the Workflow's execution according to the design.
+
+---
+
+## 11. The Error branch still needs normal engineering judgment
+
+Enabling error handling is not the same as designing error handling.
+
+An Error branch that says:
+
+```text
+error
+→ ignore
+→ Success
+```
+
+may be technically valid and operationally dishonest.
+
+When you design an Error branch, ask:
+
+```text
+1. Was the failed action required?
+2. What native error information is available?
+3. Can the requirement still be met?
+4. Is there a genuine alternate path?
+5. Should someone or something be informed?
+6. If the requirement cannot be met, should this execution end Failure?
+7. What later business evidence would still be required even after recovery?
+```
+
+That is error handling.
+
+The branch itself is only the mechanism.
+
+### Compensation, retry, and idempotency come later
+
+An Error branch can contain further actions, including compensating work.
+
+But generalized retry strategy is not a Core Module 05 problem.
+
+Retries raise questions such as:
+
+- Did the first call actually fail, or did the response fail?
+- Could retrying duplicate a side effect?
+- Is the operation idempotent?
+- What happens if two executions overlap?
+
+Module 11 owns those edge cases.
+
+For now:
+
+> **Do not add retry behavior casually just because an Error branch gives you somewhere to put it.**
+
+---
+
+## 12. Working Engineer: know that specialized actions exist
+
+The representative actions in this module are not the entire action catalog.
+
+ISC has additional actions for other lookup, platform, certification, ticketing, and specialized tasks.
+
+You do not need to memorize them.
+
+Use the current action documentation when a requirement calls for a capability you have not learned here.
+
+The later course boundaries are intentional:
+
+```text
+Forms / interactive / governed human decisions
+→ Module 06
+
+Testing and execution diagnosis
+→ Module 07
+
+Secrets, ownership, operations, limits
+→ Module 08
+
+Should this even be a Workflow?
+→ Module 09
+
+Reusable production patterns
+→ Module 10
+
+Retry, replay, concurrency, idempotency
+→ Module 11
+```
+
+### Inheriting an older Workflow
+
+You may open an older Workflow and see actions that current documentation describes as replaced.
+
+For example:
+
+- **Create Request for Access** has been replaced by Manage Access for Add Access;
+- **Request Access Removal** has been replaced by Manage Access for Remove Access.
+
+Do not memorize legacy names as active design choices.
+
+The useful engineering habit is:
+
+> **When an inherited Workflow contains an unfamiliar or legacy action, check the current documentation before copying the old pattern forward.**
+
+---
+
+## 13. A compact action-and-error decision method
+
+At this stage of the course, you should be able to design from the requirement rather than from the builder menu.
+
+Use this sequence:
+
+```text
+1. What work must happen?
+   Notify, fetch, change, integrate, pause,
+   or another specialized job?
+
+2. Do I already have the required data?
+   If yes, use it.
+   If no, what fetch is actually justified?
+
+3. Which action owns this job?
+   Choose by the work, not by familiarity.
+
+4. What boundary does the action own?
+   What does normal completion actually prove?
+
+5. What output must I inspect?
+   Does normal output contain item-level
+   success/failure or other evidence?
+
+6. Did I get a normal result or a native action error?
+   Do not confuse the two.
+
+7. If it is an action error, what error information exists?
+   Preserve what the next decision needs.
+
+8. Can the business requirement still be satisfied?
+   If yes, a real recovery/fallback may fit.
+
+9. If not, should this execution end Failure?
+   Do not hide a required failure.
+
+10. What later business boundary remains unproven?
+    Green does not mean done.
+```
+
+If you can follow that sequence, you can approach an unfamiliar action without needing the whole catalog in your head.
+
+---
+
+## Work It Out: action contract before action name
+
+Priya moves into Finance.
+
+The Workflow has already started and the operator logic has routed the run down the Finance path.
+
+Acme's design says:
+
+1. Notify Priya's new manager.
+2. The manager change supplied an identity reference, but the Workflow does not currently have the manager's email.
+3. Request a specific Finance access profile for Priya.
+4. Acme requires every requested access item in this step to be accepted by Manage Access before the Workflow may treat that step as satisfactory.
+5. Call an approved external HTTP ticket service to create a Finance onboarding ticket.
+6. If the ticket action encounters a native action error, Acme has **no** approved alternate ticket mechanism. The ticket is mandatory.
+7. After the ticket is created, Acme wants to wait before a later process checks another system.
+
+Reason through the design before looking at exact builder configuration.
+
+### Questions
+
+1. What should the Workflow do before Send Email if the manager email is not present in the manager identity reference?
+2. Why is adding Get Identity justified here, and what would make it unnecessary in a different Workflow?
+3. What does successful Get Identity completion **not** prove about the returned manager email?
+4. Manage Access completes on its normal path. Which output matters if Acme requires every requested item to be accepted by that action?
+5. If `failedAccessRequests` contains an item, is that automatically the same thing as the action taking its native Error branch?
+6. If `successfulAccessRequests` contains the Finance access profile, may Acme now claim the access was approved, provisioned, and verified on the target?
+7. The HTTP Request takes its native Error branch. Which two generic native error values are available?
+8. Is “send an email saying the ticket failed” a valid fallback if Acme's actual requirement is that the ticket must exist?
+9. With no valid fallback, which end status best tells the truth about this execution?
+10. If the HTTP Request follows its normal path, should later logic guess a fixed JSONPath for the response body?
+11. What does the later Wait prove?
+12. Which part of this scenario belongs to Module 06 rather than this module if Acme later wants a person to make a governed access decision?
+
+<details>
+<summary>Check your reasoning</summary>
+
+**1. Fetch the missing identity data.**  
+The manager change gives the Workflow a manager identity reference, not the manager's email in the documented example. Get Identity is a natural fetch action when the Workflow genuinely needs manager identity data that the reference does not provide.
+
+**2. The missing value justifies the lookup.**  
+The Workflow can point to the exact data it lacks. If another trigger or earlier step already supplied a usable manager email, the extra lookup would add latency, data, and another failure surface without solving a real data gap.
+
+**3. Get Identity success does not prove the email is present and usable.**  
+Inspect the returned identity data. A successful fetch is not a guarantee that every later business-required attribute exists in the form you expect.
+
+**4. Inspect the normal Manage Access result, especially `failedAccessRequests`.**  
+If Acme requires every requested item to be accepted by Manage Access, the normal output must be part of the decision.
+
+**5. No.**  
+A failed item represented in normal Manage Access output is not automatically the same boundary as a native action Error branch.
+
+**6. No.**
+
+```text
+Manage Access action succeeded
+        ≠
+Access request approved
+        ≠
+Provisioning completed
+        ≠
+Target state independently confirmed
+```
+
+The action's successful request-submission boundary is not final fulfillment evidence.
+
+**7.**
+
+```text
+workflowErrorMessage
+workflowStatusCode
+```
+
+Do not assume `workflowStatusCode` is universally an HTTP response status code.
+
+**8. No.**  
+That notification may be useful operationally, but it does not satisfy the stated requirement that the ticket must exist. A fallback must actually fulfill the requirement.
+
+**9. Failure.**  
+If the required HTTP ticket action errors and there is no acceptable recovery that creates the mandatory ticket, a deliberate Failure end is the truthful execution outcome.
+
+**10. No.**  
+Inspect the actual HTTP Request output and use the current Variable Selector/execution data. Do not promote an example API body into an invented fixed Workflow output path.
+
+**11. Only that the configured time boundary passed.**
+
+```text
+Wait completed
+≠
+proof another system finished
+```
+
+**12. Governed human approval mechanics.**  
+Module 05 only keeps approval as a later boundary that Manage Access success does not prove. Module 06 teaches the human-in-the-loop and governed approval mechanisms.
+
+</details>
+
+---
+
+## Checkpoint
+
+You should now be able to take a path that Module 04 designed and reason through the work in this order:
+
+```text
+What work must happen?
+        ↓
+Do I already have the required data?
+        ↓
+Which action fits the job?
+        ↓
+What does its normal completion prove?
+        ↓
+What output must I inspect?
+        ↓
+Normal result or native action error?
+        ↓
+If error:
+Can the requirement still be met honestly?
+        ↓
+recovery / valid fallback
+or
+Failure
+        ↓
+What business boundary remains unproven?
+```
+
+You should also be able to explain:
+
+- why notify / fetch / change / integrate / pause is a teaching map rather than a product taxonomy to memorize;
+- why a fetch action should solve a specific missing-data problem;
+- why an unnecessary Get Identity adds work and failure surface but is not another Workflow execution by itself;
+- why a manager identity reference is not automatically a manager email address;
+- why Manage Access success is not approval, provisioning, or independent target-state proof;
+- why `failedAccessRequests` can be a normal-result problem rather than a native Error-branch event;
+- why Manage Accounts normal output can contain successful and failed item information;
+- why partial normal output and native action error are different boundaries;
+- why HTTP Request output must be inspected rather than guessed from an example response body;
+- why `workflowStatusCode` should not be treated universally as an HTTP status code;
+- why Wait gives time rather than evidence;
+- why action-specific timeout values are lookup facts rather than Core memorization;
+- why enabling an Error branch does not automatically make the error handling design good;
+- why a fallback must still satisfy the business requirement;
+- why Success and Failure end steps describe Workflow execution status rather than proving the external business outcome;
+- why Failure can be the correct design when a required action cannot complete and no valid recovery exists;
+- why a valid business “no action needed” branch is not the same thing as a technical action failure;
+- why **Green Does Not Mean Done** applies to the whole action layer.
+
+You can now make the Workflow act without confusing action completion with proven business completion.
+
+The next question changes the shape of the Workflow:
+
+> **What if the process needs a person to provide information or make a governed decision?**
+
+That is where Module 06 — Forms, Approvals & Interactive Workflows begins.
+
+---
+
+## Official References
+
+- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Building Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Identity Attributes Changed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
+- [Filtering Events — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/filtering-events/)
+
+---
+
+[← Previous: Module 04 Operators & Logic](03-operators-and-logic.md) | [Course home](../README.md) | [Next: Module 06 Forms, Approvals & Interactive Workflows →](05-forms-and-interactive-workflows.md)
