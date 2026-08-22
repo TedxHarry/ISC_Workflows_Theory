@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 04 — Operators & Logic
+**Current target:** Module 05 — Actions & Error Handling
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, and 03 are final accepted. Module 04 remains unchanged until its module-by-module review begins.
+Modules 00, 01, 02, 03, and 04 are final accepted. Module 05 remains unchanged until its module-by-module review begins.
 
 ---
 
@@ -152,8 +152,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 01 Workflow Model | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 02 Data / JSONPath | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 06 source file pending coordinated renumbering |
 | 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 02 source file pending coordinated renumbering |
-| 04 Operators & Logic | NOT STARTED | Current target; built from current Module 03 |
-| 05 Actions & Error Handling | NOT STARTED | Built from current Module 04; add native error handling |
+| 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 03 source file pending coordinated renumbering |
+| 05 Actions & Error Handling | NOT STARTED | Current target; built from current Module 04; add native error handling |
 | 06 Forms / Approvals / Interactive | NOT STARTED | Built from current Module 05 |
 | 07 Testing / Debugging | NOT STARTED | Reorganize around diagnostic method |
 | 08 Operations / Limits / Governance | NOT STARTED | Add ownership, sizes, overlap, lifecycle |

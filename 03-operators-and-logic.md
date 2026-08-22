@@ -1,101 +1,1126 @@
-# Module 03: Operators and Logic
+# Module 04: Operators & Logic
 
-How a workflow makes decisions and shapes its data.
+How a running Workflow makes decisions, guards assumptions, shapes data, and repeats work deliberately.
 
-If actions are the verbs of a workflow, operators are the thinking. An operator never sends an email or opens a ticket. Instead it does one of two quiet but essential jobs: it makes a decision, or it shapes a piece of data. A third kind, the loop, lets the workflow repeat a job over a list. Get comfortable with these three ideas, deciding, shaping, and repeating, and you can build logic of real depth without ever leaving the safety of the no-code builder.
+Module 03 ended with a boundary worth keeping clear:
 
-We will keep following Priya, and this time her move to Finance does most of the teaching.
+```text
+PRE-START
+Should this event qualify?
+→ trigger / filter
 
-## Making a decision, and what "branching" really means
+POST-START
+The event qualified.
+The Workflow is running.
+What should this execution do?
+→ operator logic
+```
 
-Back in Module 02, the mover trigger handed us a `changes` array telling us Priya's department went from Sales to Finance. Suppose Acme only wants a mover alert when someone moves into Finance specifically, not for every department change. That is a decision, and decisions are what comparison operators are for.
+That second question is ours now.
 
-A comparison operator does one simple thing. It looks at two values, asks one yes-or-no question about them, and then sends the workflow down one of two paths depending on the answer. That is the whole mechanism, and it is also the answer to a question beginners always ask: how does a workflow branch? It branches right here. When you drop a comparison operator onto the canvas, it gives you two outcomes to wire up, the path to take when the answer is yes and the path to take when the answer is no. You connect a different next step to each. The path where the department equals Finance goes on to send the alert. The other path goes straight to a quiet ending. Branching is not a separate feature you turn on. It is just what a comparison operator does.
+Operators are the steps that let a running Workflow reason about the data it already has. They can compare values, route execution, combine conditions, validate assumptions, shape values, and repeat logic over a collection.
 
-So to alert only for Finance, you use a Compare Strings operator. Value one is the new department. Value two is the text Finance. The operator is Equals. When Priya moves to Finance, the answer is yes and the workflow continues to the alert. When someone moves to Marketing, the answer is no and the workflow ends without bothering anyone.
+They do not replace actions. We will give the Workflow things to *do* in Module 05.
 
-## Comparing the right kind of value
+For this module, stay inside the decision problem.
 
-There are four comparison operators, one for each kind of value, and choosing the one that matches your data is more important than it first appears.
+Priya's move gives us a useful example, but the requirement has changed slightly from Module 03.
 
-Compare Strings is for text. It is the one you will use most. Beyond Equals and Does Not Equal, it offers genuinely useful tests: Contains and Does Not Contain, Starts With and Ends With, and Matches for pattern checks. So "does the job title contain the word Manager" or "does the email end with acme.com" are single-operator questions.
+Acme does **not** want only Finance moves to start the Workflow.
 
-Compare Numbers is for numeric values, and it gives you the comparisons you expect: Equals, greater than, less than, and the "or equal to" versions of each. Use it when the value is genuinely a number, such as a count or a score.
+It wants one Workflow for qualifying department moves, and after each run starts it wants different paths for:
 
-Compare Boolean is for true and false values, and it is deliberately simple. It only offers Equals, because there is nothing else sensible to ask of a true-or-false value.
+- Finance;
+- Marketing;
+- other departments.
 
-Compare Timestamps is for points in time, and it is more capable than people expect. It can compare two timestamps directly using Is Before, Is After, and their on-or-before and on-or-after variants, and it understands the ISO 8601 timestamp format that ISC uses. It can also compare against a number of days, which is where it becomes powerful. Questions like "was this account last used more than ninety days ago" are exactly what the day-based options such as Is Before X Days Ago are built for. Any time your logic involves "how long since," reach for Compare Timestamps rather than trying to do date math by hand.
+That distinction is the reason operator logic belongs here.
 
-Now the failure that catches everyone, and it is worth a real pause. String comparisons can be affected by the exact value the source sends, including differences in casing and whitespace, so do not assume how differently cased values will compare. Real systems are inconsistent about case. One source stores a department as "Finance," another stores the same department as "finance," and SailPoint's own trigger documentation shows department values in lowercase. So if Priya's data holds "Finance" with a capital F but your comparison tests against "finance" in lowercase, and those are treated as different, the answer is no every time and your Finance alert silently never fires. Values that look equal to a human are not always equal to the operator. Confirm the real source value and test the comparison with representative data, and when a comparison "should match but does not," suspect case and stray spaces first. This single instinct will save you more debugging time than any other in this module. If inconsistent casing or stray whitespace is possible, normalize the value with a supported operation before comparing. That is also why the Trim operation, which we will meet in a moment, exists.
-
-A close cousin of this bug is comparing the wrong data type. If a value arrives as the text "5" and you compare it with Compare Numbers, or a real number 5 compared as a string, the result can surprise you. Match the operator to what the data actually is, not to what it looks like on screen.
-
-> **Work It Out**
+> **Common Assumption:** “If I can test Finance with a filter, I should always do it there.”
 >
-> Acme's Finance mover alert uses a Compare Strings Equals, with value one set to the new department and value two set to the text `finance`. In testing, Priya moves to Finance and the workflow clearly runs, but the alert never fires. What is wrong, and how would you fix it?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Do not assume differently cased values will compare the way you expect. Priya's department may arrive as "Finance" with a capital F while the comparison tests against "finance" in lowercase, and if those are treated as different the answer is no every time and the alert path is never taken. Confirm the actual source value, test the comparison with representative data, and if the source can produce inconsistent casing, normalize the value with a supported operation before comparing. When a comparison should match but does not, suspect case and stray spaces before anything else.
->
-> </details>
+> A filter is correct when nonmatching events should never start the Workflow. In this requirement, Marketing and other department moves still need to enter the Workflow because the running execution must make a routing decision. The event should start first; the operator decides what happens next.
 
-## Combining conditions with Define Comparison
+Before naming any operator, use this sequence:
 
-One question is often not enough. Acme really wants the alert only when two things are true together: the department actually changed to Finance, and Priya is still an active identity. A single comparison cannot ask two questions. Define Comparison can.
+```text
+1. What value am I actually testing?
+2. Is that value present in the form I expect?
+3. What type is it?
+4. What business question am I asking?
+5. What should each answer cause?
+```
 
-Define Comparison lets you build a bigger condition out of several smaller ones, joined with And and Or. You add each condition, the same string, number, boolean, and timestamp comparisons you already know, and you say whether they combine with And, meaning all must be true, or Or, meaning any can be true. You can group conditions together to control how they combine, and each group relates to the others with And. There is also a Not toggle, which flips a condition, so you can express "and the state is not terminated" without hunting for an opposite operator.
-
-For Priya, the condition becomes readable almost like a sentence: the new department equals Finance, and the lifecycle state equals active. Both true, the alert goes out. Either one false, it does not. Reading which attribute changed out of that `changes` array is its own small skill that we save for Module 06, so here just picture the combined condition and trust that the pieces snap together the way the words do.
-
-Reach for a single comparison when you have one question. Reach for Define Comparison the moment you catch yourself saying "and also" or "unless."
-
-## Shaping data with variables
-
-The other half of an operator's job is shaping data. Often the values handed to you by a trigger are not in the form you want to use. Priya arrives as a first name and a last name in separate fields, but the alert reads better as "Patel, Priya." That reshaping is what Define Variable is for.
-
-Define Variable builds a new value by running a short sequence of small operations, one after another. The operations come in three families. String operations include Concatenate to join pieces, Substring to take part of a value, Trim to strip stray spaces, Replace to swap text, and Get Index to find a position. Date operations let you Add Time, Subtract Time, and reformat a date with the Date Formatter. Number operations cover Add, Subtract, Multiply, Divide, and Modulo. You can chain up to fifty of these operations in one variable, and they run in order, each working on the result of the last, so you can go from raw fields to a polished value step by step. There is a basic editor where you drag operations together and watch a live preview, and an advanced editor for when you would rather work in JSON.
-
-Make this concrete with Priya. To turn her separate fields into the display value "Patel, Priya," you chain three operations. Concatenate her last name with the text ", " (a comma and a space), then concatenate her first name onto the end of that, then Trim to clean up any stray spaces. Three small steps, run in order, take "Priya" and "Patel" and hand back "Patel, Priya," ready to drop into an email subject or a ticket title. That is the whole idea of Define Variable: a raw value goes in one end, a short chain of operations reshapes it, and a tidy value comes out the other.
-
-One small but useful detail to file away: the result of a Define Variable is text, unless the very last operation is Get Index, in which case it hands back a number. Knowing that saves you a puzzling moment later when a value you expected to compare as a number behaves like a string.
-
-Its partner, Update Variable, changes a variable you already created, using the same set of operations. Scope is the thing to remember with it. Outside a loop, it can see the variables made earlier in the workflow. Inside a loop, it sees only the variables belonging to that same loop pass. That scoping is not a quirk to fight, it is what keeps each pass of a loop from trampling another, and it will make sense the moment we get to loops next.
-
-A quick word to prevent a common mix-up. These variable operations are sometimes called transforms, and they are small transformations, but they are not the same thing as the ISC attribute transforms we placed on the map back in Module 00. Those shape identity attributes as an identity is built. These shape a value inside a running workflow. Same spirit, different place, different tool. Module 09 draws that line sharply.
-
-## Repeating work with loops
-
-So far everything happens once. But real tasks often mean "do this for each of them." Imagine Acme wants to notify every member of the Finance team that Priya has joined. You are not holding one identity now, you are holding a list, and to act on a list you loop.
-
-A loop takes an array from an earlier step and runs the same steps once for each item in it. Inside the loop, you reach the current item through a special reference, `$.loop.loopInput`, so `$.loop.loopInput.id` is the id of whichever item this pass is working on. If the loop needs some extra shared value from outside, you pass it in as context and read it at `$.loop.context`. There are two kinds of loop, and choosing between them is a real design decision, not a coin flip.
-
-The parallel loop runs every item at the same time. All of them kick off together, in no guaranteed order, and the workflow waits for the whole set to finish before it moves on. Its best quality is resilience: if one item fails, the others still complete, and at the end you get back a tidy split of which items succeeded and which failed, in `successfulItems` and `failureItems`. A parallel loop can handle up to two hundred and fifty items. Reach for it when the items are independent of each other and you want the work done quickly and one bad item not to sink the rest. Notifying fifty Finance team members is a perfect fit, because none of those messages depends on another and order does not matter.
-
-The serial loop runs the items one at a time, in order, each pass finishing before the next begins. It handles a larger list, up to a thousand items, and it comes in two shapes: a For loop that runs once per item in the array, and a While loop that keeps going as long as a condition you set stays true. The serial loop behaves differently on failure, and this is the key contrast: if one pass fails, the loop stops and does not process the rest. Reach for a serial loop when order matters, when each pass depends on the result of the one before it, or when a failure partway through means you genuinely should stop rather than plow ahead. If you ever need to leave a serial loop early once some condition is met, the Break Loop step is how you step out.
-
-So the choice in one breath: parallel for independent work you want fast and fault-tolerant, serial for ordered or dependent work where stopping on failure is the safer behavior.
-
-Loops are also where performance stops being abstract, so let me plant a flag you will see again in Modules 08 and 11. Loop iterations count toward an individual workflow's execution total. SailPoint warns the workflow owner when a workflow reaches 100,000 total executions, including loop executions, and blocks remaining executions when it reaches 150,000. The tenant-wide daily rate limit is separate: it is around 400,000 executions and does not count loop executions; after that threshold, executions continue at 5 per second for the rest of the day. A loop over a handful of people is nothing. A loop over thousands, especially one that calls another system on every pass, can drive one workflow toward its own execution limit very quickly. The item caps, two hundred and fifty and one thousand, are not just trivia. They are a strong signal that workflows are not the right tool for truly bulk processing. When a list is that big, rethink the approach, which is a conversation we have properly in Module 09. And a small testing note: when you test a serial loop, the builder runs only the first fifty iterations, so a passing test does not prove the full-size run behaves, a point we return to in Module 07.
-
-One more loop gotcha worth seeing now. The parallel loop makes no promise about order. If you have quietly assumed the first item finishes first, and you built later logic on that assumption, it will bite you intermittently, which is the worst kind of bug because it passes most of the time. If order matters at all, that is your sign to use a serial loop instead.
-
-## Guarding your data with Verify Data Type
-
-Remember the empty-path problem from Module 01, where a step reads a field that is not there and quietly gets nothing. Verify Data Type is the seatbelt for exactly that. It checks a value before you rely on it, and it can confirm several things: that the value exists at all, or that it is specifically a string, a number, a boolean, a timestamp, or null. Put one in front of a step that would break on missing or wrong-shaped data, and you turn a silent, confusing failure into a clean, deliberate branch. It is a small habit that separates workflows that limp along from workflows you can trust.
-
-## Success, Failure, and controlling the outcome
-
-Every path through a workflow has to end, and it ends at one of two steps: Success or Failure. These are not just full stops. They are how the workflow reports what happened, and you get to decide which one a given branch lands on.
-
-Success says this run finished the way it was meant to. It carries no special fields, it simply marks the run as good.
-
-Failure marks the run as failed, and it lets you say why. It asks for a Failure Name and lets you add Failure Details, and both show up later in the execution history you will read in Module 07. This is more useful than it sounds, because ending a branch in Failure on purpose is how you tell the world "this outcome should be treated as a problem." If a workflow tried to open a ticket and could not, routing that branch to a Failure with a clear name turns an invisible non-event into a red flag someone can find and act on. So think of Success and Failure not as leftover plumbing but as the workflow's way of speaking, and choose the one that tells the truth about what happened.
-
-## Before you move on
-
-Design the Finance mover alert in your head, using only what this module gave you. What comparison operator asks whether the new department is Finance, and what is the one detail about the compared text most likely to make it silently fail? How would you extend that single question into "moved to Finance and still active" using Define Comparison? If Acme then wanted to message all fifty Finance team members, which loop would you choose and why, and which loop would you have chosen instead if each message somehow depended on the one before it? And if a run tried to notify people but the team list came back empty, which operator would you place up front to catch that cleanly, and would you end that branch in Success or in Failure? If those answers come without much strain, you can make a workflow think, and you are ready for Module 04, where we finally give it things to do.
+That is the decision-making habit for this module.
 
 ---
-[← Previous: Module 02 Triggers](02-triggers.md) | [Course home](../README.md) | [Next: Module 04 Actions →](04-actions.md)
+
+## 1. Ask one question: a single comparison
+
+Start with the smallest useful decision.
+
+Priya's Identity Attributes Changed data can include several objects in its `changes` array. Module 02 already taught you not to assume that the department change is `changes[0]`. Select by meaning, not position.
+
+Once you have identified the department change, its `newValue` in our representative example is the string:
+
+```text
+Finance
+```
+
+Now state the business question in plain English:
+
+> Is the new department Finance?
+
+That is one yes-or-no question.
+
+For a string value, the natural comparison family is **Compare Strings**.
+
+Conceptually:
+
+```text
+actual new department
+        ↓
+Compare Strings
+Equals "Finance"
+     ↙       ↘
+   true      false
+```
+
+Do not begin by browsing the operator menu and asking which feature looks useful.
+
+Begin with the value and the question.
+
+### Match the comparison to the actual data type
+
+ISC currently provides native comparison families for:
+
+- **Compare Strings**
+- **Compare Numbers**
+- **Compare Boolean**
+- **Compare Timestamps**
+
+The family should match the data you actually have.
+
+Examples:
+
+```text
+"Finance"
+→ string
+→ Compare Strings
+```
+
+```text
+7
+→ integer count
+→ Compare Numbers
+```
+
+```text
+true
+→ boolean
+→ Compare Boolean
+```
+
+```text
+a supported date/time value
+→ timestamp
+→ Compare Timestamps
+```
+
+The exact menu of comparison options can change. You do not need to memorize it.
+
+What you should remember is:
+
+```text
+actual type
+→ business question
+→ appropriate comparison family
+```
+
+### Values that look alike may not be the same type
+
+Suppose a count appears on screen as:
+
+```text
+"5"
+```
+
+with quotation marks in the JSON.
+
+That is a string.
+
+This is different from:
+
+```text
+5
+```
+
+which is a number.
+
+For Core number examples in this course, we will use actual integers such as counts. Do not build logic on an assumption that ISC will silently convert a string-looking number into an integer for you.
+
+If the type is wrong for the comparison you want, treat that as a data problem to understand, not as permission to hope for coercion.
+
+### Do not guess string comparison behavior
+
+Source systems are not always tidy about text.
+
+You may encounter:
+
+```text
+Finance
+finance
+ Finance
+Finance 
+```
+
+Do not assume a universal case-normalization rule that the current documentation does not guarantee.
+
+If a string comparison behaves differently than you expect, inspect the rendered runtime values before rewriting the logic.
+
+Ask:
+
+- What string did the Workflow actually receive?
+- Is there leading or trailing whitespace?
+- Is the casing consistent?
+- Am I using a comparison mode that is actually supported in this operator?
+
+The documented `Trim` variable operation can remove leading and trailing whitespace when that is the actual problem.
+
+It is not a general case-normalization feature.
+
+> **Engineering Habit:** When a comparison “should match” but does not, inspect the two runtime values and their types before changing the operator.
+
+---
+
+## 2. Turn the answer into a branch
+
+A comparison is useful because its answer changes what happens next.
+
+This is what branching means in a Workflow.
+
+You do not enable a separate branching mode.
+
+The comparison asks a question and provides different paths for the result.
+
+For Acme:
+
+```text
+new department == Finance?
+          ↓
+      true / false
+       ↙       ↘
+ Finance      not Finance
+   path          path
+```
+
+The true path may continue through Finance-specific logic.
+
+The false path can ask a second question:
+
+```text
+new department == Marketing?
+          ↓
+      true / false
+       ↙       ↘
+Marketing     other
+  path        path
+```
+
+That is a perfectly reasonable design when the requirement is a small routing tree.
+
+Notice the difference from Module 03.
+
+Module 03 asked:
+
+> Should this event start at all?
+
+Module 04 asks:
+
+> It started. Which path should this execution take?
+
+Those are different design decisions even when they inspect the same business value.
+
+### Ask one question per simple comparison
+
+A simple comparison is easiest to understand when it expresses one business question.
+
+Good:
+
+> Is the new department Finance?
+
+Also good:
+
+> Is this integer count greater than 10?
+
+Also good:
+
+> Is this boolean value true?
+
+The moment your sentence becomes:
+
+> “Finance **and** something else…”
+
+you have moved beyond one simple condition.
+
+That is the next problem.
+
+---
+
+## 3. Combine conditions deliberately
+
+Suppose Acme does not merely care that Priya's new department is Finance.
+
+For a particular internal route, it wants to know whether she moved specifically:
+
+```text
+Sales
+→
+Finance
+```
+
+Now there are two conditions:
+
+```text
+old department == Sales
+
+AND
+
+new department == Finance
+```
+
+You could create a maze of separate comparisons.
+
+For a small sequence, that can be understandable.
+
+But when several conditions represent one business rule, **Define Comparison** gives you a more deliberate way to express the rule.
+
+Current Define Comparison supports condition families including:
+
+- Boolean;
+- Number;
+- String;
+- Timestamp;
+- Verify Data Type.
+
+It can combine supported criteria with logical relationships such as AND and OR, and it can express exclusions with NOT.
+
+For our Core example, the reasoning is enough:
+
+```text
+old department equals Sales
+AND
+new department equals Finance
+```
+
+If both are true, take the Sales-to-Finance route.
+
+If either is false, take the other route.
+
+### One condition versus one business rule
+
+Use this heuristic:
+
+```text
+one yes/no condition
+→ simple comparison
+
+several related conditions that together mean one rule
+→ consider Define Comparison
+```
+
+Do not turn that into:
+
+> “Define Comparison contains every option from every standalone comparison.”
+
+That is stronger than the current product contract.
+
+Define Comparison can combine supported condition types, but individual sub-options can differ from the standalone operators.
+
+The design lesson is the relationship between the conditions, not menu memorization.
+
+### A little more structure when you need it
+
+**Working Engineer**
+
+Within Define Comparison, criteria can be grouped with AND or OR behavior. Additional groups have AND relationships, and NOT can invert a configured condition.
+
+That gives you room for rules such as:
+
+```text
+A AND B
+```
+
+or:
+
+```text
+(A OR B) AND C
+```
+
+Do not make the grouping syntax the first thing you think about.
+
+Write the business rule in plain language first.
+
+If you cannot explain the condition clearly without the builder, the builder will not make it clearer for you.
+
+---
+
+## 4. Guard data before depending on it
+
+So far we have assumed that the value we want to compare is present and has the expected type.
+
+That assumption deserves its own check.
+
+Module 02 established this distinction:
+
+```text
+missing
+≠
+null
+≠
+empty string
+≠
+empty array
+≠
+empty object
+≠
+usable value
+```
+
+Module 04 adds the engineering consequence:
+
+> If later logic depends on a data assumption, validate the assumption before building more logic on top of it.
+
+**Verify Data Type** is one operator that helps with this.
+
+Current documented checks include whether a selected value:
+
+- exists;
+- is Boolean;
+- is Number;
+- is String;
+- is Timestamp;
+- is Null.
+
+Suppose your next step is Compare Strings against Priya's new department.
+
+Before depending on that comparison, you may decide to verify that the selected value is a string.
+
+Conceptually:
+
+```text
+selected new department
+        ↓
+Verify Data Type
+      String?
+     ↙      ↘
+   yes       no
+    ↓         ↓
+compare     alternate path
+```
+
+Now the comparison is not quietly carrying an unstated type assumption.
+
+### A guard proves only what it checks
+
+This distinction matters:
+
+```text
+exists
+≠
+non-empty
+≠
+usable for my business rule
+```
+
+If an empty array exists, an existence check can still be true.
+
+If an empty string is a string, a string-type check can still be true.
+
+Verify Data Type is not a generic “this data is good” operator, and it is not a documented non-empty-array test.
+
+Be precise about the fact you are validating.
+
+If your requirement is:
+
+> “This value must exist.”
+
+validate existence.
+
+If it is:
+
+> “This value must be a string.”
+
+validate the string type.
+
+If it is:
+
+> “This collection must contain at least one item.”
+
+do not pretend a different check proves that requirement.
+
+That separation is exactly the same engineering discipline you used in Module 02 when distinguishing missing, null, and empty values.
+
+### Guards can be part of a larger condition
+
+**Working Engineer**
+
+Define Comparison can incorporate Verify Data Type conditions.
+
+That means a more mature design can combine:
+
+```text
+value is a String
+AND
+value equals the expected business value
+```
+
+when the supported options fit the requirement.
+
+You do not need to force every guard into its own separate node.
+
+The point is still the same:
+
+> Make the data assumption explicit before trusting it.
+
+---
+
+## 5. Shape data with variables
+
+Sometimes the data is correct but not yet in the form you want for later logic.
+
+That is where Workflow variables help.
+
+The Variable Selector from Module 02 and Define Variable solve different problems.
+
+```text
+Variable Selector
+→ reference data that is already available
+
+Define Variable
+→ create a new value by applying supported operations
+```
+
+A variable is useful when you want to prepare a value once and use the prepared result later.
+
+### Define Variable: small operations in sequence
+
+**Define Variable** applies operations one after another.
+
+Think:
+
+```text
+input value
+   ↓
+operation
+   ↓
+operation
+   ↓
+derived value
+```
+
+You do not need the entire operation catalog in your head.
+
+Current operations include string, date, and number shaping. When you need a specific transformation, verify the current supported operation.
+
+For the teaching model, one safe string example is enough.
+
+Suppose Priya's selected department value is:
+
+```text
+" Finance "
+```
+
+and Acme wants a small internal label such as:
+
+```text
+Finance move
+```
+
+A variable can conceptually do this:
+
+```text
+" Finance "
+     ↓
+Trim
+     ↓
+"Finance"
+     ↓
+Concatenate Strings
+with static text " move"
+     ↓
+"Finance move"
+```
+
+Two small operations created a value that later steps can reuse.
+
+The order matters because each operation works on the result produced by the previous one.
+
+### Keep Concatenate Strings within its documented boundary
+
+Current central Workflow documentation describes **Concatenate Strings** as adding a **static string** to the working value.
+
+That is why the example above adds the static text:
+
+```text
+" move"
+```
+
+to Priya's dynamic department value.
+
+Do not build your Core mental model around:
+
+```text
+dynamic first name
++
+dynamic last name
+```
+
+as though Concatenate Strings universally guarantees dynamic-to-dynamic concatenation.
+
+When product documentation gives you a narrow contract, teach and design to that contract.
+
+### Update Variable changes an existing Workflow variable
+
+**Update Variable** lets a Workflow operate on a variable that already exists.
+
+For Core understanding, hold onto only this:
+
+```text
+Define Variable
+→ create a derived Workflow value
+
+Update Variable
+→ change an existing eligible Workflow variable
+```
+
+The current documented selector scope is narrower than a generic programming-language idea of mutable state.
+
+Outside loops, the selector exposes upstream variables defined outside loops.
+
+Inside a loop, the selector exposes variables defined within that loop.
+
+That is the documented selection rule.
+
+Do not turn it into guarantees about:
+
+- cross-iteration mutation;
+- one iteration seeing another iteration's updates;
+- a value updated inside Serial Loop reliably persisting after the loop.
+
+Those behaviors are not established strongly enough to teach as a universal state model.
+
+We will return to loop scope in the Engineering Step-Up.
+
+### Workflow variables are not identity-attribute transforms
+
+The language can sound similar because both concepts reshape values.
+
+They live in different places.
+
+```text
+ISC identity-attribute transform
+→ calculates/shapes identity attribute values
+  as part of identity data processing
+
+Workflow variable operation
+→ shapes a value inside a running Workflow
+```
+
+Do not choose between them because the names sound similar.
+
+Choose based on which ISC capability actually owns the requirement.
+
+Module 09 will make that architectural choice explicit.
+
+---
+
+# Engineering Step-Up: Loops
+
+Everything so far can be reasoned about one value or one decision at a time.
+
+Loops change the engineering problem.
+
+A loop is not merely:
+
+> “do this several times.”
+
+The moment you repeat work over a collection, new questions appear:
+
+- Does order matter?
+- Are iterations independent?
+- What data belongs to one iteration?
+- Can several iterations be active at once?
+- What happens when one iteration fails?
+- How much work does the collection multiply into?
+
+That is why loops are an Engineering Step-Up rather than just another operator to memorize.
+
+---
+
+## 6. An array does not automatically mean “use a loop”
+
+Module 02 taught you arrays.
+
+It also taught you predicates.
+
+Those are related to loops, but they solve different problems.
+
+Suppose Priya's event contains several entries in `changes`.
+
+If your business question is only:
+
+> Which change object represents department?
+
+then a selection by meaning is often the better idea.
+
+You do not need to loop over every change merely because the data is an array.
+
+Use a loop when the requirement really is:
+
+> Apply the same body of work to each relevant item in this collection.
+
+That distinction prevents a lot of unnecessary complexity.
+
+```text
+Need one matching item or subset?
+→ selection may be enough
+
+Need repeated processing for each item?
+→ consider a loop
+```
+
+### A simple collection example
+
+Imagine Acme has a requirement to classify each changed attribute in Priya's `changes` collection.
+
+Each change object should go through the same small body of logic:
+
+```text
+change item 1
+→ classification logic
+
+change item 2
+→ same classification logic
+
+change item 3
+→ same classification logic
+```
+
+Now repetition is real.
+
+The next question is not yet:
+
+> Which loop button do I click?
+
+Ask:
+
+> Are those iterations independent, or does one depend on another?
+
+That decides the design.
+
+---
+
+## 7. Regular Loop: parallel and unordered
+
+The native **Loop** operator processes its items in parallel.
+
+The stable design facts to remember are:
+
+- iterations are processed in parallel;
+- processing order is not guaranteed;
+- failure of one iteration does not prevent the sibling iterations from running to completion;
+- the Workflow waits for the Loop to finish before continuing after it;
+- successful and failed iteration results are exposed separately.
+
+Do not strengthen “parallel” into:
+
+> “Every iteration starts at the exact same instant.”
+
+That is not the contract you need.
+
+The useful invariant is:
+
+> The work is parallel, and order is not guaranteed.
+
+### When regular Loop fits
+
+Regular Loop is a natural candidate when:
+
+- items are independent;
+- order does not matter;
+- one item's processing does not require the previous item's result.
+
+If Acme's classification of one change object has no dependency on how another change object is classified, parallel processing may fit.
+
+### Parallel does not mean “failure no longer matters”
+
+The old module called this behavior fault-tolerant.
+
+That is too broad.
+
+A more accurate statement is:
+
+> One iteration failing does not stop the other iterations from running to completion.
+
+That still leaves you with a design question afterward:
+
+> Did any iteration fail, and does the business process care?
+
+A Loop boundary completing is not proof that every repeated business outcome succeeded.
+
+That is the same discipline behind **Green Does Not Mean Done**:
+
+> know exactly what boundary was proven.
+
+Full failure handling belongs later, but partial-failure awareness belongs here because it affects whether the loop design makes sense.
+
+---
+
+## 8. Serial Loop: sequential when dependency matters
+
+The native **Serial Loop** processes iterations sequentially.
+
+One iteration runs, then the next.
+
+That makes it the better fit when:
+
+- order matters;
+- an iteration depends on what happened before it;
+- continuing after an iteration failure would be unsafe for the requirement.
+
+Current documented behavior also makes the failure contrast important:
+
+- regular Loop lets sibling iterations continue when one iteration fails;
+- Serial Loop stops further iterations after an iteration fails.
+
+That is not just a runtime detail.
+
+It changes the business meaning of choosing one loop or the other.
+
+Conceptually:
+
+```text
+Independent + order-insensitive
+→ regular Loop may fit
+
+Ordered or dependent
+→ Serial Loop may fit
+```
+
+### For and While
+
+**Working Engineer**
+
+Serial Loop supports For Loop and While Loop forms.
+
+A For-style loop is collection-oriented.
+
+A While-style loop continues according to its configured condition.
+
+Serial Loop also supports **Break Loop** when the design needs to exit early.
+
+You do not need those mechanics to understand the Core choice.
+
+First learn to recognize dependency and ordering.
+
+---
+
+## 9. Current item, context, and scope
+
+A loop body needs a way to reason about the item being processed in that iteration.
+
+The concept is simple:
+
+```text
+collection
+   ↓
+loop
+   ↓
+current item for this iteration
+```
+
+Do not make the first loop lesson a JSONPath memorization exercise.
+
+Use the current builder, Variable Selector where applicable, and actual runtime data to identify the current-item reference.
+
+### Regular Loop Context is not a universal loop feature
+
+**Working Engineer**
+
+The regular **Loop** operator has a documented **Context** mechanism for carrying additional outside data into its iterations.
+
+Do not generalize that into:
+
+> “All loop types have the same Context contract.”
+
+Serial Loop does not expose the same regular-Loop Context contract.
+
+Treat the two operators as related but distinct runtime models.
+
+### Do not memorize an exact Serial Loop current-item path here
+
+Current official SailPoint sources have not been perfectly consistent about the exact Serial Loop current-item JSONPath.
+
+That makes the engineering lesson straightforward:
+
+> Learn the current-item concept. When an exact path matters, use the current builder/documentation and inspect the actual data rather than relying on a memorized string from an older example.
+
+For the regular Loop, current documentation is more settled.
+
+For Serial Loop, Core Module 04 deliberately does not turn a disputed implementation detail into required memory.
+
+### Update Variable inside loops: stay with the documented scope rule
+
+The selector scope you learned earlier still applies.
+
+Inside a loop, Update Variable exposes variables defined within that loop.
+
+That tells you what the product currently allows you to select.
+
+It does **not** prove a universal state-persistence model across iterations or after Serial Loop.
+
+If a production design depends on mutated state surviving a loop boundary in a particular way, verify that behavior explicitly rather than deriving it from the selector.
+
+---
+
+## 10. Why loops change the engineering problem
+
+The loop body can look simple while the overall design becomes much larger.
+
+Suppose a Workflow repeats one small unit of work for every item in a collection.
+
+The collection size multiplies the work.
+
+Conceptually:
+
+```text
+1 unit of work
+×
+number of items
+=
+repeated Workflow work
+```
+
+That is why a loop choice should always trigger a few extra questions.
+
+### Does order matter?
+
+If yes, a parallel Loop is already suspicious.
+
+### Are items independent?
+
+If one iteration needs the previous one's result, Serial Loop is the more natural model.
+
+### What happens if one item fails?
+
+With regular Loop, sibling iterations continue.
+
+With Serial Loop, later iterations stop after an iteration failure.
+
+That difference should be part of the design, not a surprise discovered after deployment.
+
+### How much work can this multiply into?
+
+Loops have current product limits and execution-accounting consequences.
+
+You do **not** need the numeric thresholds in your head for Module 04.
+
+Remember the principle:
+
+> **Loops multiply work. Scale is part of the design.**
+
+Module 08 owns current operational limits and execution accounting.
+
+### Does a Workflow still make sense at this scale?
+
+A loop is not permission to turn Workflow into a general bulk-processing engine.
+
+That architecture decision belongs in Module 09.
+
+For now, keep one warning:
+
+> If the collection is large enough that scale dominates the design, stop treating “which loop?” as the only question.
+
+### What happens when executions overlap or repeat?
+
+Concurrency, replay, duplicate side effects, and idempotency become especially important when repeated work can overlap.
+
+You only need to recognize those concerns here.
+
+Modules 08 and 11 will teach the operational and failure-mode consequences.
+
+### How will I test it?
+
+Loop testing has its own current product constraints.
+
+Module 07 owns those mechanics.
+
+Do not mix a builder test limit into the first lesson on choosing a loop.
+
+---
+
+## 11. A compact operator decision method
+
+At this point, the operator menu should matter less than the reasoning.
+
+When a Workflow has already started, walk through this order:
+
+```text
+1. Identify the value.
+   What data am I actually reasoning about?
+
+2. Validate the assumption.
+   Is it present, and is the type what later logic requires?
+
+3. State the business question.
+   One condition or several?
+
+4. Route the answer.
+   What should each result cause?
+
+5. Shape only if needed.
+   Do I need a derived value for later use?
+
+6. Ask whether repetition is real.
+   Am I selecting from a collection,
+   or processing every item?
+
+7. If looping, identify dependency.
+   Independent/order-insensitive → regular Loop may fit.
+   Ordered/dependent → Serial Loop may fit.
+```
+
+That method will survive product-menu changes better than memorizing a list of operators.
+
+---
+
+## Work It Out: design the logic before naming the operator
+
+Acme changes its mover requirement.
+
+Every qualifying **department-change** event should start the Workflow.
+
+After it starts:
+
+- moves into Finance should take the Finance path;
+- moves into Marketing should take the Marketing path;
+- other department moves may take another path;
+- the new department is expected to be a string;
+- Acme wants a reusable internal label based on the new department plus the static text `" move"`;
+- separately, Acme is considering a future rule that performs the same classification logic for every change object in the `changes` array.
+
+Before looking at operator names, answer these.
+
+1. Is the Finance decision primarily a trigger-filter decision or an in-Workflow decision?
+2. What value should the first comparison test?
+3. What assumption would you consider guarding before Compare Strings?
+4. If Acme later wants “Sales to Finance” as one rule, is that one condition or a combined condition?
+5. Can Define Variable safely create the label from a dynamic department value plus static text?
+6. Does the existence of the `changes` array automatically mean the Workflow needs a loop?
+7. If every change object really must be processed and the items are independent, which loop model is the natural first candidate?
+8. If each iteration depends on the one before it, which model is the natural first candidate?
+9. Does Verify Data Type proving a collection exists prove that it contains at least one item?
+
+<details>
+<summary>Check your reasoning</summary>
+
+**1. In-Workflow decision.**  
+All qualifying department-change events are supposed to start. Finance versus Marketing versus other is therefore a post-start routing decision.
+
+**2. The actual new department value.**  
+Use the relevant department change's `newValue`, selected by meaning rather than assuming a fixed array position.
+
+**3. The expected type.**  
+If later logic depends on a string comparison, verifying that the selected value is a string can make that assumption explicit. Depending on the requirement, existence may also matter, but existence and string type are different checks.
+
+**4. Combined condition.**  
+“Old department is Sales AND new department is Finance” contains two related conditions. Define Comparison is a natural operator to evaluate for that rule.
+
+**5. Yes, within the current documented concatenation boundary.**  
+Start from the dynamic department value and concatenate the static string `" move"`. Do not generalize that into a guarantee that two independently dynamic fields can always be concatenated by this operation.
+
+**6. No.**  
+If the requirement only needs the department change, a predicate/selection may be enough. A loop is justified when the same body of work must run for each relevant item.
+
+**7. Regular Loop.**  
+Independent, order-insensitive iterations are the natural case for parallel Loop.
+
+**8. Serial Loop.**  
+When dependency or order matters, sequential processing is the safer model.
+
+**9. No.**
+
+```text
+exists
+≠
+non-empty
+≠
+usable
+```
+
+Verify Data Type does not document a non-empty-array check.
+
+</details>
+
+---
+
+## Checkpoint
+
+You should now be able to take a Workflow that has already started and sketch its decision logic in this order:
+
+```text
+What value am I using?
+        ↓
+Is the data assumption valid?
+        ↓
+What type is it?
+        ↓
+What business condition am I asking?
+        ↓
+Which path follows each answer?
+        ↓
+Do several conditions form one rule?
+        ↓
+Do I need to shape a value?
+        ↓
+Do I really need repetition?
+        ↓
+If I loop, does order or dependency matter?
+```
+
+You should also be able to explain:
+
+- why a trigger filter and a post-start comparison solve different problems;
+- why comparison family should follow actual runtime type;
+- why you should not assume string case normalization or implicit type coercion;
+- why Define Comparison is for supported combined conditions rather than an assumed copy of every standalone comparison option;
+- why `exists` does not mean `non-empty` or `usable`;
+- why Verify Data Type is a narrow guard, not a universal data-quality verdict;
+- why Define Variable should follow the current operation contract, including static text for Concatenate Strings;
+- why Update Variable selector scope does not prove a broad loop-mutation model;
+- why an array does not automatically require a loop;
+- why regular Loop is parallel and unordered;
+- why Serial Loop is sequential and appropriate when order or dependency matters;
+- why regular Loop Context should not be generalized to Serial Loop;
+- why exact Serial Loop current-item syntax is something to verify when needed rather than memorize here;
+- why loops introduce scale and partial-failure questions even before you learn full operations and failure handling.
+
+The Workflow can now decide what path it wants.
+
+Module 05 asks the next question:
+
+> **What happens when that path needs the Workflow to act — and what should the design do when an action does not go as planned?**
+
+That is where Actions & Error Handling begins.
+
+---
+
+## Official References
+
+- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Serial Loop rollout discussion — SailPoint Developer Community](https://developer.sailpoint.com/discuss/t/new-capability-workflows-with-1k-serial-loops/207478)
+
+---
+
+[← Previous: Module 03 Triggers & Filters](02-triggers.md) | [Course home](../README.md) | [Next: Module 05 Actions & Error Handling →](04-actions.md)
