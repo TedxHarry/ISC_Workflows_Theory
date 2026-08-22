@@ -27,11 +27,11 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 # Current Project State
 
-**Phase:** Preparation complete / ready for module refactor
+**Phase:** Module refactor in progress
 
-**Current target:** Module 00 — Orientation
+**Current target:** Module 01 — The Workflow Model
 
-**Course modules modified so far:** None
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-The student-facing course content should remain unchanged until the module-by-module review process begins.
+Module 00 is final accepted. Module 01 remains unchanged until its module-by-module review begins.
 
 ---
 
@@ -98,7 +98,7 @@ The existing JSON skeleton appears to place `trigger` inside `definition`. Verif
 
 Existing language suggests transforms "do not make decisions." This is likely too absolute because supported transform operations can contain conditional/fallback logic. The intended architectural distinction is that transforms calculate/shape values and do not act as general workflow orchestration engines.
 
-**Status:** Pending formal technical review
+**Status:** Module 00 resolved in the final accepted revision; Module 09 remains pending formal technical review
 
 ## Module 04 / future Module 05 — Get Identity execution wording
 
@@ -148,8 +148,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 
 | Module | State | Notes |
 |---|---|---|
-| 00 Orientation | NOT STARTED | First target |
-| 01 Workflow Model | NOT STARTED | Workflow JSON model needs verification |
+| 00 Orientation | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 01 Workflow Model | NOT STARTED | Current target; Workflow JSON model needs verification |
 | 02 Data / JSONPath | NOT STARTED | Built from current Module 06 |
 | 03 Triggers & Filters | NOT STARTED | Built from current Module 02; Core vs Specialized |
 | 04 Operators & Logic | NOT STARTED | Built from current Module 03 |
