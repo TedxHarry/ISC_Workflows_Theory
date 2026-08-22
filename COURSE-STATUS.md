@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 03 — Triggers & Filters
+**Current target:** Module 04 — Operators & Logic
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, and 02 are final accepted. Module 03 remains unchanged until its module-by-module review begins.
+Modules 00, 01, 02, and 03 are final accepted. Module 04 remains unchanged until its module-by-module review begins.
 
 ---
 
@@ -151,8 +151,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 00 Orientation | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 01 Workflow Model | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 02 Data / JSONPath | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 06 source file pending coordinated renumbering |
-| 03 Triggers & Filters | NOT STARTED | Current target; built from current Module 02; Core vs Specialized |
-| 04 Operators & Logic | NOT STARTED | Built from current Module 03 |
+| 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 02 source file pending coordinated renumbering |
+| 04 Operators & Logic | NOT STARTED | Current target; built from current Module 03 |
 | 05 Actions & Error Handling | NOT STARTED | Built from current Module 04; add native error handling |
 | 06 Forms / Approvals / Interactive | NOT STARTED | Built from current Module 05 |
 | 07 Testing / Debugging | NOT STARTED | Reorganize around diagnostic method |
