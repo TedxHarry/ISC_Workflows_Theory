@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 01 — The Workflow Model
+**Current target:** Module 02 — Data, Payloads, Variables & JSONPath
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Module 00 is final accepted. Module 01 remains unchanged until its module-by-module review begins.
+Modules 00 and 01 are final accepted. Module 02 remains unchanged until its module-by-module review begins.
 
 ---
 
@@ -90,9 +90,9 @@ These findings came from the preliminary repository review. They are **review ta
 
 ## Module 01 — Workflow JSON model
 
-The existing JSON skeleton appears to place `trigger` inside `definition`. Verify the current Workflow model. Preliminary review indicates `trigger` is top-level while `definition` contains `start` and `steps`.
+The existing JSON skeleton appeared to place `trigger` inside `definition`. Formal technical review found conflicting current official representations: the API/SDK model places `trigger` at the top level, while product-help material shows a JSON-file representation with `trigger` nested under `definition`.
 
-**Status:** Pending formal technical review
+**Status:** Resolved in the final accepted Module 01 by removing the exact universal hierarchy and teaching only the stable structured-Workflow-definition concept.
 
 ## Modules 00 / 09 — Transform wording
 
@@ -149,8 +149,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | Module | State | Notes |
 |---|---|---|
 | 00 Orientation | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 01 Workflow Model | NOT STARTED | Current target; Workflow JSON model needs verification |
-| 02 Data / JSONPath | NOT STARTED | Built from current Module 06 |
+| 01 Workflow Model | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 02 Data / JSONPath | NOT STARTED | Current target; built from current Module 06 |
 | 03 Triggers & Filters | NOT STARTED | Built from current Module 02; Core vs Specialized |
 | 04 Operators & Logic | NOT STARTED | Built from current Module 03 |
 | 05 Actions & Error Handling | NOT STARTED | Built from current Module 04; add native error handling |
