@@ -15,9 +15,19 @@ Update this file only after a module reaches an agreed milestone.
 
 ---
 
+# Working Branch
+
+**All course-refactor reads and writes must use:** `course-theory-refactor`
+
+The `main` branch is the protected/current course baseline. Do not modify student-facing course files on `main` during the refactor unless the maintainer explicitly decides to merge or apply completed work.
+
+If a role uses a GitHub connector, it must explicitly read and write the `course-theory-refactor` branch rather than relying on the connector's default branch.
+
+---
+
 # Current Project State
 
-**Phase:** Preparation / pre-refactor
+**Phase:** Preparation complete / ready for module refactor
 
 **Current target:** Module 00 — Orientation
 
@@ -50,6 +60,7 @@ Do not reopen these unless the maintainer explicitly changes them.
 - [x] Technical accuracy takes priority over style.
 - [x] Current official SailPoint sources are primary for changing technical behavior.
 - [x] Final module sequence is defined in `COURSE-IMPROVEMENT-PLAN.md`.
+- [x] Refactor work occurs on `course-theory-refactor`, not directly on `main`.
 
 ---
 
