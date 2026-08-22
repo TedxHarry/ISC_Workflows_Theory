@@ -1,278 +1,1199 @@
-# Module 07: Testing, Debugging, and Execution
+# Module 07: Testing, Debugging & Execution
 
-How to test a workflow safely, and how to read exactly what happened when one runs.
+Module 06 ended with a question:
 
-You can now build a workflow. This module is about the two skills that separate someone who builds workflows from someone who runs them in production without fear: testing without causing harm, and reading a failure calmly enough to fix it. A confident engineer is not one whose workflows never fail. Everything fails eventually. A confident engineer is one who can prove a workflow works before trusting it, and who can look at a broken run and know where to look first.
+> **The Workflow ran. What actually happened?**
 
-We will start with the single most important safety lesson in the whole course, because getting it wrong causes real damage to real people.
+That question sounds simple until something goes wrong.
 
-## Testing that does not hurt anyone
+Priya moves into Finance, but her manager does not receive the expected message.
 
-Here is the sentence I most want you to remember from this module. The ordinary Test Workflow button runs enabled steps for real. It is not automatically a harmless rehearsal. When you test, enabled actions can really send emails, create campaigns, change access, or act on live identities. So before you press test, know which steps are allowed to execute and which must be simulated.
+An access request is approved, but Priya still cannot use the application.
 
-There are two safety layers you will usually combine.
+A Workflow shows green, but one item inside an action did not succeed.
 
-The first is Simulated Testing. It lets you run the workflow using test input while controlling which steps actually execute. The Enable Step toggle on each step determines whether that step runs for real during the test. A disabled step uses simulated behavior instead of performing its real-world action. So to test Priya's offboarding safely, you can disable the Manage Access step while still exercising the surrounding logic and branches.
+Or perhaps there is no Workflow execution at all.
 
-The second is a sandbox tenant. The safest place to test is a separate non-production tenant stocked with dummy identities, accounts, and access created for testing. Then even a step that runs for real touches nobody who matters. Best practice is to use a sandbox and still simulate the most dangerous world-changing steps when practical.
+The weak debugging method looks like this:
 
-One more practical point about testing. The test panel provides sample input, but the ids and values must match objects that actually exist in your tenant if enabled steps depend on them. Real triggers hand real technical ids, so meaningful tests use input shaped like the real trigger payload and populated with values that make sense in the test tenant.
+```text
+something is wrong
+        ↓
+open the Workflow
+        ↓
+change a few things
+        ↓
+test again
+        ↓
+hope
+```
 
-For a concrete example, a mover workflow that reacts to Priya moving into Finance can be tested with input shaped like its real trigger:
+That is not debugging. It is guessing with extra steps.
+
+A better method starts with evidence.
+
+```text
+What did I expect?
+        ↓
+What actually happened?
+        ↓
+Where do those two first stop matching?
+```
+
+That **first divergence** is where diagnosis begins.
+
+By the end of this module, I want you to have one repeatable method you can use whether the problem involves a trigger, a missing value, a branch, an action, an approval, provisioning, or an outside system.
+
+---
+
+## 1. Why debugging needs an order
+
+Suppose Acme reports:
+
+> “Priya's Finance onboarding Workflow is broken.”
+
+That statement does not tell you much.
+
+Maybe the Workflow never started.
+
+Maybe it started with different data than expected.
+
+Maybe the data was correct but a comparison took the wrong path.
+
+Maybe the correct action ran and returned a problem in its result.
+
+Maybe everything inside the Workflow worked and the unfinished part belongs to provisioning or the target application.
+
+Those are different problems.
+
+If you begin at the final symptom, every step looks suspicious.
+
+Instead, write down two things.
+
+```text
+EXPECTED
+What did I believe would happen?
+
+OBSERVED
+What evidence do I actually have?
+```
+
+Then ask:
+
+> **Where is the first place those two differ?**
+
+If the trigger input is already wrong, there is little value debugging the fifth action.
+
+If the trigger input and first four steps are correct, there is little value rewriting the trigger.
+
+If approval is already proven, stop treating approval as the unresolved problem.
+
+That sounds obvious when written out.
+
+Under pressure, engineers violate it constantly.
+
+---
+
+## 2. Core — Test safely before trusting the result
+
+Before we diagnose a Workflow, we need evidence.
+
+Testing is one way to create that evidence.
+
+But there is an important safety rule:
+
+> **A Workflow test is not automatically a harmless rehearsal.**
+
+Enabled actions can actually execute.
+
+That matters when an action can:
+
+- send a message;
+- create something;
+- request or remove access;
+- change an account;
+- call another system;
+- otherwise affect real tenant state.
+
+### Simulated testing
+
+Simulated Testing lets you choose actions that should use simulated behavior instead of performing their normal action.
+
+Conceptually:
+
+```text
+step enabled during simulated testing
+        ↓
+action executes normally
+```
+
+versus:
+
+```text
+step disabled during simulated testing
+        ↓
+action is simulated
+        ↓
+mock output can support later testing
+```
+
+That means you can exercise the surrounding Workflow logic while keeping a dangerous action from changing real state.
+
+But simulated output still matters.
+
+Suppose you simulate a step that normally produces an identity ID, and the next **enabled** action depends on that ID.
+
+A placeholder that cannot be used by the enabled downstream action does not give you a meaningful test.
+
+Use safe, meaningful tenant data appropriate to what you are testing, and make simulated output usable when later enabled steps depend on it.
+
+A sandbox tenant remains the safest environment for testing because real actions that do execute are acting on test identities, accounts, access, and integrations rather than production objects.
+
+### Use test data that resembles the real event
+
+You learned this habit in Module 02:
+
+> **Inspect the data you actually have.**
+
+Testing deserves the same discipline.
+
+If you are testing Priya's mover logic, use data shaped like the event the Workflow was designed to receive.
+
+For example:
 
 ```json
 {
-  "identity": { "type": "IDENTITY", "id": "<SANDBOX_IDENTITY_ID>", "name": "workflow.test" },
+  "identity": {
+    "type": "IDENTITY",
+    "id": "<SAFE_TEST_IDENTITY_ID>",
+    "name": "workflow.test"
+  },
   "changes": [
-    { "attribute": "department", "oldValue": "Sales", "newValue": "Finance" }
+    {
+      "attribute": "department",
+      "oldValue": "Sales",
+      "newValue": "Finance"
+    }
   ]
 }
 ```
 
-Replace `<SANDBOX_IDENTITY_ID>` with the id of a dummy identity that actually exists in your sandbox, so any enabled step that looks the identity up finds a real test object rather than failing on an id that is not there.
+Use a safe identity that makes sense for the test rather than assuming any arbitrary identifier will behave meaningfully throughout the execution.
 
-## Reading what happened: the execution history
+### One important boundary
 
-Every time a workflow runs, whether a test or a real event, it leaves an execution record. This is your black box recorder, and learning to read it is most of debugging.
+A successful manual or simulated test can prove useful things about:
 
-Workflow execution details are available for up to 90 days. Current Workflow Executions API documentation also states that archived executions beyond that window return 404, so do not treat the API as a long-term archive. If your organization needs workflow evidence for longer than 90 days, export or retain that evidence somewhere outside the workflow execution history.
+- the supplied data;
+- references;
+- branches;
+- rendered values;
+- selected action behavior.
 
-You read a run in layers, from the outside in.
+It does **not** prove that the real production event will later occur, be detected, qualify for the trigger, and start the Workflow.
 
-The first layer is the status. Did this run complete, fail, get canceled, remain queued, or still run. When something is wrong, this immediately separates a workflow that started and then failed from one that never started at all.
+Keep those facts separate:
 
-The second layer is the step-by-step playback. Open a single execution and walk through the steps. The history shows the step input, step output, and the values that were actually available when the step ran. Rendered inline variables are especially useful because they show what an expression resolved to at runtime rather than only the expression you typed.
-
-Let me make that concrete. Suppose Priya's welcome email went out looking wrong, greeting her as "Welcome to Acme, " with nothing after the comma. You open the run, find the Send Email step, and inspect its input. You might see:
-
+```text
+test execution succeeds
+        ≠
+real production event delivery proven
 ```
-Step Input
-  recipients: priya.patel@acme.com
-  subject: Welcome to Acme
-  body: Welcome to Acme,
-```
 
-The body is blank exactly where the first name should be. That tells you the variable resolved to nothing. You then inspect the path and discover that you wrote `$.trigger.identity.firstname` when the field actually lives under `attributes`, so it should have been `$.trigger.attributes.firstname`. The history did not solve the bug for you, but it exposed the exact empty value that matters.
+Testing proves what you actually exercised.
 
-## A field guide to failures
-
-Most workflow failures fall into a handful of shapes, and you have already met every one of them in earlier modules. Here they are gathered into a diagnostic order so that when something breaks you have a route to walk.
-
-Start with the biggest question: did the workflow run at all? If there is no execution record for an event you expected, the workflow never started. The first suspect is often the trigger filter from Module 02. A filter that returns nothing can turn the event away without producing a workflow execution. Also check the simple causes: the workflow may be disabled, or workflows may have only recently been enabled in the tenant and still be inside the initial activation window from Module 00.
-
-If the workflow did run but a step came up empty, you are looking at a JSONPath or missing-data problem from Modules 01 and 06. Open that step's real input and output. Check the nesting, case, and actual payload rather than guessing.
-
-If an HTTP Request step failed, inspect the error and remember that HTTP Request has a 90 second timeout. The external system may have returned an error, exceeded that timeout, rate-limited the request, or returned data in a shape you did not plan for. Build an error path and read the error details rather than treating every HTTP failure as a workflow logic bug.
-
-If a Manage Access step looks successful but the business outcome is incomplete, inspect `failedAccessRequests` as well as `successfulAccessRequests`. A Manage Access action can complete without automatically failing the entire workflow even when some requested access changes appear in `failedAccessRequests`. A green step is therefore not proof that every requested access item succeeded.
-
-If a comparison sent the workflow down the wrong path, inspect the rendered values. This is often the case or type mismatch from Module 03. "Finance" and "finance" look equivalent to a person and can still compare differently.
-
-If a step failed because of permission or authentication, the workflow tried to do something it was not allowed to do or a credential it depends on is wrong, unavailable, or expired. If an action timed out, check that specific action's documented timeout. Timeouts are action-specific: Get Identity is 1 minute, HTTP Request is 90 seconds, Manage Access is 30 minutes, and Manage Accounts is 1 hour. Do not debug with a fictional universal timeout in mind.
-
-The method underneath all of these is the same. Read the status. Find the first step that failed or produced an unexpected value. Inspect the real input and output. Form one hypothesis. Fix one thing. Test again with dangerous steps simulated where appropriate. Debugging is not cleverness. It is disciplined observation.
-
-> **Work It Out**
->
-> A mover workflow is supposed to email Priya's new manager when she moves to Finance. The run looks successful, but the manager reports that no message arrived. Where do you look, and what is the likely cause?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Open the execution and read the steps in order. On the step that fetches the manager, inspect its input and output to confirm it returned a manager with an email. Then open the Send Email step and inspect the rendered recipient. If that recipient rendered to nothing, the path pointed at a value that was not there, so the message had nowhere to go even though the run may look otherwise healthy. The common cause is reading the manager's email straight from the trigger, which carries only the manager's id and name, instead of fetching the manager with Get Identity and reading the email from that result. As Module 04 put it, green does not mean done, so inspect the step input and output rather than trusting the status alone.
->
-> </details>
-
-> **Work It Out**
->
-> Priya's offboarding workflow ran and every step shows success, but a reviewer finds she still has access to a sensitive application the next day. Where do you look, and what are three likely explanations that a green run can hide?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Open the execution and read the Manage Access step output, not just its status. Inspect both `successfulAccessRequests` and `failedAccessRequests`, because a Manage Access step can complete successfully while some requested removals are listed as failed, and the workflow is not automatically marked failed for that. Three common explanations behind a green run: the removal for that application is in `failedAccessRequests`; the removal request was accepted but is still awaiting an approval decision, because Manage Access continues after submitting an approval-required request rather than waiting for it; or the removal was accepted and any approval granted, but provisioning to the target had not finished when the reviewer checked. Green does not mean done, so verify the outputs and, where completion matters, confirm the target state rather than trusting the status. This is also a reason standard termination revocation is often better handled by a leaver lifecycle state that removes all access, where the removal approval is bypassed automatically.
->
-> </details>
-
-> **Work It Out**
->
-> An aggregation-failure alert is supposed to message the source team when an aggregation fails. It never seems to fire, even though a source clearly failed to aggregate this morning. How do you tell whether it ran, and what are the most likely causes?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Start with the status question: is there an execution record at all? If there is none, the workflow never started, and the first suspect is the trigger filter. A status filter that is slightly wrong, or that assumes the wrong non-success value, turns every event away in silence, and the workflow may also simply be disabled. Because SailPoint's materials currently differ on the non-success status values, a defensive filter such as `$[?($.status != "Success")]`, validated against your tenant's real payload, is less fragile than betting on one spelling. If instead there is a record but the wrong thing happened, open the run and read the trigger input, where `status` and `source.name` tell you which source failed and what status the event actually carried. Remember too that warnings are reported separately, and a `Success` event can still contain warnings, so a status-only filter may not capture a run that produced warnings the team would still want to see.
->
-> </details>
-
-> **Work It Out**
->
-> A Joiner workflow fired for a new hire, and its status is green, but the onboarding email went to the team without the new hire's manager on it, and the manager's task was never created. In the execution history, where do you look, and what is the most likely cause given what an Identity Created event does and does not carry?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Open the run and read the trigger input first. An Identity Created event carries the identity reference and the attributes mapped in the identity profile, but an optional attribute such as manager is not guaranteed to contain a usable, non-null value, for example when a usable manager relationship has not been established. Confirm in the step input whether the manager value is usable, then check whether the workflow validated it, fetched with Get Identity, or branched on the missing value. The green status only means the steps ran, not that the manager was found. The fix is to validate the manager attribute before use and take a deliberate path when it is not usable. Get Identity can retrieve the identity's current state, but it is a refresh of what ISC already knows, not a guarantee that missing source data now exists, so the workflow must still branch appropriately if manager remains null.
->
-> </details>
-
-## Debugging Native Change executions
-
-Native Change problems start with a different first question: did aggregation detect the change at all?
-
-If there is no workflow execution for the direct account change you expected, check the source before you debug the workflow canvas. Native Change Detection must be enabled on that source. The operation must be monitored, for example Account Updates for a group added to an existing AD account. The attribute must be monitored, for example the entitlement attribute that represents group membership. The source must have aggregated after the direct target change. And remember the AND relationship from Module 02: the operation and monitored attribute both have to line up with the change.
-
-Then check whether the source can use the feature in the way you configured it. SailPoint documents that Native Change Detection is not available for Non-Employee Lifecycle Management sources, and that SAML Just-in-Time sources require the Native Change Detection API endpoint to enable it. If the UI does not show the expected source option, do not treat that as a filter bug until you have confirmed the source's supported configuration path.
-
-For platform-level evidence, Search gives you a second check. SailPoint documents three exact Native Change audit-event names: `Create Native Change Detected`, `Update Native Change Detected`, and `Delete Native Change Detected`. These are audit events, not additional Workflow triggers. Use them to confirm that ISC recorded the native-change detection at the expected operation boundary before spending time on downstream workflow logic.
-
-If the workflow did run, inspect the trigger input before every other step. Native Change is account-centered. For a sensitive group addition, look at `source.id`, `account.id`, `account.nativeIdentity`, `account.correlated`, `accountChangeTypes`, and `entitlementChanges`. If `account.correlated` is `false`, the identity object is system-generated rather than a proven human identity, so an alert that names a person as the owner of the change is overclaiming. Route it to the source owner with the source and native account identity.
-
-For an update event, do not assume the first entitlement change is the one you care about. Read through `entitlementChanges`, then through each `added` and `removed` list. For account attributes, separate `singleValueAttributeChanges` from `multiValueAttributeChanges`; they are different shapes. If a filter or choice expects the sensitive group under `singleValueAttributeChanges`, it will never match a real entitlement addition.
-
-If a remediation step reports success but the sensitive access still appears on the next aggregation, apply green does not mean done. The workflow status proves the step completed from the workflow engine's point of view. It does not prove the target account stayed corrected after the fact. Check the remediation action output, the next aggregation result, the Native Change audit event, and the target system state. Also check whether a human or another process re-added the same access after your workflow removed it.
-
-> **Work It Out**
->
-> A Native Change Account Updated workflow should alert when `Finance Privileged Operators` is added to an AD account. The group was added directly in AD, but no workflow execution appears. Name the first checks, in order.
->
-> <details>
-> <summary>Check your answer</summary>
->
-> First check whether the AD source has Native Change Detection enabled. Then check whether Account Updates are monitored and whether the entitlement attribute that carries group membership is monitored. Confirm an aggregation ran after the direct AD change, because native changes are detected on aggregation. If those are correct, remove or loosen the trigger filter and test against the real event shape. If the source does not expose the expected Native Change Detection option, verify the source's supported configuration path before treating the workflow as broken.
->
-> </details>
-
-## Debugging across the access-request boundaries
-
-Access-request incidents become easier when you first identify which pattern created the execution. Adaptive Approval and Manage Access are related to the same request lifecycle, but they are not the same workflow pattern.
-
-For an Adaptive Approval workflow started by Access Request Submitted:
-
-1. Confirm the requested access item is configured to use the enabled Workflow as its Approval Type.
-2. Inspect the trigger input and confirm `accessRequestId`, `requestedItem`, `requestedBy`, and `requestedFor`.
-3. Inspect the Approval Policy configuration and output. This workflow is the approval process, so the approval step must reach a result before logic that branches on approved or rejected can continue.
-4. Inspect the approval identifiers and result data, including `approvalId`, status, and approved or rejected information where the action documents it.
-5. If the request was approved but the user still has no access, move to provisioning evidence. Approval is proven; fulfillment is not.
-
-For a workflow that uses Manage Access to submit a new access request:
-
-1. Inspect both `successfulAccessRequests` and `failedAccessRequests`, not just the green step status.
-2. If approval is required, do not expect the final decision inside that Manage Access execution. The action submits the request and the workflow continues without waiting for approval.
-3. Use a separate workflow on Access Request Decision when downstream logic needs the final approved or denied result.
-4. If the incident is really "the access is still not live," inspect Provisioning Completed and provisioning or account activity, then confirm the target state itself when business certainty requires it.
-
-The single question underneath both patterns is the same: which boundary has actually been proven, and which boundary am I only assuming? Submission, approval, provisioning completion, and access independently confirmed live on the target are different facts.
-
-> **Work It Out**
->
-> Priya requested a sensitive Finance access profile through Request Center. Its Approval Type points to an enabled Adaptive Approval workflow. The Access Request Submitted execution shows that the Approval Policy completed with an approved result, and the workflow ended successfully. A day later Priya still cannot use the Finance application. What does the green workflow prove, and where should you debug next?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The green Adaptive Approval workflow proves that this approval workflow ran successfully and reached an approved business decision. It does not prove provisioning completed or that the Finance application reflects the access. Move to the provisioning boundary: inspect Provisioning Completed and the relevant provisioning or account activity for errors, warnings, account requests, and status. If the business needs certainty that the access is actually usable, verify the Finance target itself. Do not add Manage Access to this explanation, because the request already existed before Access Request Submitted fired and Approval Policy is the action governing that existing request.
->
-> </details>
-
-## Debugging certification campaign workflows
-
-Certification incidents are easier when you follow one campaign id across its lifecycle instead of treating every green workflow execution as the same kind of success.
-
-Start with the workflow that creates the campaign. If Acme's Finance mover should create a targeted review, inspect the Identity Attributes Changed trigger input first and prove that the `changes` array contains the department transition the workflow was designed to handle. Then inspect Create Certification Campaign. Confirm the reviewer type, certification type, `Identities to Certify`, campaign duration, undecided-item setting, and **Start Campaign when Created** value that actually rendered at runtime. The identity value must be the intended ISC identity id.
-
-Next, inspect the Create action output and preserve its campaign id as the correlation value for later evidence. Create Certification Campaign has a documented 36-hour timeout, so a timeout here is not the same failure boundary as Get Certification Campaign, which times out after 1 minute, or Activate Certification Campaign, which times out after 2 hours.
-
-If the design deliberately stages campaigns before activation, do not expect the original mover execution to receive a later Campaign Generated trigger. One workflow has one trigger, and separate event-driven workflows have separate execution contexts. The Campaign Generated execution should carry the generated campaign under `campaign`, including its id and the documented sample status `STAGED`. If another workflow is responsible for activation, inspect that execution and prove that Activate Certification Campaign received the same campaign id. A `Campaign Activated` event later represents the active boundary and its documented sample status is `ACTIVE`.
-
-After activation, split reviewer evidence from campaign evidence. Certification Signed Off is about a certification reviewed by a reviewer. Its seed includes a `certification` object with fields such as `id`, `campaignRef`, `completed`, `hasErrors`, `decisionsMade`, `decisionsTotal`, `signed`, and reviewer information. It is not the Campaign End event. Campaign Ended is the campaign-level event and its documented sample status is `COMPLETED`.
-
-That distinction matters when the incident is "the reviewer revoked access, but the user still has it." SailPoint documents that signed-off revoke decisions initiate remediation, but remediation can be automatic or manual depending on the source. Do not stop at Certification Signed Off or Campaign Ended. Inspect the campaign remediation evidence, provisioning or account activity where applicable, and the target state when the business requires confirmation.
-
-Replay is a debugging concern too. If Create Certification Campaign returned an ambiguous result or an operator is considering a rerun, first determine whether a campaign already exists for that business event. The action documentation does not promise idempotent creation. Replaying blindly can create a duplicate campaign and duplicate reviewer work. Use the durable correlation record or reconciliation mechanism defined by the production design before deciding to create again.
-
-> **Work It Out**
->
-> The Finance mover execution is green and its Create Certification Campaign output contains campaign id `2c91808576f886190176f88cac5a0010`. A separate Campaign Generated execution exists for `2c91808576f886190176f88cac5a0010`, but no Campaign Activated execution exists. An engineer proposes rerunning the mover workflow. What should you inspect first, and why is rerunning the wrong first move?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The existing campaign already crossed the creation and generation boundaries, so recreating it does not address the missing activation. Open the Campaign Generated execution, confirm it is the expected campaign and inspect its `campaign.id` and status. Then inspect the workflow that should activate staged campaigns. Confirm its filter or correlation check accepted `2c91808576f886190176f88cac5a0010`, and confirm Activate Certification Campaign received that exact campaign id. If the activation action failed, inspect its error rather than creating another campaign. Rerunning the mover workflow first risks a duplicate certification because Create Certification Campaign is not documented as idempotent.
->
-> </details>
-
-## Debugging outlier response workflows
-
-Outlier debugging starts at the detection boundary, then follows the response that policy selected. Do not start by assuming a missing review or still-active account means the trigger was wrong.
-
-If there is no execution, verify that the tenant can produce the event before editing workflow logic. Current Outlier documentation requires Access Insights, a configured source with loaded account data, and onboarding that account data into AI-Driven Identity Security. Identity Outliers also has regional availability limits. The Developer documentation says outliers are calculated daily, so this trigger is not instant target-system telemetry.
-
-If an execution exists, inspect the real trigger input first. Confirm `identity.id`, `identity.displayName`, `outlierType`, and the raw numeric `score`. Current trigger-specific documentation supports `LOW_SIMILARITY` and defines score from `0.0` through `1.0`. The Product Identity Outliers UI describes its displayed score on a `0-100` scale. A branch that compares a raw event value such as `0.82` with a literal such as `70` is debugging the wrong representation, not the wrong identity.
-
-Then inspect the policy branch. Write down the exact lower and upper bounds and prove which branch accepted the runtime value. If Acme follows the SailPoint certification-template example, `0.70` belongs in the review band and `0.90` does not, because that example uses `score >= 0.7` and `score < 0.9`. Treat those values as Acme policy only if Acme actually adopted them. Do not infer enterprise policy from a template title.
-
-Next inspect enrichment. Outlier Detected does not document manager data or the richer risk-factor detail shown in the Product UI. If the workflow uses manager routing, inspect Get Identity and prove it returned the intended manager reference. If a later step needs the manager's current email, inspect the separate manager lookup. A blank recipient is an enrichment problem, not evidence that the Outlier event was incomplete.
-
-For a certification branch, inspect Create Certification Campaign exactly as the certification section above teaches. Confirm `Identities to Certify` resolves to the event's ISC `identity.id`, confirm the reviewer, and preserve the returned campaign id. From there, follow Campaign Generated, Campaign Activated, Certification Signed Off, Campaign Ended, remediation evidence, and target state as separate boundaries. Do not rerun the Outlier response merely because a later campaign boundary is missing.
-
-For a containment branch, debug the account action separately from the score decision and separate account discovery from action capability. If the design uses Get Accounts, confirm the expected account appears in its output and remember that the action documents a maximum of 250 returned accounts. An account appearing there proves discovery only. Before expecting Manage Accounts to disable it automatically, verify that the account's source and connector configuration support the required Disable/provisioning operation. If the source cannot perform that operation, confirm that the workflow routed the account to the alternate manual containment or escalation path instead of treating it as automatically containable. For accounts whose sources support the operation, inspect Manage Accounts. Confirm Account Action is Disable and confirm the exact account ids that rendered into the action input. Inspect the documented sample result fields `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Manage Accounts has a 1-hour timeout, so a timeout here is an account-action incident, not proof that the Outlier trigger or threshold was wrong. When business certainty matters, confirm the expected target state after the action.
-
-Replay deserves its own check. Outliers are recalculated, an ignored identity can be rediscovered after a significant entitlement change, and an operator can rerun a workflow after an ambiguous result. None of those facts promises duplicate event delivery. They do mean that a state-changing response can be encountered again. Before creating another campaign or repeating containment, determine what already happened and reconcile the current state.
-
-Test these paths with the same safety rule as every other world-changing workflow. Ordinary Workflow testing can execute enabled actions for real. In Simulated Testing, turn **Enable Step** off for Create Certification Campaign, Manage Accounts, Send Email, or any other step that should not change real state while you validate the score branch. Use a sandbox identity when an enabled lookup or action needs a real technical id.
-
-> **Work It Out**
->
-> An Outlier Detected execution arrives with `score = 0.93`. Acme policy sends that value to a containment branch. The execution is green, but one account Security expected to be disabled is still active. Where do you investigate next?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The trigger and branch decision are already proven, so do not start by changing the threshold or replaying the detector. Inspect the account discovery step and confirm the expected account was actually returned and selected. Then check the source capability boundary: appearing in Get Accounts does not prove the source can perform automatic Disable. Verify that the account's source and connector configuration support the required Disable/provisioning operation. If they do not, the correct next evidence is the alternate manual containment or escalation path, not a missing Manage Accounts success. If the source does support Disable, inspect the Manage Accounts input and prove that the expected account id was sent with Account Action set to Disable. Read `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails` in the action result instead of trusting the overall execution color. Finally, verify the target state when the control requires that certainty. If the account was never selected, debug account discovery and scope. If the source lacks the capability, debug the alternate path. If it was selected on a capable source but appears in a failure result, debug that account action. If the result says it succeeded but the target still appears active, investigate the target or later state boundary rather than blindly repeating the whole Outlier response.
->
-> </details>
-
-## Debugging External Trigger and HTTP integrations
-
-An external integration has two systems to inspect, so start at the boundary between them instead of starting in the middle of the workflow.
-
-For an inbound External Trigger, first inspect what the caller received from the external workflow execution API. Current Developer documentation lists `200`, `400`, `401`, `403`, `429`, and `500` outcomes, and the success response model can include a `workflowExecutionId` plus a `message` when an error occurred. Do not stop at the HTTP status. Read the response body too. A bad request points toward the request shape. `401` or `403` points toward authentication or authorization. `429` is rate limiting. A server error belongs on a retry or operator path defined by the calling integration rather than being guessed at inside ISC.
-
-Then ask whether an execution exists. If none exists, verify the caller used the External Trigger invocation details generated for the correct enabled workflow and that its configured authorization method is current. Product documentation teaches a trigger-generated OAuth client path, while current v2025 Developer API documentation also advertises Personal Access Token and Client Credentials authorization with scope `sp:workflow-execute:external`. Debug the method that the integration actually uses. If that caller uses the trigger-generated credential and a new External Trigger access token was generated, the previous token is overwritten, so an upstream service still using the old credential can fail after rotation.
-
-If an execution does exist, inspect the trigger input before later steps. External Trigger data is dynamic, so SailPoint does not expose its caller-defined fields through the normal variable selector. Confirm the real payload and the JSONPath you wrote, for example `$.trigger.eventId` or `$.trigger.workerId`. Then inspect the validation steps. Verify Data Type can confirm existence and basic types, but a correctly typed value can still be an unknown event type, an unmapped external identifier, or a replay of an event already processed.
-
-SailPoint also exposes a dedicated External Trigger test endpoint whose purpose is to validate that a workflow can receive the supplied input intact. Use that boundary test when you need to prove the caller-to-trigger payload shape. Do not confuse it with the ordinary Test Workflow operation. The ordinary workflow test can execute enabled actions for real, so continue to simulate dangerous actions or use a safe sandbox when testing the workflow itself.
-
-For an outbound HTTP Request, open the action and read the error branch data. Workflow error handling exposes `workflowErrorMessage` and `workflowStatusCode` for the failed action. Check authentication, request URL, headers, rendered body, and the external response. Remember the documented 90-second timeout. Also remember that an external response must be JSON for this action. If a later step expects a field such as `caseId`, inspect the actual HTTP Request output and prove that field exists before debugging the later JSONPath.
-
-Rate limiting is another specific clue. HTTP Request documents handling for common rate-limit response headers, including `Retry-After` and several reset-header variants. Do not invent a retry count or assume every remote error is retried. Read the actual error and the remote API's contract.
-
-> **Work It Out**
->
-> Acme's HR service says it called the separation workflow successfully, but no security case was opened. The HR logs show an External Trigger API response, and ISC has a workflow execution. What do you check, in order?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Start with the caller response and confirm the workflow execution id and any message. Because an ISC execution exists, open it and inspect the trigger input next. Confirm `eventId`, `eventType`, and `workerId` arrived in the shape the workflow expects. Then inspect the validation and identifier-mapping steps before the HTTP call. If those passed, inspect the HTTP Request input, rendered body, and output or error branch. Check `workflowStatusCode` and `workflowErrorMessage` on an error path, remember the 90-second timeout, and confirm the external system returned the JSON field the downstream logic expects. Do not jump straight to the case system until you know which boundary failed.
->
-> </details>
-
-## Running it again, and the trap of the second run
-
-Sooner or later a workflow will fail halfway through, and your instinct will be to run it again. Pause before you do, because this is where a careless fix makes things worse.
-
-Think about what already happened before the failure. Suppose Priya's onboarding workflow created an account, opened a ticket, and then failed at the next step. If you simply run the whole workflow again, it may try to create the account a second time and open a second ticket.
-
-The word for an operation that can safely be repeated without changing the final result after the first successful application is idempotent. Build world-changing steps with the second run in mind. Before creating something, check whether it already exists. Before granting or removing access, check the current state when the process requires that level of certainty. Before opening a ticket, consider whether you can detect an existing ticket for the same event.
-
-And carry one honest limit with you, which Modules 04 and 05 already hinted at and Module 11 will press harder. Testing cannot prove everything. You cannot practically rehearse every long wait, every external outage, or every race between two real events. So testing and defensive design are partners, not substitutes. You test what you can, and for everything you cannot rehearse, you design so failure is visible and recovery is safe.
-
-## Before you move on
-
-Walk a diagnosis in your head. You test Priya's offboarding workflow and it appears to do nothing. What is the first place you look to tell whether it ran and failed or never started? If there is no execution record, what is the first thing you suspect? During that same test, which feature lets you keep Manage Access from really changing Priya's access while you exercise the logic? If the welcome email arrives with a blank name, where in the execution details do you look and what does the blank tell you? If Manage Access shows success but one requested access item did not go through, which output do you inspect? And if the workflow created a ticket and then failed, what property must those earlier steps have before a second run is safe? If those answers come without strain, you can test without fear and debug without guessing, and you are ready for Module 08.
+Nothing more.
 
 ---
-[← Previous: Module 06 Data, Variables, and Expressions](06-data-variables-and-expressions.md) | [Course home](../README.md) | [Next: Module 08 Operations, Limits, and Governance →](08-operations-limits-and-governance.md)
+
+## 3. Core — The five diagnostic questions
+
+This is the method I want you to carry out of this module.
+
+```text
+1. Did the Workflow start?
+        ↓
+2. What data actually arrived?
+        ↓
+3. Where did the first unexpected value appear?
+        ↓
+4. What did that action actually guarantee?
+        ↓
+5. Which system or process owned the next boundary?
+```
+
+Do not treat these as five unrelated troubleshooting tips.
+
+They are an order.
+
+You move forward only when the earlier boundary has enough evidence.
+
+A slightly wider view looks like this:
+
+```text
+BUSINESS / TARGET EVENT
+Did the thing we care about actually happen?
+        ↓
+EVENT DETECTION
+Did ISC detect the relevant event?
+        ↓
+WORKFLOW START
+Did the trigger qualify and create an execution?
+        ↓
+INPUT
+Did the expected data arrive?
+        ↓
+LOGIC
+Did runtime values produce the expected path?
+        ↓
+ACTION
+What result or Error did the step actually produce?
+        ↓
+HUMAN / PROCESS
+Did the next governed or human process complete?
+        ↓
+DOWNSTREAM SYSTEM
+Which system now owns the next fact?
+        ↓
+TARGET STATE
+Is the intended business state independently confirmed?
+```
+
+You do not need to memorize that whole ladder.
+
+The five questions are enough to navigate it.
+
+---
+
+## 4. Core — Question 1: Did the Workflow start?
+
+Start with the simplest distinction:
+
+```text
+no execution
+```
+
+versus:
+
+```text
+execution exists
+```
+
+If an execution exists, the Workflow started.
+
+Now you have runtime evidence to inspect.
+
+If no execution exists for the situation you expected, stay at or before the start boundary.
+
+Do **not** immediately decide:
+
+> “The filter is wrong.”
+
+A missing execution does not tell you why the Workflow did not start.
+
+Several boundaries may exist before execution:
+
+```text
+business event happened
+        ≠
+ISC detected the event
+        ≠
+Workflow trigger qualified
+        ≠
+Workflow execution started
+```
+
+The right next question depends on the trigger family.
+
+You may need to determine:
+
+- whether the event actually occurred;
+- whether ISC detected the event;
+- whether the Workflow was enabled and eligible to receive it;
+- whether required trigger conditions were satisfied;
+- whether the filter allowed that event instance to qualify.
+
+Notice the discipline:
+
+> **No execution means stay upstream.**
+
+Do not debug downstream actions in a Workflow that has no execution.
+
+### Execution status is a clue, not the whole diagnosis
+
+Once an execution exists, its overall status helps orient you.
+
+Current Workflow execution states include:
+
+```text
+Completed
+Failed
+Canceled
+Queued
+Running
+```
+
+A failed execution and a Workflow that never started are completely different diagnostic situations.
+
+But even `Completed` is only the beginning of the investigation when the business result is wrong.
+
+You already know why:
+
+> **Green Does Not Mean Done.**
+
+---
+
+> **Work It Out**
+>
+> Acme expects a Workflow to react to an event this morning. Nobody sees the expected notification, and no Workflow execution can be found.
+>
+> An engineer immediately rewrites the trigger filter.
+>
+> What is wrong with that debugging move?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> The engineer has skipped the start boundary.
+>
+> No execution proves only that there is no Workflow execution to inspect. It does not prove the filter caused that outcome.
+>
+> First determine whether the relevant event occurred or was detected, whether the Workflow was eligible to start, and whether the trigger conditions were satisfied. Filtering becomes one possible boundary inside that investigation.
+>
+> The useful rule is:
+>
+> ```text
+> no execution
+> → stay upstream
+> ```
+>
+> Do not change downstream logic or blame one start condition without evidence.
+>
+> </details>
+
+---
+
+## 5. Core — Question 2: What data actually arrived?
+
+Once an execution exists, resist the urge to jump to the step that looks broken.
+
+Start with the real input.
+
+You learned in Module 02 that a Workflow cannot use data merely because you expected it to exist.
+
+That becomes a debugging rule now:
+
+> **Do not debug the value you imagined. Debug the value the execution actually received.**
+
+Ask:
+
+- Is the field present?
+- Is it missing?
+- Is it null?
+- Is it empty?
+- Is it the type you expected?
+- Does an array contain the item you expected?
+- Is the value usable for the next step?
+
+### Priya's mover event
+
+Suppose the Workflow is intended to run when Priya moves from Sales to Finance.
+
+The execution exists.
+
+Before examining the later branch, open the trigger input.
+
+You expect the `changes` data to show something conceptually like:
+
+```text
+attribute: department
+oldValue: Sales
+newValue: Finance
+```
+
+If the real input says something else, you have already found an important divergence.
+
+The problem is not yet the comparison.
+
+The comparison can only evaluate what it received.
+
+### Optional data is still optional at runtime
+
+Now imagine an onboarding Workflow needs manager information.
+
+An Identity Created event can contain identity attributes that ISC knows at that point, but you should not assume every optional attribute is present and usable in every execution.
+
+So the diagnostic method is:
+
+```text
+inspect actual event data
+        ↓
+validate the value you need
+        ↓
+retrieve current ISC-known information if required
+        ↓
+still handle missing or unusable data deliberately
+```
+
+A lookup does not manufacture information ISC does not know.
+
+That is why validation remains useful even when a Get Identity step exists.
+
+---
+
+> **Work It Out**
+>
+> Priya's onboarding Workflow starts successfully, but the manager-related path does not behave as expected.
+>
+> The engineer says:
+>
+> “The trigger should have manager information, so the comparison must be broken.”
+>
+> What do you inspect first?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Start with the real trigger input.
+>
+> Determine whether usable manager data actually arrived before changing the comparison.
+>
+> If the Workflow later retrieves current identity data, inspect that result too. A lookup can tell you what ISC currently knows; it does not guarantee that previously missing source or relationship data now exists.
+>
+> The first divergence might therefore be the data boundary rather than the logic boundary.
+>
+> </details>
+
+---
+
+## 6. Core — Question 3: Where did the first unexpected value appear?
+
+Now walk the execution **in order**.
+
+Execution history is your black box recorder.
+
+For a Workflow execution, you can use its playback and runtime evidence to see what went into steps and what came out.
+
+The goal is not to inspect every step forever.
+
+The goal is to find the first place where:
+
+```text
+expected value
+        ≠
+observed value
+```
+
+Once you find that point, stop walking forward.
+
+Later symptoms may simply be consequences.
+
+### Priya's blank welcome message
+
+Suppose Priya receives a message that effectively renders as:
+
+```text
+Welcome to Acme,
+```
+
+You expected:
+
+```text
+Welcome to Acme, Priya
+```
+
+Do not immediately decide:
+
+> “JSONPath is wrong.”
+
+The blank value tells you where to investigate, not yet why it happened.
+
+Open the execution and compare the evidence.
+
+Ask:
+
+1. Did the source step actually contain Priya's first name?
+2. Did the later step reference the correct value?
+3. Was the reference or expression valid for the environment where it ran?
+4. What value actually rendered at runtime?
+
+Imagine the trigger input clearly contains Priya's first name, but the later input references a different location.
+
+Now you have evidence for a reference/path problem.
+
+That is much stronger than guessing from the empty message.
+
+### Rendered values are often more useful than the expression you remember writing
+
+The canvas tells you what you intended.
+
+Execution playback tells you what that execution actually ran with.
+
+That distinction matters even more when a Workflow has been edited since the historical execution occurred.
+
+When diagnosing an old run, reason from the evidence associated with **that execution**, not only from what the current canvas looks like today.
+
+### Comparisons work the same way
+
+Suppose a comparison takes the unexpected branch.
+
+Do not begin by replacing the operator.
+
+First inspect the exact runtime values that reached it.
+
+Maybe one value is missing.
+
+Maybe the wrong field was selected.
+
+Maybe whitespace, casing, formatting, or another representation differs from what you expected.
+
+Do not assume undocumented normalization behavior.
+
+Read the rendered values and diagnose from evidence.
+
+---
+
+> **Engineering Habit:** Walk forward until the first unexpected value or state. Once you find it, stop blaming later steps until you understand that divergence.
+
+---
+
+## 7. Core — Question 4: What did that action actually guarantee?
+
+This is where Module 05 becomes a debugging skill.
+
+When a step looks green, ask:
+
+> **What did this action actually complete?**
+
+Do not translate:
+
+```text
+green
+```
+
+into:
+
+```text
+the entire business requirement succeeded
+```
+
+An action can produce several kinds of evidence.
+
+### Native action Error
+
+With Error handling enabled, an action can take its native Error path.
+
+That is a technical action-execution problem.
+
+Read the execution's Error evidence.
+
+Do not turn every unwanted business result into a technical Error.
+
+### Normal result containing a problem signal
+
+Some actions can complete normally while their documented output tells you that part of the requested work did not succeed.
+
+**Manage Access** is the clearest example.
+
+Its result includes:
+
+```text
+successfulAccessRequests
+failedAccessRequests
+```
+
+Those fields matter more than the color alone.
+
+A Manage Access step can complete while one or more requested items appear in `failedAccessRequests`.
+
+So:
+
+```text
+Manage Access step completed
+        ≠
+every requested item succeeded
+```
+
+And even `successfulAccessRequests` is easy to overread.
+
+It does **not** mean:
+
+```text
+approved
+```
+
+It does **not** mean:
+
+```text
+provisioned
+```
+
+It does **not** mean:
+
+```text
+confirmed live on the target
+```
+
+Keep the ladder explicit:
+
+```text
+successfulAccessRequests
+        ≠
+approval completed
+        ≠
+provisioning completed
+        ≠
+target state independently confirmed
+```
+
+That is Green Does Not Mean Done applied as diagnosis.
+
+### Normal business result
+
+A Workflow may also reach a perfectly valid business outcome that is not the outcome one person hoped for.
+
+A governed approval may result in rejection.
+
+That is not automatically a broken Workflow.
+
+A human step may follow its documented non-response contract.
+
+That is not automatically the same thing as a generic action failure.
+
+Classify the result before trying to “fix” it.
+
+---
+
+> **Work It Out**
+>
+> Priya's offboarding execution is `Completed`.
+>
+> The Manage Access step is also green.
+>
+> A reviewer later finds one access item that should have been removed but was not.
+>
+> Where do you start?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Do not start by rewriting the trigger or assuming the whole access-removal action succeeded.
+>
+> Open the Manage Access result and inspect both `successfulAccessRequests` and `failedAccessRequests`.
+>
+> If the relevant removal appears in `failedAccessRequests`, the first divergence is already inside the action result.
+>
+> If the request appears successful at the Manage Access boundary, move forward to the later approval or provisioning boundary instead of assuming the target state is already proven.
+>
+> </details>
+
+---
+
+## 8. Core — Question 5: Which system or process owned the next boundary?
+
+This question prevents endless Workflow debugging after the Workflow has already done its job.
+
+Return to Priya's Finance request.
+
+Suppose the approval Workflow ran and produced an approved result.
+
+Priya still cannot use the Finance application.
+
+What is proven?
+
+```text
+approval completed
+```
+
+What is not yet proven?
+
+```text
+provisioning completed
+target access confirmed
+```
+
+Do not restart at the trigger.
+
+Do not change the approval policy merely because the final application state is wrong.
+
+The unresolved fact belongs later in the process.
+
+Move to provisioning evidence.
+
+A **Provisioning Completed** event can provide meaningful evidence about provisioning activity, warnings, errors, account requests, and provisioning results.
+
+That is stronger evidence than approval alone.
+
+But keep the final boundary distinct:
+
+```text
+Provisioning Completed
+        ≠
+independent confirmation of current target state
+```
+
+If the business requirement demands certainty that Priya can actually use the Finance application, the next evidence must come from the target side or another independent confirmation mechanism.
+
+### Once a boundary is proven, move forward
+
+This is an engineering habit worth making explicit.
+
+```text
+trigger data is correct
+→ stop rewriting the filter without evidence
+
+comparison input is correct
+and branch is correct
+→ stop debugging the trigger
+
+approval is proven
+→ stop treating approval as unresolved
+
+Workflow sent the expected request
+and received the expected response
+→ investigate the next system boundary
+```
+
+Do not move backward merely because the final symptom is emotionally attached to the Workflow.
+
+Evidence decides where you work next.
+
+### Human non-response follows the same rule
+
+Module 06 established that human mechanisms do not share one universal non-response rule.
+
+So if a person never responded, do not conclude:
+
+```text
+human did not respond
+→ generic Workflow failure
+```
+
+Ask:
+
+> What does this specific mechanism's documented non-response contract say happened?
+
+A Form, an Interactive Form, and an approval policy can represent non-response differently.
+
+Module 07 diagnoses the result.
+
+It does not invent a new universal timeout rule.
+
+---
+
+## 9. Core — Classify the first divergence
+
+Once you have found the first point where evidence differs from expectation, give the problem a useful class.
+
+| First evidence | Likely class | Next reasoning move |
+|---|---|---|
+| No execution | Start / event boundary | Determine whether the event occurred or was detected and whether the Workflow qualified |
+| Trigger data differs | Data boundary | Work from the real payload and validate what is missing or different |
+| Rendered value differs | Data-reference / logic boundary | Trace the value backward to its source |
+| Action enters Error | Native action failure | Read the actual Error evidence and the action contract |
+| Action is green but output reports failed items | Normal result with problem signal | Read the documented result instead of trusting color |
+| Human interaction does not end as expected | Human/process boundary | Apply that mechanism's own contract |
+| Approval is complete but access is absent | Downstream process boundary | Move to provisioning evidence |
+| Provisioning evidence exists but target state is still wrong | Target/external boundary | Investigate the system that now owns the state |
+
+This classification is not a troubleshooting catalog.
+
+You still locate the divergence first.
+
+Classification only helps you decide what kind of evidence comes next.
+
+---
+
+## 10. Core — One hypothesis, one change, one safe retest
+
+Once you find the first divergence, form one explanation that fits the evidence.
+
+Then change one thing.
+
+```text
+observe
+        ↓
+form one hypothesis
+        ↓
+change one thing
+        ↓
+retest safely
+        ↓
+compare the new evidence
+```
+
+Why one thing?
+
+Because if you change the trigger filter, JSONPath, comparison, and action input at the same time and the Workflow starts working, you have learned almost nothing.
+
+You do not know which assumption was wrong.
+
+That makes the next incident harder.
+
+### Do not blindly rerun side-effecting work
+
+Sometimes the proposed “retest” is a rerun of a Workflow that already executed halfway.
+
+Before doing that, ask:
+
+> **What already happened?**
+
+Suppose the Workflow already created something, changed access, or sent a request before failing later.
+
+A second full run does not start from a clean mental slate merely because you pressed Run again.
+
+For Module 07, carry this safety rule:
+
+> **If earlier side effects may already have happened, determine what occurred before rerunning the whole process.**
+
+Later in the course we will go deeper into replay, idempotency, duplicate effects, correlation, and concurrency.
+
+For now, do not create a second incident while fixing the first one.
+
+---
+
+## 11. Working Engineer — Apply the same method to harder boundaries
+
+The five questions are valuable only if they transfer.
+
+Here are three situations that look very different but use the same method.
+
+### Native Change — add the upstream detection boundary
+
+Suppose someone adds `Finance Privileged Operators` directly to an AD account.
+
+Acme expects a Native Change Workflow to react.
+
+No execution appears.
+
+Do not start by editing the Workflow.
+
+Native Change adds an important upstream question:
+
+```text
+target change happened
+        ↓
+did ISC detect it?
+        ↓
+did the Workflow start?
+```
+
+Native Change Detection depends on the relevant source configuration and aggregation boundary.
+
+So diagnosis stays upstream until detection is established.
+
+If an execution **does** exist, continue normally:
+
+```text
+What account/change data arrived?
+        ↓
+Where did the first unexpected value appear?
+        ↓
+What did remediation actually prove?
+        ↓
+What evidence owns the current target state?
+```
+
+Also keep attribution narrow.
+
+If the account is not correlated to a real identity, do not convert a technical account-change signal into a confident statement about a known human owner or actor.
+
+```text
+technical change detected
+        ≠
+human intent proven
+        ≠
+authorization proven
+```
+
+Native Change is not a different debugging method.
+
+It is the same method with an extra detection boundary before the Workflow.
+
+---
+
+> **Work It Out**
+>
+> A sensitive group is added directly to an AD account, but no Native Change Workflow execution appears.
+>
+> What should you *not* debug yet?
+>
+> <details>
+> <summary>Check your answer</summary>
+>
+> Do not start with downstream Workflow actions or remediation logic.
+>
+> First establish the upstream evidence: did the target change occur, did ISC detect it through the relevant Native Change/aggregation boundary, and did the Workflow then qualify to start?
+>
+> Only after an execution exists should you debug the data and later Workflow steps.
+>
+> </details>
+
+---
+
+### Access request — follow the business boundaries
+
+Priya requests sensitive Finance access.
+
+The request goes through its governed approval process.
+
+The approval Workflow completes with an approved result.
+
+The next day Priya still cannot use the application.
+
+Walk the five questions.
+
+#### 1. Did the Workflow start?
+
+Yes.
+
+You have the approval Workflow execution.
+
+#### 2. What data arrived?
+
+The request data is present and corresponds to Priya's Finance request.
+
+#### 3. Where did the first unexpected value appear?
+
+So far, nowhere inside the approval execution.
+
+#### 4. What did the action actually guarantee?
+
+The approval process reached an approved result.
+
+That proves the approval boundary.
+
+#### 5. Who owns the next boundary?
+
+Provisioning.
+
+And after provisioning evidence:
+
+the target system.
+
+The useful conclusion is:
+
+```text
+approval is proven
+→ stop debugging approval
+→ move forward
+```
+
+That is systematic diagnosis.
+
+### HTTP integration — separate Workflow evidence from remote-system evidence
+
+Suppose Acme's separation Workflow should create a case in an external security platform.
+
+The Workflow starts.
+
+Its trigger input is correct.
+
+Validation and branching are correct.
+
+Then you reach **HTTP Request**.
+
+At that point, inspect what the action actually returned or what Error evidence the execution recorded.
+
+Do not create a universal rule such as:
+
+```text
+HTTP status X
+→ always means one specific Workflow outcome
+```
+
+Read the actual execution.
+
+If HTTP Request entered Error, diagnose the action and remote response from that evidence.
+
+If it returned the expected Workflow-side result but the security case is still absent, the unresolved fact has moved outside the Workflow.
+
+```text
+Workflow request evidence
+        ↓
+remote system response
+        ↓
+remote business state
+```
+
+Again, the method did not change.
+
+Only the owner of the next boundary changed.
+
+---
+
+## 12. Advanced — What this module is deliberately not solving yet
+
+At this point you know how to diagnose **one execution**.
+
+That does not yet make you responsible for every production-operations problem around the Workflow.
+
+Module 08 will deal with questions such as:
+
+- ownership;
+- production monitoring;
+- retention strategy;
+- limits;
+- promotion;
+- credentials and secrets;
+- maintenance over time.
+
+And later modules will go deeper into:
+
+- replay;
+- idempotency;
+- duplicate side effects;
+- concurrency;
+- race conditions;
+- durable correlation;
+- reconciliation.
+
+You have already seen why those ideas matter.
+
+For now, your responsibility is narrower:
+
+```text
+find what actually happened
+        ↓
+locate the first divergence
+        ↓
+classify the boundary
+        ↓
+form one evidence-based hypothesis
+```
+
+That is enough to make debugging dramatically less random.
+
+---
+
+## 13. Work It Out — Full diagnosis
+
+Priya requests a Finance access profile.
+
+You are told:
+
+> “The Workflow worked, but she still has no access.”
+
+You find the following evidence:
+
+```text
+Access-request approval Workflow:
+Completed
+
+Approval result:
+Approved
+
+Provisioning evidence:
+contains an error for the Finance source
+```
+
+An engineer proposes changing the approval logic.
+
+Walk the diagnosis.
+
+<details>
+<summary>Check your answer</summary>
+
+Start with what is already proven.
+
+```text
+Did the Workflow start?
+→ Yes
+
+What data arrived?
+→ The expected Finance request
+
+Where is the first unexpected state?
+→ Not in the approval Workflow
+
+What did the approval guarantee?
+→ The governed approval reached Approved
+
+Which process owns the next boundary?
+→ Provisioning
+```
+
+The first relevant divergence is in the provisioning evidence.
+
+Changing the approval logic would move backward without evidence.
+
+Investigate the Finance provisioning problem.
+
+Only return to the approval Workflow if new evidence points back there.
+
+</details>
+
+---
+
+## 14. Checkpoint — Diagnose before you redesign
+
+You should now be able to take a Workflow incident and walk it systematically rather than changing random steps.
+
+Given an expected business event, you should be able to ask:
+
+```text
+1. Did the Workflow start?
+
+2. What data actually arrived?
+
+3. Where did the first unexpected value or state appear?
+
+4. What did the relevant action or human process actually prove?
+
+5. Which system or process owned the next unproven fact?
+```
+
+You should also be able to turn the answer into a controlled debugging loop:
+
+```text
+expected
+        ↓
+observed
+        ↓
+first divergence
+        ↓
+one hypothesis
+        ↓
+one change
+        ↓
+one safe retest
+```
+
+And you should know when **not** to keep debugging the Workflow.
+
+If approval is already proven, move to provisioning.
+
+If provisioning evidence is already proven, move to the target state.
+
+If an external system now owns the missing fact, investigate that system.
+
+If there is no execution, stay upstream.
+
+That is the habit I want you to carry forward:
+
+> **Debug from evidence, and stop at the first place reality differs from expectation.**
+
+Module 08 changes the scale of the problem.
+
+You now know how to diagnose one execution.
+
+Next we ask how to operate the Workflow itself as a production asset over time.
+
+---
+
+## Official References
+
+- [Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/index.html)
+- [Building Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Creating Data for Testing Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-test-data.html)
+- [Managing Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Workflow Actions — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Workflow Triggers — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Identity Attributes Changed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
+- [Identity Created — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-created/)
+- [Provisioning Completed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
+- [Native Change Account Updated — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
+
+---
+
+[← Previous: Module 06 Forms, Approvals & Interactive Workflows](05-forms-and-interactive-workflows.md) | [Course home](README.md) | [Next: Module 08 Operations, Limits & Governance →](08-operations-limits-and-governance.md)

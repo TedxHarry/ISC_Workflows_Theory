@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 07 — Testing, Debugging & Execution
+**Current target:** Module 08 — Operations, Limits & Governance
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, 05, and 06 are final accepted. Module 07 is the current target.
+Modules 00, 01, 02, 03, 04, 05, 06, and 07 are final accepted. Module 08 is the current target.
 
 ---
 
@@ -155,8 +155,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 03 source file pending coordinated renumbering |
 | 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 04 source file pending coordinated renumbering |
 | 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 05 source file pending coordinated renumbering |
-| 07 Testing / Debugging | NOT STARTED | Current target; reorganize around diagnostic method |
-| 08 Operations / Limits / Governance | NOT STARTED | Add ownership, sizes, overlap, lifecycle |
+| 07 Testing / Debugging | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 08 Operations / Limits / Governance | NOT STARTED | Current target; add ownership, sizes, overlap, lifecycle |
 | 09 When to Use Workflows | NOT STARTED | Add decision framework |
 | 10 Real-World Patterns | NOT STARTED | Add difficulty classification |
 | 11 Failure Modes / Edge Cases | NOT STARTED | Increase scenario-first reasoning |
