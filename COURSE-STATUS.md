@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 09 — When to Use Workflows and When Not
+**Current target:** Module 10 — Real-World Workflow Patterns
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, 05, 06, 07, and 08 are final accepted. Module 09 is the current target.
+Modules 00, 01, 02, 03, 04, 05, 06, 07, 08, and 09 are final accepted. Module 10 is the current target.
 
 ---
 
@@ -98,7 +98,7 @@ The existing JSON skeleton appeared to place `trigger` inside `definition`. Form
 
 Existing language suggests transforms "do not make decisions." This is likely too absolute because supported transform operations can contain conditional/fallback logic. The intended architectural distinction is that transforms calculate/shape values and do not act as general workflow orchestration engines.
 
-**Status:** Module 00 resolved in the final accepted revision; Module 09 remains pending formal technical review
+**Status:** Resolved in the final accepted Modules 00 and 09. Module 09 explicitly preserves supported conditional value logic while teaching the architectural boundary between attribute-value calculation/manipulation and event/process orchestration.
 
 ## Module 04 / future Module 05 — Get Identity execution wording
 
@@ -157,8 +157,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 05 source file pending coordinated renumbering |
 | 07 Testing / Debugging | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 08 Operations / Limits / Governance | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 09 When to Use Workflows | NOT STARTED | Current target; add decision framework |
-| 10 Real-World Patterns | NOT STARTED | Add difficulty classification |
+| 09 When to Use Workflows | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 10 Real-World Patterns | NOT STARTED | Current target; add difficulty classification |
 | 11 Failure Modes / Edge Cases | NOT STARTED | Increase scenario-first reasoning |
 | 12 Readiness / Paper Design | NOT STARTED | Finalize seven-question framework |
 
