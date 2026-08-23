@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 08 — Operations, Limits & Governance
+**Current target:** Module 09 — When to Use Workflows and When Not
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, 05, 06, and 07 are final accepted. Module 08 is the current target.
+Modules 00, 01, 02, 03, 04, 05, 06, 07, and 08 are final accepted. Module 09 is the current target.
 
 ---
 
@@ -122,7 +122,7 @@ Verify and add where current documentation supports them:
 - scheduled execution overlap behavior
 - current execution thresholds and retention
 
-**Status:** Pending
+**Status:** Resolved in the final accepted Module 08 through current-source verification of ownership and Workflow PAT behavior, size limits, scheduled overlap, execution thresholds, retention boundaries, promotion/configuration-management behavior, and secure-credential scope.
 
 ---
 
@@ -156,8 +156,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 04 source file pending coordinated renumbering |
 | 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 05 source file pending coordinated renumbering |
 | 07 Testing / Debugging | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 08 Operations / Limits / Governance | NOT STARTED | Current target; add ownership, sizes, overlap, lifecycle |
-| 09 When to Use Workflows | NOT STARTED | Add decision framework |
+| 08 Operations / Limits / Governance | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 09 When to Use Workflows | NOT STARTED | Current target; add decision framework |
 | 10 Real-World Patterns | NOT STARTED | Add difficulty classification |
 | 11 Failure Modes / Edge Cases | NOT STARTED | Increase scenario-first reasoning |
 | 12 Readiness / Paper Design | NOT STARTED | Finalize seven-question framework |
