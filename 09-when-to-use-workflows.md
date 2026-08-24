@@ -1545,4 +1545,4 @@ That is how you prevent a useful automation tool from becoming the answer to eve
 
 ---
 
-[← Previous: Module 08 Operations, Limits, and Governance](08-operations-limits-and-governance.md) | [Course home](../README.md) | [Next: Module 10 Use Case Patterns →](10-use-case-patterns.md)
+[← Previous: Module 08 Operations, Limits & Governance](08-operations-limits-and-governance.md) | [Course home](README.md) | [Next: Module 10 Real-World Workflow Patterns →](10-use-case-patterns.md)

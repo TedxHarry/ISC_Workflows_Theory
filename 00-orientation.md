@@ -328,4 +328,4 @@ That is where Module 01 begins.
 
 ---
 
-[Course home](../README.md) | [Next: Module 01 The Workflow Model →](01-the-workflow-model.md)
+[Course home](README.md) | [Next: Module 01 The Workflow Model →](01-the-workflow-model.md)

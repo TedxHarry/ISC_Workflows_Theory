@@ -2687,4 +2687,4 @@ That is the skill that survives when the next requirement has a business name yo
 
 ---
 
-[← Previous: Module 09 When to Use Workflows and When Not](09-when-to-use-workflows.md) | [Course home](../README.md) | [Next: Module 11 Challenges and Edge Cases →](11-challenges-and-edge-cases.md)
+[← Previous: Module 09 When to Use Workflows and When Not](09-when-to-use-workflows.md) | [Course home](README.md) | [Next: Module 11 Challenges, Failure Modes & Edge Cases →](11-challenges-and-edge-cases.md)

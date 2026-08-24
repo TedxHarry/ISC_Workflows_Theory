@@ -1191,4 +1191,4 @@ Next we ask a different engineering question:
 
 ---
 
-[← Previous: Module 07 Testing, Debugging, and Execution](07-testing-debugging-and-execution.md) | [Course home](../README.md) | [Next: Module 09 When to Use Workflows and When Not →](09-when-to-use-workflows.md)
+[← Previous: Module 07 Testing, Debugging & Execution](07-testing-debugging-and-execution.md) | [Course home](README.md) | [Next: Module 09 When to Use Workflows and When Not →](09-when-to-use-workflows.md)

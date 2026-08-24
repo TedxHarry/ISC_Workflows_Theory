@@ -27,7 +27,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 # Current Project State
 
-**Phase:** Module refactor sequence complete; repository-wide finalization pending
+**Phase:** Repository-wide structural cleanup complete; course-wide audits pending
 
 **Current target:** None — Modules 00–12 are FINAL ACCEPTED
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00 through 12 are final accepted. The module-by-module refactor sequence is complete. Repository-wide finalization work remains pending.
+Modules 00 through 12 are final accepted. The module-by-module refactor sequence and coordinated filename/navigation repair are complete. Course-wide technical, learner-continuity, teaching-voice, and reference consistency audits remain pending.
 
 ---
 
@@ -150,11 +150,11 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 |---|---|---|
 | 00 Orientation | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 01 Workflow Model | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 02 Data / JSONPath | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 06 source file pending coordinated renumbering |
-| 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 02 source file pending coordinated renumbering |
-| 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 03 source file pending coordinated renumbering |
-| 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 04 source file pending coordinated renumbering |
-| 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete in current Module 05 source file pending coordinated renumbering |
+| 02 Data / JSONPath | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
 | 07 Testing / Debugging | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 08 Operations / Limits / Governance | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 09 When to Use Workflows | FINAL ACCEPTED | Maintainer approved; integration complete |
@@ -166,18 +166,20 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 
 # Repository-Wide Work Still Pending
 
-The module-by-module refactor sequence is complete, but the following repository-wide work remains pending and must be handled separately.
+The module-by-module refactor sequence and structural navigation cleanup are complete. The remaining work is the course-wide audit and final integrity phase.
 
-- [ ] Renumber/rename module files 02–06
-- [ ] Update README navigation
-- [ ] Update previous/next links
-- [ ] Update Docsify/sidebar navigation where required
-- [ ] Repair cross-module number references
-- [ ] Decide whether old public deep links need redirect/stub files
-- [ ] Add/update Official References sections
+- [x] Renumber/rename module files 02–06
+- [x] Update README navigation
+- [x] Update previous/next links
+- [x] Update Docsify/sidebar navigation where required
+- [x] Repair cross-module number references
+- [x] Decide whether old public deep links need redirect/stub files — preserved with moved-module stubs
+- [ ] Add/update Official References sections and reconcile site-injected reference lists
 - [ ] Run final technical consistency audit
 - [ ] Run final beginner learning-continuity audit
 - [ ] Run final teaching-voice audit
+
+`index.html` module routing, ordering, display titles, and module-key mappings have been structurally updated. The student-facing `moduleHighlights` text and `officialReferences` contents were intentionally not substantively revised during structural cleanup and remain explicit specialist-audit targets.
 
 ---
 
