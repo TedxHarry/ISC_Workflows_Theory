@@ -29,9 +29,9 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 **Phase:** Module refactor in progress
 
-**Current target:** Module 11 — Challenges, Failure Modes & Edge Cases
+**Current target:** Module 12 — Readiness & Paper Design
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 — Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, 05, 06, 07, 08, 09, and 10 are final accepted. Module 11 is the current target.
+Modules 00, 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, and 11 are final accepted. Module 12 is the current target.
 
 ---
 
@@ -159,8 +159,8 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 08 Operations / Limits / Governance | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 09 When to Use Workflows | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 10 Real-World Patterns | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 11 Failure Modes / Edge Cases | NOT STARTED | Current target; increase scenario-first reasoning |
-| 12 Readiness / Paper Design | NOT STARTED | Finalize seven-question framework |
+| 11 Failure Modes / Edge Cases | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 12 Readiness / Paper Design | NOT STARTED | Current target; finalize seven-question framework |
 
 ---
 
