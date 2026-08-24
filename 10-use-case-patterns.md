@@ -608,7 +608,7 @@ Module 11 will force that question much harder.
 
 One of the most useful Workflows in a tenant can be very small.
 
-An aggregation fails.
+An aggregation reaches a failure or termination condition Acme cares about.
 
 Tell the right person.
 
@@ -616,16 +616,19 @@ Tell the right person.
 
 ```text
 PURPOSE
-Turn an aggregation failure into an actionable signal.
+Turn an aggregation failure or termination condition
+into an actionable signal.
 
 EVENT
 Account Aggregation Completed
 
 CONTEXT
-Aggregation status and source information.
+Aggregation outcome and source information.
 
 DECISION
-Is status Error?
+Does the verified aggregation outcome match
+the failure / termination condition
+Acme actually intends to alert on?
 
 WORK
 Route an alert to the responsible owner/team.
@@ -637,27 +640,21 @@ RISK
 Poor filtering creates noise and destroys trust in the alert.
 ```
 
-Current documented status values for this event include:
+The important implementation habit is not memorizing one status value.
 
-```text
-Success
-Error
-```
+The exact status predicate is an implementation fact to verify against the current native Workflow contract and actual trigger data.
 
-So the direct failure decision can be expressed conceptually as:
-
-```text
-status == "Error"
-```
-
-There is no reason to teach a stale documentation conflict around the failure status.
+> **Do not hard-code a status value from memory.**
 
 ### The reusable shape
 
 ```text
 Account Aggregation Completed
         ↓
-status == Error?
+inspect the verified aggregation outcome
+        ↓
+does it match the failure / termination condition
+Acme actually intends to alert on?
         |
         +---- no  → end quietly
         |
@@ -672,21 +669,21 @@ status == Error?
 
 The filter is not decorative.
 
-Without it:
+Without a precise condition:
 
 ```text
-every successful aggregation
+aggregation outcomes Acme does not care about
         ↓
 another message
 ```
 
 Soon the channel becomes noise.
 
-When the real failure arrives, nobody notices.
+When the real operational condition arrives, nobody notices.
 
 ### Signal before remediation
 
-An aggregation error can result from different causes:
+An actionable aggregation outcome can result from different operational conditions, such as:
 
 - connectivity;
 - credentials;
@@ -694,7 +691,9 @@ An aggregation error can result from different causes:
 - collection problems;
 - other operational conditions.
 
-The event says the aggregation ended with an error.
+The event gives you an aggregation outcome.
+
+Your verified predicate determines whether that outcome matches the failure or termination condition Acme intends to alert on.
 
 It does not automatically tell your Workflow that one universal corrective action is safe.
 
