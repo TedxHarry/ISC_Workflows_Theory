@@ -27,11 +27,11 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 # Current Project State
 
-**Phase:** Module refactor in progress
+**Phase:** Module refactor sequence complete; repository-wide finalization pending
 
-**Current target:** Module 12 — Readiness & Paper Design
+**Current target:** None — Modules 00–12 are FINAL ACCEPTED
 
-**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 — Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`)
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 — Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`); Module 12 — Readiness & Paper Design (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00, 01, 02, 03, 04, 05, 06, 07, 08, 09, 10, and 11 are final accepted. Module 12 is the current target.
+Modules 00 through 12 are final accepted. The module-by-module refactor sequence is complete. Repository-wide finalization work remains pending.
 
 ---
 
@@ -160,13 +160,13 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 | 09 When to Use Workflows | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 10 Real-World Patterns | FINAL ACCEPTED | Maintainer approved; integration complete |
 | 11 Failure Modes / Edge Cases | FINAL ACCEPTED | Maintainer approved; integration complete |
-| 12 Readiness / Paper Design | NOT STARTED | Current target; finalize seven-question framework |
+| 12 Readiness / Paper Design | FINAL ACCEPTED | Maintainer approved; integration complete |
 
 ---
 
 # Repository-Wide Work Still Pending
 
-Do not perform these globally until the relevant module architecture is approved.
+The module-by-module refactor sequence is complete, but the following repository-wide work remains pending and must be handled separately.
 
 - [ ] Renumber/rename module files 02–06
 - [ ] Update README navigation
