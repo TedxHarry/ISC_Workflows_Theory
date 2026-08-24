@@ -255,7 +255,7 @@ You should be able to reason through them, but they deserve more deliberate veri
 
 These involve security response, event chains, external contracts, destructive actions, correlation questions, or multiple independent business boundaries.
 
-Your goal is **recognition and boundary judgment**.
+Your goal here is **recognition and boundary judgment**.
 
 You are not expected to solve every replay, idempotency, race, retry, or reconciliation problem yet.
 
