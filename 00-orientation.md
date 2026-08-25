@@ -326,6 +326,11 @@ The next question is the natural one:
 
 That is where Module 01 begins.
 
+## Official References
+
+- [Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/index.html)
+- [Building Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+
 ---
 
 [Course home](README.md) | [Next: Module 01 The Workflow Model →](01-the-workflow-model.md)

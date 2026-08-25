@@ -267,7 +267,7 @@ Module 11 will teach you how to attack that answer.
 
 ---
 
-# Part I: Core Patterns
+## Part I: Core Patterns
 
 ## 4. Core: Joiner communication
 
@@ -1163,7 +1163,7 @@ If you can produce that without memorizing a previous canvas, you are using patt
 
 ---
 
-# Part II: Working Engineer Patterns
+## Part II: Working Engineer Patterns
 
 ## 14. Working Engineer: Manage Access orchestration
 
@@ -1627,7 +1627,7 @@ Module 11 will handle the deeper replay/correlation design.
 
 ---
 
-# Part III: Advanced Recognition
+## Part III: Advanced Recognition
 
 Advanced does **not** mean irrelevant.
 
@@ -2245,7 +2245,7 @@ Module 11 will handle the durable state and duplicate-side-effect reasoning.
 
 ---
 
-# Part IV: Combining Patterns
+## Part IV: Combining Patterns
 
 ## 24. Core / Working Engineer Bridge: Real Workflows combine simple shapes
 
@@ -2359,7 +2359,7 @@ That is the preparation Module 11 needs.
 
 ---
 
-# Part V: Pattern Transfer
+## Part V: Pattern Transfer
 
 ## 26. Work It Out: A pattern you have not seen exactly
 
@@ -2518,7 +2518,7 @@ That is exactly why pattern anatomy matters more than recipe copying.
 
 ---
 
-# Part VI: Final Pattern Checkpoint
+## Part VI: Final Pattern Checkpoint
 
 ## 28. Checkpoint: Do you recognize the shape?
 

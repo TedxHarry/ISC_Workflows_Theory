@@ -634,7 +634,7 @@ Module 09 will make that architectural choice explicit.
 
 ---
 
-# Engineering Step-Up: Loops
+## Engineering Step-Up: Loops
 
 Everything so far can be reasoned about one value or one decision at a time.
 

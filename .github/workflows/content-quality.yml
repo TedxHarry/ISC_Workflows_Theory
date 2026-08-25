@@ -1,0 +1,25 @@
+name: Content quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate course content
+        run: python scripts/check_content.py
+      - name: Validate scripts and site shell
+        run: |
+          python -m py_compile scripts/check_content.py scripts/check_external_links.py
+          python -c "from pathlib import Path; import re; html=Path('index.html').read_text(encoding='utf-8'); Path('/tmp/index-inline.js').write_text('\\n'.join(re.findall(r'<script>(.*?)</script>', html, flags=re.S)), encoding='utf-8')"
+          node --check /tmp/index-inline.js

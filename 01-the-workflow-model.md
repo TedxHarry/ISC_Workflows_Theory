@@ -461,6 +461,12 @@ That is the next problem.
 
 Module 02 starts with the data itself: values, objects, nested structures, and arrays. Once you can confidently see the shape of the information, we will teach you how a Workflow points to the exact value it needs.
 
+## Official References
+
+- [Building Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Workflow Actions - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Workflow Operators - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+
 ---
 
 [← Previous: Module 00 Orientation](00-orientation.md) | [Course home](README.md) | [Next: Module 02 Data, Payloads, Variables & JSONPath →](02-data-variables-and-expressions.md)
