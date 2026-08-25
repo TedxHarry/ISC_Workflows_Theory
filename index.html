@@ -723,6 +723,7 @@
         button.textContent = 'Copy';
         button.setAttribute('aria-label', 'Copy code');
         button.setAttribute('aria-live', 'polite');
+        button.setAttribute('aria-live', 'polite');
         button.addEventListener('click', function () {
           const text = code.innerText;
           if (navigator.clipboard && navigator.clipboard.writeText) {
