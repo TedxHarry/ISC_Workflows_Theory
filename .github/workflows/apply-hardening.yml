@@ -72,16 +72,21 @@ jobs:
           PY
           node --check /tmp/index-inline.js
 
+      - name: Keep workflow files out of the runner commit
+        run: |
+          git checkout -- .github/workflows/apply-hardening.yml .github/scripts/apply_hardening.py
+          rm -f .github/workflows/content-quality.yml .github/workflows/external-link-check.yml
+          rm -rf scripts/__pycache__
+
       - name: Remove already merged stale branches
         run: |
           git fetch origin --prune
-          protected='main hardening/course-quality course-theory-refactor'
-          for remote in $(git branch -r --merged origin/main | sed 's#^[ *]*origin/##' | grep -v '^HEAD$'); do
-            case " $protected " in
-              *" $remote "*) continue ;;
+          git for-each-ref --format='%(refname:strip=3)' --merged=refs/remotes/origin/main refs/remotes/origin | while read remote; do
+            case "$remote" in
+              HEAD|main|hardening/course-quality|course-theory-refactor) continue ;;
             esac
             echo "Deleting merged branch: $remote"
-            git push origin --delete "$remote" || true
+            git push origin --delete "$remote"
           done
 
       - name: Commit hardening changes
