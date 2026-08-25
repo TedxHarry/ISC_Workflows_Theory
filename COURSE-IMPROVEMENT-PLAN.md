@@ -67,7 +67,7 @@ This plan does **not** include hands-on labs. Labs are a separate course.
 
 # 2. Existing-to-New Module Mapping
 
-Current repository mapping:
+Pre-finalization source mapping used during the refactor:
 
 ```text
 Current 00 Orientation                         → New 00 Orientation

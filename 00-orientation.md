@@ -1,62 +1,331 @@
 # Module 00: Orientation
 
-Where workflows sit in Identity Security Cloud, what you should already know, and how workflows relate to the other tools around them.
+Where Workflows fit in Identity Security Cloud, what you need before starting, and how this course will teach you to think about Workflow engineering.
 
-Before we touch a single trigger or action, I want you to have a clear picture in your head of what workflows are for and where they live. If you get this picture right, everything later in the course has somewhere to attach. If you skip it, workflows can feel like a bag of loose features. So let us slow down here for a few minutes.
+Before we open a Workflow, I want you to have one picture in your head:
 
-## A story we will keep coming back to
+**Workflow is a tool for coordinating processing. It is not the answer to every automation problem in ISC.**
 
-All the way through this course we will follow one company and one person. The company is Acme. The person is Priya. Priya gets hired into Acme, so on day one a new identity appears for her in Identity Security Cloud. A few months later she moves from the Sales team to the Finance team, so her identity changes. Later still she leaves the company, so her identity is disabled and her access has to be cleaned up.
+That distinction matters from the beginning. Learning where Workflow fits will save you from becoming very good at building the wrong thing.
 
-Joiner, mover, leaver. Almost every real workflow you will ever build is a reaction to a moment like one of those. Keeping Priya in mind gives us something concrete to point at every time a new idea shows up, instead of talking in the abstract. When you read "an identity attribute changed," do not picture a diagram. Picture Priya moving to Finance.
+This course is going to teach you both sides of that problem: how Workflows work, and how an engineer decides whether Workflow should own a requirement at all.
 
-## What a workflow actually is
+## Meet Acme and Priya
 
-Identity Security Cloud, which most people shorten to ISC, spends its day watching identities and access. It aggregates accounts from your sources, it works out who should have what, it runs certifications, it fulfills access requests. All of that is the core of the product.
+Throughout the course we will keep returning to one company and one person.
 
-A workflow is the part that lets you say: when this specific thing happens, do these specific things automatically. The official definition is plain, and I like it: a workflow is a set of steps that run every time a certain event occurs.
+The company is **Acme**. The person is **Priya**.
 
-That is the whole idea. Something happens. Steps run. No human has to remember to do it.
+Priya joins Acme. ISC eventually has an identity representing her, with attributes and accounts associated with that identity. A few months later she moves from Sales to Finance, so some of that identity data changes. Later she leaves the company, and Acme has to deal with her access and accounts appropriately.
 
-Think about what Acme did before they had workflows. When Priya was hired, someone in IT got an email, then they logged into a few systems by hand, then they sent a welcome message, then they opened a ticket so the facilities team could set up her desk. Every one of those steps depended on a person noticing and remembering. People are busy. Steps get missed. New hires sit for two days without an account.
+Joiner. Mover. Leaver.
 
-A workflow takes that whole chain and makes it happen the instant Priya's identity is created. That is the problem workflows solve. They turn "someone should really do this every time" into "this happens every time, on its own, in seconds." When you find yourself describing a task with the words "every time X happens, we always do Y," you have almost certainly found a job for a workflow.
+We will use those moments because they give us something concrete to reason about. When you later see a phrase such as “identity attributes changed,” I would rather you picture Priya moving to Finance than try to memorize an abstract definition.
 
-## What you should already know before this course
+Priya is our learning thread, though, not the boundary of what Workflows can do. Real Workflow scenarios also involve access requests, provisioning events, aggregations, forms, scheduled processing, integrations, governance events, and other situations we will meet later.
 
-I am going to assume three things, and I want to be honest about them so you can shore up any gaps now rather than get stuck later.
+For now, Priya gives us a person to follow while the engineering ideas are still new.
 
-First, the ISC identity model at a high level. You should know that an identity is the central record for a person, that it has attributes such as department or lifecycle state, and that it is connected to accounts on various sources. You do not need to be an expert. You just need to not be surprised when I say "identity" or "account" or "source."
+## What a Workflow is for
 
-Second, comfort reading JSON. This one matters more than people expect, so I will not pretend otherwise. Everything that moves through a workflow is JSON. If a block of curly braces and quoted keys makes you nervous, spend an hour with a JSON primer before Module 01. It will pay you back many times over, because the single most common workflow bug in the world is reaching for a piece of data that is not shaped the way you thought it was.
+Identity Security Cloud already does a lot of work around identities and access. It loads account information from sources, maintains identity information, supports access requests and certifications, and drives provisioning processes.
 
-Third, a basic idea of what a REST call is. You should know that software can call other software over the web by sending a request to a URL and getting a response back. That is enough. When we get to the HTTP Request action in Module 04, we will build on exactly that idea and nothing fancier.
+A Workflow sits alongside those capabilities.
 
-You do not need a tenant to learn any of this. That is the point of a theory course. A tenant helps when you move to the labs, but the understanding comes first, and understanding is portable.
+At a high level, a Workflow lets ISC coordinate a sequence of processing when its configured starting condition occurs.
 
-## Turning workflows on, and the wait that surprises people
+Keep the mental model simple for now:
 
-There is one practical detail worth knowing at the very start, because it trips up almost everyone the first time. When you enable workflows in a tenant for the first time, they do not become active instantly. It takes about two hours for the feature to fully switch on.
+```text
+something happens
+        ↓
+coordinated processing follows
+```
 
-This is not a bug and it is not something you did wrong. It is just how the platform provisions the capability behind the scenes. I mention it now so that if you ever enable workflows and then sit there wondering why nothing fires, you remember this paragraph, make a coffee, and come back later. Knowing a normal delay is normal is a small thing that saves a lot of confused debugging.
+Module 01 will open that box and show you what the pieces are. You do not need trigger catalogs, actions, operators, payloads, or JSONPath yet.
 
-## Where workflows sit among the other tools
+Think instead about the business problem.
 
-Here is the part that separates people who understand ISC from people who only understand workflows. ISC gives you several tools that can change or react to identity data, and workflows are only one of them. If you reach for a workflow every time, you will sometimes pick the wrong tool and build something fragile. So let us map the neighborhood. We will go deep on this decision in Module 09. For now I just want you to know who the neighbors are.
+Suppose Acme has a process around a new employee. After ISC detects the relevant identity event, Acme may want to notify someone, gather additional information, call another service, or coordinate several related steps.
 
-Transforms are for shaping attribute values. When Priya's identity is built, a transform can take her raw first name and last name from a source and turn them into a clean display name, or force a department code into upper case. Transforms are quiet, declarative, and they run as part of how an identity or an account is calculated. They do not make decisions or call other systems. They just shape data. If your task is "the value should look like this instead of that," you probably want a transform, not a workflow.
+Without orchestration, those activities may depend on people noticing an event and manually coordinating the next steps.
 
-Rules are for logic that transforms cannot express, usually written as code and often reviewed by SailPoint before they run in your tenant. Reach for a rule only when the simpler tools genuinely cannot do the job. Rules are powerful and heavier to maintain, so they are a last resort, not a first instinct.
+A Workflow can automate some or all of that coordination.
 
-Provisioning is the machinery that actually creates, updates, and disables accounts on your connected sources. When Priya leaves and her accounts get disabled, provisioning is what carries that out. A workflow might decide that something should happen, but provisioning is often the thing that makes the account change real on the far system.
+Notice the wording: **coordination**.
 
-Event trigger subscriptions are the closest relative of all, and the relationship is worth getting straight. Under the hood, ISC publishes events such as "identity created." A workflow is essentially one kind of subscriber to those events. You could instead subscribe your own external service directly to an event and receive it as a webhook, and then do whatever you want in your own code. So the honest way to think about it is this: a workflow is the managed, no code way to react to an event inside ISC, and a direct event trigger subscription is the do it yourself way to react to the same event in your own system. Same underlying events. Different amount of control and different amount of work. We will return to when each one fits.
+A Workflow does not mean humans can never be involved. Some Workflow designs can be initiated by a person or deliberately wait for human input. The useful idea is that the overall process no longer has to depend on somebody remembering and manually driving every transition.
 
-You do not need to memorize all of this today. You just need to hold one sentence: workflows are the automation layer that reacts to events, and they live next to transforms, rules, provisioning, and raw event subscriptions, each of which is better at a different kind of job.
+There is another distinction I want you to keep from the start.
 
-## Before you move on
+When you hear:
 
-Here is a small thing to do in your head, not on a keyboard. Picture three tasks at Acme. One: whenever a new identity is created, send the hiring manager a welcome note. Two: whenever an identity is built, make sure the display name is formatted as "Last, First." Three: whenever an account is disabled, actually remove it from the target system. For each one, ask yourself which tool from this module is the natural fit. If you can say "workflow, transform, provisioning" and give yourself a reason for each, you are ready for Module 01, where we open up a workflow and watch the data move through it.
+> “When X happens, we need Y to happen.”
+
+do **not** immediately translate that into:
+
+> “We need a Workflow.”
+
+What you have identified is an automation or orchestration requirement.
+
+Your next question is:
+
+> **Which ISC capability should own it?**
+
+That question will become much more important as the course progresses.
+
+> **Engineering Habit:** Do not begin with “How do I build this in Workflow?” Begin with “What kind of problem is this, and which capability should own it?”
+
+## Workflow is one tool in ISC
+
+This is where engineers begin separating similar-sounding requirements.
+
+Imagine four different problems at Acme.
+
+### Calculate or shape a value
+
+Priya's source provides a department code such as `fin`, but Acme wants an identity attribute derived or formatted differently.
+
+That is the kind of problem **Transforms** are designed around.
+
+Transforms calculate, select, format, derive, and otherwise shape attribute values. Some transform operations can also use conditional or fallback logic.
+
+That does not make a Transform a general-purpose process orchestrator.
+
+If the main question is:
+
+> “What should this value be?”
+
+a Transform is one of the first capabilities I would consider.
+
+### Determine or govern access
+
+ISC also has native access-model and governance capabilities for deciding, requesting, reviewing, and governing access.
+
+You do not need that architecture yet.
+
+For now, recognize the boundary: if the requirement is fundamentally about **who should receive access or how that access should be governed**, do not assume a Workflow should replace the ISC capability designed to own that decision.
+
+We will make this distinction much sharper later in the course.
+
+### Carry out an account or access change
+
+Suppose Priya leaves and an account needs to be disabled.
+
+That moves us into **provisioning**.
+
+Provisioning is the ISC process responsible for carrying account and access changes toward the applicable source or fulfillment mechanism. Depending on the source and configuration, fulfillment may be automatic or may require manual work.
+
+One subtle point matters even at this early stage:
+
+**provisioning activity is not automatically the same thing as independently proving the final target state.**
+
+You do not need the full engineering consequences of that distinction yet. We will return to it when we study actions, execution, and production behavior.
+
+### Coordinate a process
+
+Now suppose an ISC event should cause Acme to notify a team, evaluate information, call another service, wait for something, and continue processing.
+
+That sounds much more like **Workflow orchestration**.
+
+The question is no longer just:
+
+> “What should this value be?”
+
+or:
+
+> “Which account change needs fulfillment?”
+
+There is a process to coordinate.
+
+That is where Workflow becomes a natural candidate.
+
+The habit I want you to develop is not memorizing four definitions. It is learning to identify the **kind of problem** in front of you.
+
+### Working Engineer preview: other extension options
+
+You will eventually encounter requirements that do not fit neatly into those first three categories.
+
+**Rules** provide supported custom logic at particular ISC extension points. Different Rule types have different execution and deployment models, and they bring additional support and maintenance considerations. For now, just recognize that Rules exist and that native ISC capabilities are preferable when they already solve the requirement.
+
+ISC also supports **external Event Trigger subscriptions**. Some event types overlap with events that can start Workflows, allowing an external service to react outside the Workflow runtime. The two mechanisms are related, but their trigger catalogs and execution models are not one-to-one.
+
+That is enough for Module 00.
+
+You do not need to choose among all of these mechanisms confidently yet. Later modules will give you the technical knowledge to make that judgment.
+
+## What you need before starting
+
+I am going to assume that you know a few basic ISC ideas.
+
+You should be comfortable with the idea that an identity represents an access-holding entity such as Priya, that identities have attributes, and that identities can be associated with accounts on sources.
+
+That level is enough to begin.
+
+Some JSON familiarity will help, but **JSON is not an entrance exam for this course**.
+
+Workflow data flow and step input/output are generally represented as structured JSON, so reading data confidently will matter. The course will teach that deliberately. Module 01 lets you see Workflow data in context, and Module 02 slows down and builds the data model properly.
+
+If JSON still looks unfamiliar today, keep going.
+
+Basic awareness of REST and APIs will also help later when we reach external integrations. You do not need to understand HTTP integration design before beginning the course.
+
+And you do not need an ISC tenant for this theory course.
+
+The goal here is to build the mental model first. Hands-on implementation belongs in the separate practical material.
+
+## How this course develops you
+
+The course moves through four stages:
+
+**Understand → Build → Operate → Engineer**
+
+### Understand
+
+First, you learn what a Workflow is, how its data behaves, and how to recognize the events that start processing.
+
+At this stage I will guide you closely and tell you what can safely wait.
+
+### Build
+
+Then you learn the building blocks: conditions, logic, actions, error paths, forms, approvals, and human interaction.
+
+You will start answering more of the questions yourself instead of receiving the answer immediately.
+
+### Operate
+
+A Workflow that looks sensible on a diagram still has to survive execution.
+
+You will learn how to investigate what actually happened, understand failures, respect limits, and treat Workflows as production assets rather than diagrams that happen to run.
+
+### Engineer
+
+By the later modules, the question changes.
+
+Instead of:
+
+> “Which block do I add?”
+
+you will increasingly ask:
+
+> “Would I accept this design in production, and why?”
+
+You will compare designs, find hidden assumptions, question success boundaries, think about repeated execution, and sometimes conclude that Workflow is not the right capability.
+
+That progression is intentional. I will do more of the guiding at the beginning. By Module 12, you should be doing much more of the reasoning.
+
+## How to read the difficulty labels
+
+Not everything in this course deserves equal space in your memory.
+
+You will see four labels used when they help control the learning load.
+
+**Core** means I expect you to understand the idea on your first serious pass through the course.
+
+**Working Engineer** means the material becomes important when you are designing or supporting real Workflows, but you do not need every detail before continuing.
+
+**Advanced** means you should recognize the design problem and know that it exists. You can return when your work actually requires that depth.
+
+**Reference** is material you normally look up rather than memorize, especially changing product details such as particular limits, timeouts, or operational behavior.
+
+If you encounter an Advanced or Reference section later and think, “I understand why this matters, but I would need to look up the details,” that is often exactly the right outcome.
+
+An engineer who knows **what to verify** is more useful than one who memorized an old number.
+
+## Seven questions you will grow into
+
+By the end of this course, I want you to be able to look at a Workflow requirement and work through seven questions:
+
+1. **What actually starts this process?**
+2. **What data do I have, and what is missing?**
+3. **What decisions need to be made?**
+4. **What actions belong here?**
+5. **What can fail?**
+6. **What happens if this runs twice or concurrently?**
+7. **What evidence proves the intended business outcome?**
+
+Do not try to answer all seven today.
+
+Some of them probably sound obvious. Others may not mean much yet.
+
+That is intentional.
+
+Each part of the course will give those questions more meaning. We will bring them together properly in Module 12, when you design Workflows on paper and defend the reasoning behind them.
+
+For Module 00, I only want you to notice the pattern:
+
+**Workflow engineering is bigger than connecting steps.**
+
+The engineer has to understand the event, the data, the decisions, the actions, the failure boundaries, repeated execution, and the evidence of success.
+
+One piece at a time.
+
+## Work It Out: Which capability owns the problem?
+
+Consider three Acme requirements.
+
+### Scenario 1
+
+When ISC processes the event representing a new Acme identity, Acme wants to notify the hiring manager and coordinate several follow-up activities.
+
+What kind of problem is this?
+
+This is primarily **orchestration**, so Workflow is a natural capability to evaluate.
+
+The reason matters more than the label: an event starts a process involving subsequent coordinated work.
+
+### Scenario 2
+
+Acme receives Priya's name from an authoritative source and wants a display-name attribute calculated as:
+
+```text
+Patel, Priya
+```
+
+What kind of problem is this?
+
+This is primarily **value calculation and shaping**, so a Transform is the natural place to look first.
+
+There is no need to build a process simply to calculate a value.
+
+### Scenario 3
+
+Priya leaves Acme and her target account needs to be disabled through the applicable fulfillment process.
+
+What kind of problem is this?
+
+That is primarily a **provisioning** concern.
+
+A Workflow might participate in a larger leaver process, but the account change itself belongs to the provisioning mechanism that owns fulfillment for that source.
+
+Now look back at the three answers.
+
+The useful skill is not saying:
+
+> Workflow. Transform. Provisioning.
+
+The useful skill is explaining:
+
+> orchestration. value calculation. account-change fulfillment.
+
+Once you understand the problem category, choosing the product capability becomes much easier.
+
+## Checkpoint
+
+You should now be able to hear a simple ISC requirement and ask:
+
+> **What kind of problem is this, and which capability should own it?**
+
+You should recognize Workflow as a strong candidate for orchestration without treating it as the automatic answer to every automation requirement.
+
+You should also understand where this course is taking you: from understanding the model, to building with it, to operating it, and eventually to defending engineering decisions independently.
+
+The next question is the natural one:
+
+> **If Workflow really is the right capability, what does one actually look like?**
+
+That is where Module 01 begins.
 
 ---
-[Course home](../README.md) | [Next: Module 01 The Workflow Model →](01-the-workflow-model.md)
+
+[Course home](README.md) | [Next: Module 01 The Workflow Model →](01-the-workflow-model.md)

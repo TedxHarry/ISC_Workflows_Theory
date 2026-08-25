@@ -1,325 +1,2563 @@
-# Module 11: Challenges and Edge Cases
+# Module 11: Challenges, Failure Modes & Edge Cases
 
-The hard parts to reason about before you build.
+Module 10 taught you to recognize a good Workflow shape.
 
-You can now build a workflow, operate it, and choose when to use one. This module adds the layer that only experience usually teaches: the hard edges that show up at scale, under load, or when something upstream misbehaves. None of these are reasons to fear workflows. They are the things a seasoned engineer thinks about up front, so the workflow survives contact with the real world instead of breaking the first time reality does not cooperate.
+You learned to ask:
 
-One idea runs through every section, so hold it from the start. A workflow does not live in a tidy, private machine. It lives in a distributed, event-driven world it does not control, a world that is sometimes late, sometimes concurrent, and occasionally broken. The mark of a good workflow is not that this world behaves. It is that the workflow stays correct anyway.
-
-## Loops and performance
-
-Loops are the fastest way to turn a small workflow into an expensive one. Every pass is real work, and the costs stack in ways that are easy to underestimate. Recall the caps from Module 03, two hundred and fifty items for a parallel loop and a thousand for a serial one. Loop executions count toward the individual workflow's total execution count, which produces a warning at 100,000 and blocks remaining executions at 150,000.
-
-Now add an external action on every loop pass and the design becomes even more sensitive to latency and timeouts. Do not assume one universal action timeout. HTTP Request is documented at 90 seconds, Get Identity at 1 minute, Manage Access at 30 minutes, and Manage Accounts at 1 hour. A loop that repeatedly calls an external or connector-backed action multiplies both the workload and the number of places a dependency can fail.
-
-The design response is discipline about size. Filter before you loop so you iterate over the few items that matter. Keep loops modest. Treat a genuinely large list as the signal it is, the same signal from Module 09, that the job may not belong in a workflow at all. And remember from Module 03 that a parallel loop gives no promise about order.
-
-## Throttling and execution limits
-
-The limits from Module 08 interact in different ways. The tenant-wide daily rate limit is around 400,000 executions and does not include loop executions. After that threshold, executions continue at 5 per second for the rest of the day. The individual workflow count does include loop executions and warns at 100,000 total executions, then blocks remaining executions at 150,000.
-
-A noisy trigger can therefore hurt you in two directions. It can contribute to tenant-wide rate limiting, and if the workflow also loops heavily it can drive that individual workflow toward its own block.
-
-Rate limiting is not only about speed. If an important automation is delayed by a crowded execution queue, the business effect can be late notifications, late integrations, or late security actions. The defenses are the ones you already know: filter at the trigger, keep loops controlled, spread scheduled work sensibly, and act on high-execution warnings before the block is reached.
-
-## Ordering and race conditions
-
-This is the edge that surprises people the most. Do not design separate event-driven workflows on the assumption that related events will always be processed in the neat business order you imagined.
-
-Picture Priya. Her identity is created, and moments later an attribute change occurs. Those workflows may run close together. Two workflows can also act on the same identity at nearly the same time, one reading state while another changes it. A mover and a leaver occurring close together can create combinations your happy-path test never pictured.
-
-The response is to reduce dependence on timing between separate workflows. Re-read current state before making a sensitive decision when necessary. Make operations safe to repeat where possible. Keep truly sequential operations inside one controlled flow rather than relying on the relative timing of independent event handlers.
-
-> **Work It Out**
->
-> Acme's Joiner workflow sends a welcome email and opens a starter ticket. The workflow successfully opens the ticket but later fails, so an engineer runs the onboarding process again. Meanwhile, some new hires arrive with manager or department information that is not usable for the notification. What problems can this create, and how should the design handle both?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> A re-run can repeat business side effects that already succeeded, such as creating another starter ticket or sending another welcome. Make those operations idempotent where required by checking durable state or the target system before repeating them, for example confirming whether a starter ticket for this new hire already exists. Separately, validate the identity data the process requires. If manager or department is not usable, retrieve the current identity state with Get Identity and branch rather than assuming the value exists. If the business action truly requires data that becomes available later, choose a later event or lifecycle transition that corresponds to that requirement rather than acting on first creation.
->
-> </details>
-
-## Partial failures and retries
-
-A workflow can complete some work and then fail later. That partial completion is often more dangerous than a clean failure at the start.
-
-Suppose Priya's offboarding workflow removed access, opened a ticket, and then failed before the final notification. Re-running the workflow from the beginning can repeat steps that already succeeded. A duplicate ticket is easy to picture. A repeated access action may be harmless in one system and problematic in another.
-
-So design for the second run from the beginning. Make world-changing steps idempotent where practical by checking before acting or using operations whose repeated execution has a safe result. Order steps thoughtfully so cheap validations happen before expensive or irreversible actions. Preserve enough information to tell whether a prior attempt already completed a step.
-
-Do not assume the workflow engine will automatically repair every failed business process for you. Recovery should be part of the design: a human may re-run a process, an API-driven recovery process may invoke it again, or another scheduled control may identify unfinished work. Whatever recovery method you use, it is only safe if the earlier steps tolerate repetition.
-
-> **Work It Out**
->
-> Acme's Finance mover alert notifies the gaining team whenever someone moves into Finance. In production it occasionally sends two alerts for the same move, and once it sent none because the chat service was briefly down. What is happening in each case, and how would you make the workflow behave?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The double alert comes from the workflow running more than once for what looks like a single move, whether from repeated events or a re-run, so the notify step is not safe to repeat. Make it idempotent where it matters. If duplicate suppression is a business requirement, keep a durable marker or idempotency key in a system that persists across separate workflow executions, and check that state before sending again, so a repeat skips the duplicate. Do not rely on the workflow remembering on its own that it already sent the alert, because separate executions do not share memory. The missing alert comes from an unhandled dependency failure: the chat service was down and nothing caught it. Give that step an error path, so a failed send is routed to a deliberate Failure or a backup notification rather than vanishing. A notification workflow feels low-risk, but duplicate and dropped messages are exactly the partial-failure and external-dependence problems this module is about.
->
-> </details>
-
-> **Work It Out**
->
-> Priya's offboarding workflow removed her access, disabled her account, and opened a ServiceNow ticket, then failed before the final confirmation step. You re-run it from the start. What can go wrong, and how should the workflow have been designed so the re-run is safe?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> A re-run from the start can repeat the steps that already succeeded, opening a second duplicate ticket and re-issuing access and account changes that were already applied. Design each world-changing step to be safe to repeat. Before opening a ticket, check whether a ticket for this offboarding already exists. Before removing access or disabling an account, check the current state so a repeat is a no-op rather than a fresh action. Order cheap checks before expensive or irreversible actions, and keep enough durable state to recognize that an earlier attempt already completed a step, so recovery does not multiply side effects.
->
-> </details>
-
-> **Work It Out**
->
-> Acme's aggregation-failure alert works, but one source starts failing every hour and the alert fires on every cycle, flooding the channel until people mute it. The next week a different source fails and no one notices, because the channel is muted. How should the workflow have handled the repeated failure, and what should it do if the alert channel itself is unavailable when it tries to send?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Treat a continuing failure as one condition, not one alert per run. Suppress repeated alerts for the same ongoing failure, for example by recording that this source is already in a failed-and-notified state in durable storage that persists across executions, and only alerting again when the state changes or after a deliberate reminder interval, so an hourly failure does not train people to ignore the channel. For the alerting dependency itself, do not assume the send always succeeds. If the chat or email service is unavailable, route that failure to a deliberate path, such as a backup channel or a Failure that is itself monitored, rather than letting the notification vanish silently. A monitoring workflow that goes quiet when its own channel is down is the worst time to lose the signal.
->
-> </details>
-
-## Native change is a signal, not a verdict
-
-Native Change Detection is built for drift, and drift is a real security concern. But the workflow must be careful with language and action. The event tells you ISC detected an out-of-band account create, update, or delete during aggregation on a configured source. It does not, by itself, prove the change was malicious, who made it, or whether the business intended it through an emergency path outside ISC.
-
-That matters because native-change response workflows sit close to real access. A notify-only workflow can still create noise or leak sensitive data into the wrong channel. A remediation workflow can change access. If the workflow automatically revokes every direct entitlement addition, it can undo a valid emergency grant. If it disables an account created directly on the source, it can interrupt a legitimate break-glass or service account process unless the business rule says that is exactly what should happen.
-
-The safer architecture is staged:
-
-```
-detect  ->  classify  ->  notify or ticket  ->  remediate only when the rule is clear
+```text
+PURPOSE
+→ EVENT
+→ CONTEXT
+→ DECISION
+→ WORK
+→ BOUNDARY
+→ RISK
 ```
 
-Classify from fields the payload actually gives you: source, account, correlation state, event type, account change types, entitlement additions or removals, and account attribute changes. Enrich only when you need data the seed does not carry, for example current identity details or ownership routing. If the account is uncorrelated, do not invent a human owner. Treat it as an account investigation and route to the source owner.
+That gets you to an apparently sound design.
 
-Auto-remediation adds two more edge cases. First, revocation needs a valid entitlement id. SailPoint's Native Change Detection workflow template documentation says those templates skip entitlements with null IDs because revocation requests require a valid Entitlement ID. Second, remediation changes target state, but do not assume an ISC-initiated correction is itself another Native Change. Native Change Detection is for out-of-band changes detected during aggregation. A genuine repeat-event loop occurs when an external actor or process changes the target again, for example when a source administrator re-adds the same entitlement after the workflow revoked it. That later external re-addition can be detected as another Native Change Account Updated event on a later aggregation. If external changes keep alternating with remediation, you have an incident loop, not a clean control. Ordinary Account Updated events are a separate trigger family and can result from aggregation or provisioning, so do not use an ordinary account event as evidence that the remediation itself was a Native Change.
+Now we do something different.
 
-Make the repeated path explicit. For alerts, record a durable incident key such as source id, account id, entitlement id, event type, and a time window, then suppress duplicates or update the existing ticket. For remediation, re-read current state before acting when the action is risky, and skip if the entitlement is already gone. That is idempotency applied to drift response.
+We try to break it.
 
-The unsupported-source edge case is ordinary, not exotic. If no event arrives, do not start by rewriting JSONPath. Confirm Native Change Detection is available and enabled for that source, the monitored operation and attributes match the direct change, and aggregation has run. SailPoint also documents that Native Change Detection is not available for Non-Employee Lifecycle Management sources, while SAML Just-in-Time sources require the API endpoint for enablement.
+```text
+Module 10
 
-> **Work It Out**
->
-> Acme builds auto-revocation for direct AD additions to `Finance Privileged Operators`. During an outage, the AD team adds Priya to that group for a documented emergency. The workflow revokes it on the next aggregation, sends a green execution record, and Security later asks why the workflow "fixed the unauthorized change." What is wrong with that interpretation, and how would you redesign the response?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The green execution proves the workflow followed its path, not that the original change was unauthorized or that revocation was the right business action. Native Change Detection proves out-of-band drift was detected during aggregation. It does not prove malicious intent or emergency status. Redesign the response so high-risk entitlement additions are classified first, with a notify or ticket path by default and auto-remediation only for changes covered by a clear policy. Add an exception path for documented emergency access, include source owner review, and make repeated events safe by using a durable incident key or by checking current state before revoking again.
->
-> </details>
+This pattern fits.
 
-## Outlier detection is a risk signal, not a verdict
+        ↓
 
-Outlier Detected sits at a different security boundary from a confirmed policy violation. SailPoint describes the event as identifying an identity with unusual access compared with peers. Current Developer documentation says outliers are calculated daily, the score ranges from `0.0` through `1.0`, higher values mean the identity is more likely to be an outlier, and `LOW_SIMILARITY` is currently the only supported `outlierType` value for this trigger. None of those facts proves malicious intent or identifies one entitlement as unauthorized.
+Module 11
 
-The first production edge is score representation. The native event uses the decimal scale above. The Product Identity Outliers UI describes its displayed score on a `0-100` scale. Treat that as a cross-surface representation difference. Do not copy a UI threshold literal into Workflow logic and do not describe `0.82` as `0.82 percent`. Inspect the trigger input and use the event representation that the Workflow actually received. Unless SailPoint explicitly documents a conversion rule, do not invent one.
+Which assumption inside the pattern fails
+when reality stops being orderly?
 
-The second edge is context. The Product UI can show factors such as Peer Access Similarity, Standalone Entitlements, Rare Access, Roles with a Single Entitlement, Entitlement Count, and Access Profile and Role Uniqueness. The documented Workflow seed does not contain those factor fields. It contains `score`, `_meta`, `outlierType`, and `identity`. A workflow that branches on `$.trigger.rareAccess` is not using the documented contract. Enrich through a documented lookup when the workflow needs more identity context, and leave UI-only investigation context in the UI unless a documented API or action supplies it.
+        ↓
 
-Manager routing is one concrete example. The Outlier trigger does not contain a manager object. Get Identity can return the current identity and its manager reference. If a manager notification requires the manager's email, retrieve the manager identity and inspect that result. A missing manager or missing usable email needs an explicit path rather than an invented trigger field.
+Module 12
 
-The third edge is policy. SailPoint currently publishes three template response bands: above `0.5` and below `0.7` for manager notification, at or above `0.7` and below `0.9` for certification, and at or above `0.9` for account disablement plus manager notification. These are documented template designs, not mandatory enterprise thresholds. A tenant must decide which populations are in scope, what evidence is sufficient for each response, what exceptions apply, and who authorizes destructive containment.
-
-Boundary precision matters. Under the current template descriptions, `0.69` is in the notification example, `0.70` and `0.89` are in the certification example, and `0.90` is in the account-disable example. Do not create accidental gaps or overlaps by rounding, switching `>` to `>=`, or copying a title without checking the documented condition.
-
-The high-score path deserves more scrutiny because the blast radius is much larger. SailPoint providing a `0.9+` disable template proves that automated containment is a supported design pattern. It does not mean every tenant should disable every account for every identity at that score, and it does not mean every discovered account is automatically containable. Production policy should define the authorized population, intended accounts, exception process, safe test method, recovery path, evidence required after containment, and the source-capability gate. If a custom design uses Get Accounts followed by Manage Accounts, treat Get Accounts as discovery only. Before sending an account to the automatic Disable path, verify that its source and connector configuration support the required Disable/provisioning operation. SailPoint sources can be read-only, and Quick Compliance sources cannot be used for provisioning, so accounts on sources without the required capability need an alternate manual containment or escalation path. For accounts that pass the capability gate, remember that Get Accounts documents a maximum of 250 returned accounts. Manage Accounts supports Disable and has a 1-hour timeout. Its documented sample output includes `successfulAccounts`, `failedAccounts`, and `accountsErrorDetails`. Inspect those fields and the target state that matters. Do not collapse "the containment branch ran" into "every expected account is unusable."
-
-The fourth edge is repeat behavior. Developer documentation says outliers are recalculated daily. Product documentation says an ignored identity can be rediscovered as an outlier after a significant entitlement change. Those facts do not define an exactly-once event-delivery contract. They do establish that the same identity can become relevant again as its access changes. Operator reruns and ambiguous action outcomes create another repetition path. Before sending another notification, creating another campaign, or applying containment again, determine what already happened and what the current state is.
-
-Certification is especially sensitive to replay because it creates durable governance work. Create Certification Campaign is not documented as idempotent. If the first Outlier response already created the intended campaign, replaying the detector does not repair a later activation or reviewer problem. Correlate by the campaign technical id and use the certification lifecycle from the previous section.
-
-The fifth edge is feature readiness. Outlier functionality currently depends on Access Insights, a configured source with loaded account data, and onboarding that account data into AI-Driven Identity Security. Identity Outliers also has regional availability limits. When the trigger never fires, confirm those prerequisites before treating the workflow filter as the primary suspect.
-
-The final edge is evidence. Keep these boundaries separate:
-
-```
-Outlier Detected
-        -> ISC emitted the documented risk signal
-
-policy branch
-        -> the organization selected a response for that signal
-
-source capability gate
-        -> the account is eligible for automatic Disable, or it is routed to a manual path
-
-notification
-        -> a message action completed according to its contract
-
-Create Certification Campaign
-        -> governance work was created
-
-Certification Signed Off / Campaign Ended
-        -> later governance boundaries were reached
-
-Manage Accounts Disable
-        -> inspect the account-action result for the capable accounts actually targeted
-
-manual containment / escalation
-        -> unsupported sources remain visible and owned instead of being counted as automatic success
-
-remediation / target observation
-        -> the business outcome is independently evidenced
+Design the whole solution deliberately
+before opening the builder.
 ```
 
-Green does not mean risk resolved. It means the Workflow completed the steps it owned. The meaning of those steps still depends on the boundary they represent.
+This is where Workflow design starts to look less like building a diagram and more like engineering a production system.
 
-> **Work It Out**
->
-> Acme receives an Outlier Detected event for Priya with `outlierType = LOW_SIMILARITY` and `score = 0.82`. Acme policy maps that band to a certification review. The Outlier workflow is green and Create Certification Campaign returned a campaign id. Security closes the incident as "risky access removed." Which facts are proven, and which are still missing?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The event proves ISC emitted an Outlier Detected risk signal for Priya with the documented type and raw score. Acme policy then selected a certification response, and the green Create Certification Campaign step proves the campaign creation boundary according to that action's contract. None of that proves a reviewer signed off, any item was revoked, remediation completed, or the target changed. Follow the campaign id through generation and activation as the design requires, then Certification Signed Off and Campaign Ended, and finally remediation and target evidence for any revoke decision. Detection, policy response, governance state, and target state are different facts.
->
-> </details>
+A Workflow does not live in a tidy private machine.
 
-> **Work It Out**
->
-> Using the current SailPoint template conditions, classify these raw Workflow event scores: `0.69`, `0.70`, `0.89`, and `0.90`.
->
-> <details>
-> <summary>Check your answer</summary>
->
-> `0.69` is in the notification example because it is above `0.5` and below `0.7`. `0.70` and `0.89` are in the certification example because that band is at or above `0.7` and below `0.9`. `0.90` is in the account-disable example because that branch begins at or above `0.9`. These classifications describe the current SailPoint template examples. They do not create Acme policy automatically.
->
-> </details>
+It lives in an event-driven world containing:
 
-## Access requests across separate boundaries and executions
+- other Workflow executions;
+- changing identity and account state;
+- external systems;
+- connectors;
+- schedules;
+- human decisions;
+- retries and recovery;
+- partial results;
+- temporary outages;
+- uncertain timing.
 
-Access requests stretch across several boundaries that are handled at different times, and most access-request edge cases come from forgetting that. Hold the approved and denied paths apart:
+The goal is not to assume that world will behave perfectly.
 
-```
-submitted  ->  final decision
-                 |-> approved  ->  provisioning  ->  provisioning result recorded by ISC  ->  target independently observed
-                 |-> rejected  ->  no access grant from this request
-```
+The goal is to make the design remain correct when it does not.
 
-A request waiting on approval is normal after Manage Access. If the requested item requires approval, Manage Access submits the request and the workflow continues without waiting for the final decision. A green Manage Access step therefore does not prove approval happened.
+One question will follow us through the entire module:
 
-Adaptive Approval is different. A workflow started by Access Request Submitted uses Approval Policy as the approval process itself. Logic after that Approval Policy can branch on the result once the configured approval criteria are met and the action completes. That workflow can still end before provisioning finishes, but do not describe it as though the approval decision is still pending after the workflow has already branched on the Approval Policy result.
+> **If this happens twice, does the system still end in the correct state?**
 
-A final rejection is also a normal, handled outcome. When a request is denied, the correct workflow behavior is to follow its rejection path and end, and that execution can be a success even though no access was granted. This is the green does not mean approved lesson from Module 10: a green execution can mean a correctly handled rejection, so never read overall status as evidence of the business decision.
+Keep that question close.
 
-A partial Manage Access failure is the multi-item version of the same trap. A single Manage Access step can return a nonempty `failedAccessRequests` alongside `successfulAccessRequests` and still complete green, as Module 04 showed. If every requested item must succeed, inspect both arrays and branch, rather than trusting the step status.
-
-Provisioning is a separate boundary on the approved path. An approved decision does not mean provisioning finished, and Provisioning Completed firing does not by itself prove the access is confirmed live on the target. A denied request does not proceed to an access grant from that request. Where certainty matters on an approved path, treat the target-system check as its own step.
-
-Re-runs and duplicate requests need real caution here, because submitting an access request is a world-changing operation. Do not assume Manage Access is idempotent; its Workflow documentation does not promise that property. Separately, SailPoint's Access Requests API documents asynchronous submission and warns that duplicate requests submitted in quick succession may not return an error. That API behavior does not prove which internal endpoint Manage Access uses, but it supports the defensive design lesson: before replaying a workflow that submits access, check whether equivalent work is already pending or whether the access is already held instead of blindly repeating the request.
-
-These lifecycle signals can appear in separate workflow executions, so do not design a dependency on cross-workflow timing or ordering unless SailPoint explicitly documents that guarantee. Treat each execution as its own event context. If a later workflow needs authoritative status, re-read current state or use the data carried by the event that represents that boundary rather than assuming another execution already finished.
-
-Finally, be careful with multi-item requests and fan-out. A person can submit a basket of several items in the Request Center, but do not treat that basket as one atomic unit, and do not invent exact fan-out mechanics that SailPoint does not document. What is safe to rely on is that access-request items can be processed and provisioned individually, and that the Adaptive Approval Workflow seed for Access Request Submitted carries a singular `requestedItem`, so your workflow reasons about the item represented by that event. Do not turn that into an undocumented guarantee of exactly one workflow execution per basket item. If the precise fan-out behavior matters to your design, validate it against your tenant's real executions rather than assuming.
-
-> **Work It Out**
->
-> Acme's workflow runs on Access Request Submitted for a sensitive access profile, makes the decision with an Approval Policy, and notifies on both branches. Two incidents come in. First, a manager says a request was "approved by the workflow" but the person still has no access two hours later. Second, an auditor flags that a run for a denied request is marked successful and asks whether the denial was actually enforced. Explain both.
->
-> <details>
-> <summary>Check your answer</summary>
->
-> Both come from confusing the workflow's boundary with the whole chain. In the first incident, the workflow owns the approval decision, not provisioning. An approved decision inside this execution does not mean provisioning has finished or that the access is live on the target, so the two-hour gap does not prove the approval workflow failed. Check the provisioning stage through Provisioning Completed and provisioning or account activity, and if certainty is required, verify the target itself. In the second incident, a successful execution for a denied request is correct, not a defect. The workflow's job on a denial is to follow its rejection branch and end, so green means the denial path was handled successfully, which is exactly green does not mean approved. Confirm the business decision from the request's final denied outcome, not from the workflow's overall status. If the separate question is whether the person already had equivalent access for some other reason, inspect current access or the target state rather than looking for a provisioning record from this denied request.
->
-> </details>
-
-## Certification campaigns are long-lived governance state
-
-A certification campaign is not a one-step side effect. Creating it starts a governance object that can move through generation, activation, reviewer sign-off, campaign completion, and remediation. That makes campaign workflows especially sensitive to duplicate creation and boundary confusion.
-
-The first edge case is duplicate campaigns. A mover event can be replayed, an engineer can rerun a failed workflow, or a later recovery process can discover the same business condition again. Those are possible recovery paths, not a claim that SailPoint delivers duplicate events. The important design fact is that Create Certification Campaign is not documented as idempotent. If duplicate review work would be harmful, keep a durable business correlation key outside the individual workflow execution and check whether the intended campaign already exists before creating a new one. A repeated campaign name is useful evidence for a human, but it is not proof that creation will deduplicate.
-
-The second edge case is cross-workflow state. A workflow that starts on Identity Attributes Changed cannot later receive Campaign Generated, Campaign Activated, Certification Signed Off, or Campaign Ended inside the same execution. Those are separate triggers and therefore separate workflows when you react to them. Carry the campaign technical id as the correlation value, and re-read current campaign state with Get Certification Campaign when a later execution needs an authoritative status. Do not make correctness depend on undocumented timing or ordering between independent workflow executions.
-
-The third edge case is confusing a certification with a campaign. A campaign is a set of reviews. Certification Signed Off represents one certification moving to its signed-off end state, not the whole campaign ending. Its payload carries `campaignRef` so you can connect that review back to the campaign. Campaign Ended is the campaign-level completion event. If a campaign has multiple reviewer certifications, one signed-off event is not evidence that every other reviewer is finished.
-
-The fourth edge case is remediation. SailPoint documents that revoke decisions that are not signed off are not applied. Once a reviewer signs off, revoked access enters the remediation process. A directly connected source that can provision changes can use automated remediation; a source that ISC cannot write to uses manual remediation work. The campaign reaching `COMPLETED` does not erase that dependency boundary. Where removal matters, use remediation status and target evidence rather than reading campaign completion as proof that every revoked entitlement disappeared.
-
-Undecided access deserves an explicit policy too. Current certification documentation strongly recommends maintaining undecided access when a campaign is completed because reinstating access after an automatic revoke can be difficult. The Workflow action exposes an **Undecided Access Items** setting. Treat that as a governance policy decision, not a convenient default hidden inside automation.
-
-Campaign composition can also surprise an engineer. The campaign is a snapshot of the access selected when it is generated, and certification inclusion depends on campaign type and access structure. For example, current Search campaign documentation explains that an entitlement granted through a role or access profile is not treated the same as a standalone entitlement for selection. Do not promise that "certify this entitlement" automatically reviews every indirect grant path. Validate the campaign preview or generated contents against the governance question you are trying to answer.
-
-Finally, remember that certification actions have unusually different timeouts: 36 hours for Create Certification Campaign, 2 hours for Activate Certification Campaign, and 1 minute for Get Certification Campaign. A long Create timeout should not be mistaken for permission to wait indefinitely, and an action timeout should not trigger an automatic blind recreate.
-
-> **Work It Out**
->
-> Acme receives two incidents after a Finance mover certification. One reviewer signed off with a revoke decision, while another reviewer has not finished. An administrator later completes the campaign, which shows `COMPLETED`, but the revoked access is still present on a manually managed source. Which assumptions would make an engineer misdiagnose this?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> First, Certification Signed Off is certification-level evidence, so one reviewer signing off does not prove all certifications in the campaign are complete. Second, a revoke decision must be signed off before remediation begins. Third, campaign `COMPLETED` is a campaign boundary, not proof that the target changed. On a source ISC cannot write to, remediation is manual, so inspect the remediation task or Campaign Remediation Status Report and then verify the target according to Acme's control. Also inspect how undecided items were configured when the campaign was completed. Do not translate campaign completion into target-state certainty.
->
-> </details>
-
-## External input crosses a trust boundary
-
-External Trigger changes who controls the starting data. ISC starts the workflow only after the invocation is authenticated and authorized by a supported method, but the values in the payload still come from that caller. SailPoint Product documentation teaches admins to generate trigger-specific OAuth client information with **New Access Token**. Current v2025 Developer API documentation for the external execution endpoint also advertises Personal Access Token and Client Credentials authorization with scope `sp:workflow-execute:external`. Do not collapse those official documentation paths into a claim that every caller must use the trigger-generated credential. Follow the invocation instructions generated for the workflow and verify the authentication method and required scope against the current API documentation for the integration being built.
-
-Authentication, regardless of mechanism, answers only whether the request is authorized to call the endpoint. It does not prove that the caller's `workerId`, `eventType`, effective date, or requested business action is correct.
-
-Treat inbound data in layers. First verify required fields exist and have the expected basic types. Verify Data Type is useful here, but its documented contract stops at existence and basic types such as string, number, boolean, timestamp, and null. Then validate business values. Then resolve external identifiers to the ISC objects the workflow actually intends to affect. Only after those checks should a world-changing action run.
-
-The identifier boundary is easy to miss because both systems often use a field named `id`. An HR worker id such as `W-18422` is not an ISC technical identity id merely because both are identifiers. The integration needs a documented mapping strategy, and a missing or ambiguous match is a failure or investigation path, not permission to guess.
-
-Replay is the second boundary. SailPoint does not document External Trigger as an exactly-once business-delivery mechanism, and you should not invent that guarantee. A caller can retry after a network timeout, an operator can replay a failed message, or an upstream platform can resend an event under its own retry policy. Carry a stable external event id or request id and use durable state when duplicate suppression matters. Separate workflow executions do not share memory.
-
-Outbound calls have a related failure mode. A remote ticketing API can create the ticket and then the connection can fail before the workflow receives a usable response. A blind retry can create a second ticket. If the remote API supports an idempotency key, use a stable key according to that API's contract. Otherwise, design a lookup or reconciliation step that can determine whether the earlier side effect already happened before creating it again. This is integration idempotency, not just workflow idempotency.
-
-Credential rotation is operational work too. When an integration uses the trigger-specific credential path from Product documentation, SailPoint documents that the generated client secret cannot be retrieved after the configuration overlay is closed, and generating a new access token overwrites the previous token. Treat rotation of that generated credential as a coordinated cutover with the calling system. If the caller uses another authorization method advertised by the current Developer API documentation, follow that credential's own rotation procedure and required scope instead.
-
-> **Work It Out**
->
-> Acme's HR service calls an External Trigger with event id `hr-00421`. The workflow validates every field and calls a case-management API. That API creates case `SEC-8821`, but the connection drops before the HTTP Request receives a usable response. The HR service later retries `hr-00421`. What can go wrong, and what would a production design do before creating another case?
->
-> <details>
-> <summary>Check your answer</summary>
->
-> The second execution can create a duplicate case even though both inbound payloads are valid, because the first remote side effect may have completed before the response was lost. Use `hr-00421` as a durable integration key. If the case-management API supports an idempotency key, send the stable key according to that API's documented contract. Otherwise, check durable integration state or query the case system for an existing case tied to that event before creating another one. The recovery question is not only "did the HTTP step fail?" It is "did the external business action already happen before the failure became visible?"
->
-> </details>
-
-## Large payloads
-
-Data has weight. A trigger that carries a big array, an HTTP response that returns a large blob, or a workflow that preserves more attributes than later steps need all make the flow harder to reason about and can increase processing cost.
-
-The response is leanness. Pull and preserve only what you need for downstream logic. Narrow searches. Avoid passing giant arrays into loops when a filtered subset will do. When an external service supports paging or narrower queries, use them instead of swallowing a huge response and making the workflow do bulk processing.
-
-## Error handling
-
-Every edge in this module eventually comes down to one habit: give failure a path.
-
-Any step that depends on another service, connector, or human can fail or return an unexpected result. An unhandled failure is bad not because failure exists, but because the workflow gives nobody a clear route to understand and recover from it.
-
-Use error handling on steps that can break. Read the details the failed action provides. Route the workflow to a deliberate Failure when the business process truly failed, notify an operator when intervention is needed, or take a fallback path when one exists.
-
-Also distinguish action completion from business completion. Manage Access is a good example from Module 04: a successful action result does not guarantee that every requested access item ultimately succeeded, and `failedAccessRequests` does not automatically fail the overall workflow execution. Error handling therefore includes validating important outputs, not only catching thrown errors.
-
-## Dependence on external systems
-
-Your workflow is only as reliable as the systems it calls. Every HTTP Request and connector-backed action ties your process to another system that can be down, slow, rate-limiting you, rejecting credentials, or returning a response shape you did not expect.
-
-You cannot remove that dependency. You can only design around it. Know the action-specific timeout. Handle errors. Validate responses before trusting them. Decide in advance whether a failure should stop the process, notify a human, fall back, or be picked up by a later reconciliation process.
-
-Credentials are part of that dependency too. Use the supported authentication and Parameter Storage mechanisms rather than hard-coding secrets into workflow definitions.
-
-## The limits of testing
-
-You cannot test your way to certainty, and accepting that is part of engineering rather than a weakness.
-
-You cannot conveniently rehearse every long Wait, every dependency outage, every race between real production events, or every condition that appears only at high execution volume. A serial-loop test that covers only a limited number of iterations does not prove how a large production run behaves. Simulated testing protects systems from selected actions but cannot reproduce every behavior of the real target systems.
-
-The response is not to test less. It is to pair testing with design and monitoring. Test everything you reasonably can. For paths you cannot fully rehearse, make failure safe and visible. Then monitor the real executions so rare production conditions are discovered quickly.
-
-## Before you move on
-
-Reason through the hard cases for Priya. Her mover and leaver workflows run close together. What state assumptions could become stale, and where would you re-check current state before acting? A leaver workflow removed access, opened a ticket, and then failed before notifying. What happens if you re-run it, and what property must the earlier steps have to make that recovery safe? A ticketing API starts responding slowly while forty leavers process. Which action-specific timeout and error-handling questions matter? A Manage Access step is green, but one access item is in `failedAccessRequests`. Why is that still a business failure you may need to handle? And finally, why can no amount of testing completely prove a production workflow? If you can reason through those without reaching for certainty you do not have, you are ready for Module 12.
+It exposes more production defects than another hour spent polishing the happy path.
 
 ---
-[← Previous: Module 10 Use Case Patterns](10-use-case-patterns.md) | [Course home](../README.md) | [Next: Module 12 Readiness and Paper Design →](12-readiness-and-paper-design.md)
+
+## 1. Core — Stress the design
+
+Module 10 gave you a pattern anatomy.
+
+Module 11 gives you a stress test.
+
+For any apparently good Workflow pattern, attack it from these directions:
+
+```text
+REPEAT
+Could this business situation be processed again?
+
+OVERLAP
+Could two executions touch the same state
+at roughly the same time?
+
+PARTIAL
+Could some work succeed before failure
+becomes visible?
+
+DEPEND
+Could another system be unavailable,
+slow, ambiguous, or incapable?
+
+SCALE
+What changes when one subject becomes hundreds
+or scheduled work starts to overlap?
+
+INTERPRET
+What does the event actually prove?
+Are we treating a signal as a verdict?
+```
+
+And when one business process continues through later executions:
+
+```text
+CORRELATE
+How does the later execution know
+which business object or process it belongs to?
+```
+
+You can remember the method as:
+
+```text
+GOOD-LOOKING DESIGN
+        ↓
+STRESS IT
+
+REPEAT
+OVERLAP
+PARTIAL
+DEPEND
+SCALE
+INTERPRET
+
++ CORRELATE when work crosses executions
+```
+
+You are not expected to solve every distributed-systems problem with Workflow.
+
+Sometimes the result of the stress test will be:
+
+> This design needs a stronger external coordination mechanism.
+
+Sometimes it will be:
+
+> Workflow should orchestrate less of this.
+
+That is a valid engineering conclusion.
+
+---
+
+### Three kinds of statements
+
+This module mixes SailPoint behavior with broader engineering reasoning.
+
+Keep three categories separate.
+
+#### Documented SailPoint behavior
+
+Examples:
+
+```text
+Scheduled executions can overlap.
+
+Parallel Loop work can execute concurrently,
+and processing order is not guaranteed.
+
+Manage Access can report failed requested items
+without automatically making the Workflow execution fail.
+```
+
+These are product behaviors.
+
+#### Engineering failure model
+
+Examples:
+
+```text
+Two executions could both read the same state
+before either changes it.
+
+A remote system could perform an action
+before its response becomes unavailable.
+
+A later execution could reason from state
+that changed after an earlier read.
+```
+
+These are possible failure conditions we design against.
+
+They are not claims that SailPoint specifically caused them.
+
+#### Engineering control
+
+Examples:
+
+```text
+re-read authoritative state
+
+use a documented downstream idempotency key
+
+enforce uniqueness on a stable business key
+
+store durable correlation
+
+reconcile after ambiguity
+
+route uncertain cases for recovery
+```
+
+These are design techniques.
+
+They are not automatic Workflow guarantees.
+
+That distinction becomes important immediately.
+
+---
+
+## 2. Core — When the same thing happens twice
+
+Start with something simple.
+
+Priya joins Acme.
+
+The Joiner Workflow:
+
+```text
+Identity Created
+        ↓
+validate required context
+        ↓
+send welcome notification
+        ↓
+create starter ticket
+```
+
+The first run creates:
+
+```text
+INC-10428
+```
+
+Then a later step fails.
+
+An engineer investigates the execution and reruns the process.
+
+What happens?
+
+---
+
+### Ask before answering
+
+Do not start with:
+
+> How do I retry the failed step?
+
+Start with:
+
+> **What already changed in the world?**
+
+The welcome notification may already have been sent.
+
+The starter ticket may already exist.
+
+The Workflow failure does not rewind those external side effects.
+
+So a second execution can produce:
+
+```text
+welcome notification
+welcome notification
+
+INC-10428
+INC-10491
+```
+
+The Workflow may be functioning exactly as designed.
+
+The design is still wrong for the business requirement.
+
+---
+
+### Where can repetition come from?
+
+Do not invent a duplicate-event guarantee.
+
+You do not need one.
+
+The same business work can become relevant again because of:
+
+- an operator rerun;
+- scheduled execution overlap;
+- a caller retrying an External Trigger;
+- repeated external or business changes;
+- recovery after partial completion;
+- a later recalculated condition;
+- concurrent work touching shared state.
+
+The engineering rule is broader:
+
+> **Do not make correctness depend on exactly-once processing unless the applicable contract explicitly guarantees it.**
+
+That rule is more useful than guessing why a second execution appeared.
+
+---
+
+### A current-state check helps, but it is not enough
+
+A common first improvement is:
+
+```text
+Does Priya already have a starter ticket?
+        |
+        +---- yes → skip creation
+        |
+        +---- no  → create ticket
+```
+
+That is useful.
+
+It prevents obviously unnecessary repeat work.
+
+But do not call it a concurrency-safe idempotency guarantee.
+
+Imagine two executions overlap:
+
+```text
+Execution A
+check → no ticket
+
+Execution B
+check → no ticket
+
+Execution A
+create ticket
+
+Execution B
+create ticket
+```
+
+Both checks were correct when they happened.
+
+You still created two tickets.
+
+The problem is the gap between:
+
+```text
+CHECK
+```
+
+and:
+
+```text
+ACT
+```
+
+Another execution can enter that gap.
+
+---
+
+### Separate three mechanisms
+
+This distinction is important enough to learn explicitly.
+
+#### 1. Current-state check
+
+```text
+read current state
+        ↓
+avoid obviously unnecessary work
+```
+
+Useful for:
+
+- skipping an already-disabled account;
+- avoiding a notification when the required condition no longer exists;
+- checking whether access is already held;
+- detecting that a previous process appears complete.
+
+But a separate read followed by a separate write can still race.
+
+---
+
+#### 2. Idempotency or uniqueness contract
+
+The side-effect boundary itself understands a stable operation identity.
+
+Conceptually:
+
+```text
+business operation key:
+ONBOARDING-TICKET:PRIYA:2026-08-24
+```
+
+If the downstream interface documents a mechanism that guarantees the same key cannot create the same business operation twice, overlapping callers can safely present that key.
+
+The important part is not the string format.
+
+The important part is where uniqueness is enforced.
+
+```text
+same stable business operation
+        ↓
+same idempotency / uniqueness contract
+        ↓
+one intended side effect
+```
+
+Do not claim a downstream API provides that guarantee unless its contract actually does.
+
+---
+
+#### 3. Durable coordination or reconciliation
+
+Sometimes the Workflow cannot enforce uniqueness at the side-effect boundary.
+
+Then the design may require durable state outside the individual execution.
+
+That state can help answer questions such as:
+
+```text
+Has this business operation already been claimed?
+
+Which execution owns it?
+
+What remote object was created?
+
+Was the result confirmed?
+
+Does current state match intended state?
+```
+
+A later reconciliation process can also compare:
+
+```text
+INTENDED STATE
+        vs
+AUTHORITATIVE CURRENT STATE
+```
+
+and repair or escalate the difference.
+
+Durable state is not magic either.
+
+A design that merely performs:
+
+```text
+read marker
+→ marker absent
+→ perform side effect
+→ write marker
+```
+
+can still contain a race.
+
+Where competing executions matter, the coordination mechanism itself needs an appropriate uniqueness or atomic-claim property.
+
+That property belongs to whatever durable system is being used.
+
+---
+
+### The engineering habit
+
+Before every world-changing step, ask:
+
+> **If another execution performs this same business operation, what prevents duplicate or contradictory state?**
+
+Possible answers include:
+
+- the repeated operation is naturally harmless;
+- current state makes the second operation unnecessary;
+- the downstream system guarantees uniqueness;
+- a durable coordination mechanism chooses one owner;
+- reconciliation will resolve ambiguity;
+- the operation is too risky to automate without a human recovery path.
+
+Those are very different answers.
+
+That is the point.
+
+---
+
+### Work It Out
+
+Acme's Joiner Workflow creates a starter ticket and then sends a welcome message.
+
+The ticket is successfully created.
+
+The notification step fails.
+
+An operator reruns the process.
+
+What must you know before saying that the rerun is safe?
+
+You need to know what already happened and what each repeated side effect does.
+
+The failed Workflow execution does not prove the starter ticket was rolled back.
+
+A current-state lookup can help determine whether work already exists, but a lookup followed by creation is not by itself a concurrency-safe uniqueness guarantee.
+
+If duplicate ticket creation is unacceptable, the design needs a stronger duplicate-prevention or reconciliation strategy appropriate to the ticketing interface.
+
+The notification has its own repeat behavior and may require a different decision.
+
+Recovery begins by determining actual state, not by assuming that every step before the visible failure needs to run again.
+
+---
+
+## 3. Core — When two correct executions collide
+
+Repetition is one problem.
+
+Concurrency is another.
+
+Picture Priya during a chaotic afternoon.
+
+At nearly the same time:
+
+```text
+Finance mover condition
+        ↓
+Workflow A begins
+
+leaver lifecycle transition
+        ↓
+Workflow B begins
+```
+
+Workflow A retrieves Priya and sees:
+
+```text
+department = Finance
+lifecycle = Active
+```
+
+Workflow B begins the leaver process.
+
+A few moments later, Workflow A uses the state it already read.
+
+Is that state still safe to act on?
+
+Maybe.
+
+Maybe not.
+
+That is a race condition.
+
+---
+
+### The stale-state problem
+
+A Workflow can make a perfectly logical decision from information that was true a moment ago.
+
+```text
+READ
+Priya is Active
+
+        ↓
+
+another execution changes relevant state
+
+        ↓
+
+ACT
+perform action based on old Active state
+```
+
+Nothing about the first read was incorrect.
+
+The world changed after it.
+
+For sensitive actions, that can matter.
+
+---
+
+### Re-read current state near the decision boundary
+
+Suppose Workflow A is about to send a routine Finance onboarding request.
+
+Before performing a sensitive or expensive action, it can re-read the current authoritative state it depends on.
+
+```text
+initial event
+        ↓
+build context
+        ↓
+...
+        ↓
+before sensitive action:
+re-read required current state
+        ↓
+still eligible?
+```
+
+This reduces stale-state decisions.
+
+But remember the previous lesson.
+
+A fresh re-read is still not automatically a concurrency lock.
+
+Two executions can both re-read the same current state and then both act.
+
+So distinguish the purposes:
+
+```text
+RE-READ CURRENT STATE
+helps reduce stale decisions
+
+        ≠
+
+UNIQUENESS / COORDINATION
+prevents competing executions
+from multiplying a side effect
+```
+
+Both may be necessary.
+
+---
+
+### Do not depend on undocumented cross-Workflow ordering
+
+A fragile design says:
+
+```text
+Workflow A will always finish first.
+
+Then Workflow B will run.
+
+Then Workflow C will see B's result.
+```
+
+Do not make correctness depend on that assumption unless the current product contract explicitly guarantees the required ordering.
+
+Use the safer engineering rule:
+
+> **Do not make correctness depend on the relative ordering of independent Workflow executions unless the current product contract explicitly guarantees that ordering.**
+
+If one operation truly must happen after another, design around a supported lifecycle boundary, authoritative state, explicit correlation, or another mechanism that actually establishes the dependency.
+
+Do not use optimism as sequencing.
+
+---
+
+### Scheduled overlap is the same problem wearing different clothes
+
+Suppose Acme has a scheduled operational Workflow.
+
+```text
+06:00
+run starts
+        ↓
+large population still processing
+
+07:00
+next scheduled execution starts
+```
+
+SailPoint currently documents that a new scheduled execution can begin before the previous scheduled execution completes.
+
+Now both executions may discover Priya.
+
+```text
+06:00 execution
+find Priya
+        ↓
+
+07:00 execution
+find Priya
+```
+
+Ask:
+
+- Can both create the same ticket?
+- Can both send the same form?
+- Can both submit the same business operation?
+- Does a state check merely reduce duplicates, or is true uniqueness required?
+- Should the schedule be redesigned because the work routinely exceeds its interval?
+
+This is why schedule overlap is not merely a Module 08 limit fact.
+
+It is a correctness question.
+
+---
+
+### Work It Out
+
+A scheduled Workflow searches for unfinished contractor offboarding every hour.
+
+At 07:00 it finds Priya and begins a slow downstream operation.
+
+At 08:00 the previous execution is still running, and the new execution finds Priya again.
+
+An engineer proposes:
+
+```text
+Just check whether Priya is still marked unfinished.
+```
+
+What does that fix, and what does it not fix?
+
+The check may prevent work if Priya has already reached a clearly completed state.
+
+It does not by itself prevent both executions from observing the same unfinished state and then acting concurrently.
+
+If duplicate side effects are harmful, the design needs an appropriate uniqueness, coordination, or reconciliation mechanism in addition to any current-state check.
+
+The schedule itself also deserves review if overlap is becoming normal rather than exceptional.
+
+---
+
+## 4. Core — When half the Workflow already happened
+
+Clean failure is easy to reason about:
+
+```text
+nothing changed
+        ↓
+failure
+```
+
+Partial completion is harder:
+
+```text
+change
+        ↓
+change
+        ↓
+change
+        ↓
+failure
+```
+
+Suppose Priya's leaver process does this:
+
+```text
+remove access
+        ↓
+disable account
+        ↓
+open ServiceNow ticket
+        ↓
+send final confirmation
+```
+
+The first three operations happen.
+
+The confirmation fails.
+
+Now someone says:
+
+> Retry the Workflow.
+
+That sentence is incomplete.
+
+---
+
+### Retry and recovery are not the same thing
+
+Use these definitions:
+
+```text
+RETRY
+
+Repeat an operation believed to have failed.
+```
+
+```text
+RECOVERY
+
+Determine what actually happened,
+then continue from the correct state.
+```
+
+Those can produce very different behavior.
+
+---
+
+### Why blind retry is dangerous
+
+Suppose the first execution already:
+
+- removed access;
+- disabled an account;
+- opened `INC-7734`.
+
+A blind rerun may:
+
+- request the access removal again;
+- send another account action;
+- open `INC-7791`;
+- send another notification.
+
+Some repeated actions may be harmless.
+
+Some may not.
+
+You cannot decide from the Workflow's final status alone.
+
+---
+
+### Recovery begins with evidence
+
+A recovery design asks:
+
+```text
+What did the first execution definitely complete?
+
+What outputs did important actions return?
+
+What current state exists now?
+
+Which side effects can safely repeat?
+
+Which side effects need reconciliation?
+
+Where is human intervention safer?
+```
+
+This is another form of:
+
+> **Green Does Not Mean Done.**
+
+And the inverse also matters:
+
+> **Red Does Not Mean Nothing Happened.**
+
+A failed execution can leave successful business side effects behind.
+
+---
+
+### Order cheap certainty before expensive side effects
+
+If a Workflow needs to validate:
+
+- identity state;
+- required identifiers;
+- policy eligibility;
+- source capability;
+- required business values;
+
+do that before an expensive or destructive action whenever the design allows it.
+
+Prefer:
+
+```text
+validate
+        ↓
+retrieve required context
+        ↓
+confirm eligibility/capability
+        ↓
+world-changing action
+```
+
+over:
+
+```text
+world-changing action
+        ↓
+discover required data was missing
+        ↓
+fail
+```
+
+This does not eliminate every partial failure.
+
+It reduces how often you create one unnecessarily.
+
+---
+
+### Partial results inside a successful action matter too
+
+Partial completion is not limited to a Workflow ending red.
+
+Manage Access is a useful example.
+
+Its current Workflow action contract can return both:
+
+```text
+successfulAccessRequests
+```
+
+and:
+
+```text
+failedAccessRequests
+```
+
+A populated `failedAccessRequests` result does not automatically make the overall Workflow execution fail.
+
+So this is unsafe reasoning:
+
+```text
+Manage Access box is green
+        ↓
+all requested access work succeeded
+```
+
+Instead:
+
+```text
+Manage Access completed
+        ↓
+inspect important result data
+        ↓
+did every required item meet
+the business success condition?
+```
+
+This is the Module 05 action-contract lesson under production stress.
+
+---
+
+### Work It Out
+
+Priya's leaver Workflow:
+
+1. removes required access;
+2. disables an account;
+3. creates a ServiceNow ticket;
+4. sends confirmation.
+
+The first three complete.
+
+The fourth fails.
+
+Which question is better?
+
+```text
+How do I rerun the Workflow?
+```
+
+or:
+
+```text
+What state did the first execution leave behind,
+and what is the safe recovery point?
+```
+
+Explain why.
+
+The second question is the correct starting point.
+
+The first execution may have already changed multiple systems. Recovery has to determine actual state before deciding which work should repeat.
+
+A repeated account or access operation may be harmless only if its current contract and current state make it so. Ticket creation may require duplicate prevention or reconciliation. The failed notification may simply need a targeted retry.
+
+Recovery continues from reality. It does not pretend the failed execution never existed.
+
+---
+
+## 5. Core — When another system gives you an ambiguous answer
+
+External dependencies create a special kind of failure.
+
+Consider this sequence.
+
+Acme's Workflow calls a case-management API.
+
+```text
+HTTP Request
+        ↓
+remote system creates SEC-8821
+        ↓
+response becomes unavailable
+        ↓
+Workflow cannot determine the final remote result
+```
+
+This is an **engineering failure model**.
+
+It is not a claim that SailPoint causes a remote system to behave this way.
+
+The important fact is that distributed systems can lose certainty between:
+
+```text
+REMOTE SIDE EFFECT
+```
+
+and:
+
+```text
+LOCAL CONFIRMATION
+```
+
+---
+
+### Local failure does not prove remote failure
+
+Suppose the Workflow sees an HTTP failure or timeout.
+
+This reasoning is unsafe:
+
+```text
+my request failed locally
+        ↓
+the remote object definitely does not exist
+        ↓
+create it again
+```
+
+The remote system may have received and committed the first request before the response became unavailable.
+
+A second create may produce:
+
+```text
+SEC-8821
+SEC-8840
+```
+
+Now your recovery action created the defect.
+
+---
+
+### Retry versus recovery appears again
+
+If the operation is known not to have happened:
+
+```text
+RETRY
+may be appropriate
+```
+
+If the outcome is ambiguous:
+
+```text
+RECOVERY
+determine what happened first
+```
+
+That may mean querying:
+
+- the remote object;
+- a stable external event ID;
+- an integration record;
+- authoritative current state;
+- a reconciliation queue.
+
+Then continue based on evidence.
+
+---
+
+### Downstream idempotency keys
+
+Some APIs provide a documented idempotency-key or uniqueness contract.
+
+If the case-management API documents that behavior, Acme could send:
+
+```text
+hr-event-id = hr-00421
+```
+
+as the stable operation key in the way that API requires.
+
+Then the API itself can prevent repeated application of the same business operation according to its contract.
+
+Do not generalize that technique into:
+
+> Every API accepts an idempotency key.
+
+It does not.
+
+The downstream contract has to provide it.
+
+---
+
+### When the remote system offers no such contract
+
+Then the design may require reconciliation:
+
+```text
+ambiguous result
+        ↓
+query remote system
+        ↓
+does object for business key already exist?
+        |
+        +---- yes → continue from existing object
+        |
+        +---- no  → decide whether create is safe
+        |
+        +---- uncertain → human / recovery path
+```
+
+Again, a simple query followed by a create is not automatically concurrency-proof.
+
+The mechanism has to match the risk.
+
+---
+
+### Failure needs ownership
+
+An external dependency can be:
+
+- unavailable;
+- slow;
+- rate-limiting;
+- returning unexpected data;
+- rejecting credentials;
+- partially completing work;
+- unable to prove its own final business state.
+
+The Workflow cannot make those facts disappear.
+
+It has to decide:
+
+```text
+STOP?
+FALL BACK?
+RECONCILE?
+ESCALATE?
+RETRY?
+WAIT FOR LATER CONTROL?
+```
+
+That is production design.
+
+---
+
+### Work It Out
+
+Acme's HR service calls an External Trigger using stable event ID:
+
+```text
+hr-00421
+```
+
+The Workflow validates the event and calls a case-management API.
+
+The remote API creates:
+
+```text
+SEC-8821
+```
+
+but the Workflow never receives a usable success response.
+
+Later, the HR system retries `hr-00421`.
+
+What should the second execution determine before creating another case?
+
+It should determine whether the business side effect associated with `hr-00421` already happened.
+
+If the case-management API provides a documented idempotency mechanism, the stable event key can be used according to that contract.
+
+Otherwise the design needs a durable lookup or reconciliation strategy that can connect the external event to any case already created.
+
+The important distinction is:
+
+```text
+the local HTTP step did not confirm success
+        ≠
+the remote side effect definitely did not happen
+```
+
+---
+
+## 6. Working Engineer — When the design grows
+
+A pattern that works for five subjects can become unsafe for five hundred.
+
+Scale does not create entirely new laws.
+
+It makes your existing assumptions fail more often.
+
+Consider this design:
+
+```text
+Scheduled Trigger
+        ↓
+find identities needing review
+        ↓
+loop
+        ↓
+call external service
+        ↓
+create work
+```
+
+At small scale:
+
+```text
+10 identities
+```
+
+it appears harmless.
+
+Then the population grows.
+
+Now ask:
+
+```text
+What if another scheduled run begins
+before this one finishes?
+
+What if the loop contains mixed success and failure?
+
+What if an external dependency slows down?
+
+What if every failed subject creates another alert?
+
+What if the returned population or payload is much larger
+than the Workflow was designed to handle?
+```
+
+That is the Module 11 version of scale.
+
+---
+
+### Do not rebuild the Module 08 limit catalog
+
+Module 08 owns detailed production limits and current operational numbers.
+
+Here the habit is:
+
+> **When volume changes, re-evaluate the architecture and verify the current limits for the Workflow, actions, and tenant involved.**
+
+Do not memorize a number and assume the design is safe because today's population sits just below it.
+
+Ask what the number means for the architecture.
+
+---
+
+### Parallel work changes your reasoning
+
+Parallel Loop work can execute concurrently, and its processing order is not guaranteed.
+
+That matters if loop items touch shared state.
+
+Suppose several iterations update the same external object.
+
+The question is no longer:
+
+> Does each iteration work?
+
+It is:
+
+> What happens when several valid iterations act at the same time?
+
+Similarly, mixed results matter.
+
+If some items succeed and others fail, a later recovery run must not blindly treat the entire population as untouched.
+
+---
+
+### Serial work has a different failure shape
+
+Sequential work avoids some concurrency questions.
+
+It creates another:
+
+```text
+item 1 succeeds
+item 2 succeeds
+item 3 succeeds
+item 4 fails
+        ↓
+later items do not run
+```
+
+Now the population is partially processed.
+
+Your recovery design needs to know where truth lives.
+
+---
+
+### Noise is also a scale failure
+
+Return to Acme's aggregation-failure alert.
+
+One source begins failing every hour.
+
+The Workflow sends:
+
+```text
+08:00 ALERT
+09:00 ALERT
+10:00 ALERT
+11:00 ALERT
+12:00 ALERT
+...
+```
+
+Eventually the team mutes the channel.
+
+The next genuinely new failure is missed.
+
+Technically, the Workflow delivered messages.
+
+Operationally, the control failed.
+
+A stronger design may model:
+
+```text
+source failure begins
+        ↓
+open / identify incident
+        ↓
+notify once
+
+same failure continues
+        ↓
+update / suppress / remind by policy
+
+source recovers
+        ↓
+close / clear incident state
+
+new failure later
+        ↓
+new actionable signal
+```
+
+That requires state lasting beyond one execution when the business requirement needs it.
+
+Again, do not reduce this to:
+
+```text
+if I sent an alert last time,
+the Workflow will remember
+```
+
+A business incident that spans executions needs an appropriate durable representation.
+
+---
+
+### Scale can change the correct tool
+
+Sometimes the right conclusion is:
+
+```text
+This is no longer bounded orchestration.
+```
+
+If the design is becoming:
+
+```text
+every hour
+→ discover a huge population
+→ loop everything
+→ call several systems
+→ maintain large durable processing state
+→ reconcile extensive partial results
+```
+
+return to Module 09.
+
+Ask whether Workflow should still own that workload.
+
+A supported capability is not automatically the right architecture.
+
+---
+
+## 7. Working Engineer — When one business process crosses executions
+
+Users describe business processes as one thing:
+
+> Priya's access request.
+
+> The Finance certification.
+
+> The offboarding process.
+
+The platform may represent that business process through several independent boundaries.
+
+So learn this explicitly:
+
+```text
+ONE BUSINESS PROCESS
+        ≠
+ONE WORKFLOW EXECUTION
+```
+
+That introduces correlation.
+
+---
+
+### Access request example
+
+Consider this business chain:
+
+```text
+request submitted
+        ↓
+decision
+        ↓
+approved path
+        ↓
+provisioning
+        ↓
+provisioning evidence
+        ↓
+target observation when required
+```
+
+Those are different facts.
+
+Do not collapse them.
+
+---
+
+### Manage Access does not wait for the whole business lifecycle
+
+A successful Manage Access action can establish its own documented action boundary.
+
+It does not automatically prove:
+
+```text
+every requested item succeeded
+
+approval completed
+
+provisioning completed
+
+target access is independently confirmed
+```
+
+The action may also return both:
+
+```text
+successfulAccessRequests
+failedAccessRequests
+```
+
+So important business logic must inspect the result that actually matters.
+
+---
+
+### Approval is another boundary
+
+For an Adaptive Approval design, Approval Policy owns the configured governed decision inside that Workflow.
+
+Once the action completes and the Workflow branches on that decision, do not describe the decision as though it were still pending.
+
+But an approved decision is still not the same thing as provisioning completion.
+
+Keep:
+
+```text
+approved
+        ≠
+provisioned
+```
+
+And:
+
+```text
+denied path handled successfully
+        ≠
+access granted
+```
+
+A green Workflow execution can be the correct result for a denied request if the Workflow handled the rejection branch exactly as intended.
+
+Again:
+
+> **Green Does Not Mean Granted.**
+
+---
+
+### Provisioning Completed is real evidence
+
+Do not swing too far in the other direction.
+
+Provisioning Completed is meaningful documented ISC/connector provisioning evidence about the provisioning action and its result.
+
+It is not meaningless.
+
+But it is also not necessarily an independent observation of the target application's final business state.
+
+Use the distinction:
+
+```text
+Provisioning Completed
+
+→ meaningful provisioning evidence
+  within its documented boundary
+
+Independent target observation
+
+→ different/stronger evidence
+  when the control specifically requires
+  proof of final target state
+```
+
+Match the evidence to the claim you need to make.
+
+---
+
+### Certification: correlation over time
+
+A certification is another useful example because its lifecycle naturally crosses boundaries.
+
+Conceptually:
+
+```text
+campaign creation
+        ↓
+generation / readiness
+        ↓
+activation
+        ↓
+review activity
+        ↓
+certification sign-off
+        ↓
+campaign end
+        ↓
+remediation / target evidence where required
+```
+
+Do not turn those into synonyms.
+
+---
+
+#### Creation and activation are distinct boundaries
+
+The stable teaching rule is:
+
+```text
+CAMPAIGN CREATION
+        ≠
+CAMPAIGN ACTIVATION
+```
+
+The current Create Certification Campaign action can be configured to start the campaign when it is created.
+
+If that option is not used, activation can be a later explicit lifecycle step.
+
+So do not memorize:
+
+```text
+Create
+→ always Activate separately
+```
+
+Learn the boundary instead.
+
+Know what the configured design actually does.
+
+---
+
+#### Do not assume campaign creation is idempotent
+
+Current Workflow action documentation does not document an idempotency guarantee for Create Certification Campaign.
+
+Therefore:
+
+> **Do not assume one.**
+
+That is different from claiming:
+
+> Create Certification Campaign is definitely non-idempotent.
+
+The first statement respects the documented contract.
+
+The second invents a guarantee about behavior we do not have.
+
+If duplicate campaign creation would be harmful, the design needs deliberate correlation and duplicate-control reasoning.
+
+---
+
+#### Durable correlation
+
+Suppose Workflow A creates a campaign.
+
+A later Workflow reacts to another certification lifecycle event.
+
+How does the later execution know:
+
+> This event belongs to the Finance mover process we started for Priya.
+
+The technical campaign or certification identifiers available at the relevant lifecycle boundaries are far stronger correlation values than:
+
+```text
+"Finance Review"
+```
+
+or:
+
+```text
+Priya's display name
+```
+
+A later execution can use appropriate technical identifiers plus current authoritative state to understand which governance object it is handling.
+
+The larger lesson is reusable:
+
+```text
+BUSINESS PROCESS
+        ↓
+may create durable business/platform object
+        ↓
+later event references that object
+        ↓
+later Workflow correlates and re-reads state
+```
+
+That is how work survives beyond one execution.
+
+---
+
+#### Certification Signed Off is not Campaign Ended
+
+One campaign can contain more than one certification.
+
+Therefore:
+
+```text
+Certification Signed Off
+        ≠
+Campaign Ended
+```
+
+One reviewer finishing one certification does not prove everyone is finished.
+
+And even:
+
+```text
+Campaign Ended
+```
+
+does not automatically prove:
+
+```text
+every target-side remediation
+has been independently observed
+```
+
+Follow the evidence chain only as far as each boundary allows.
+
+---
+
+#### Work It Out
+
+Acme creates a Finance certification for Priya.
+
+The campaign exists.
+
+Later one reviewer signs off with a revoke decision.
+
+Another reviewer has not finished.
+
+An engineer says:
+
+> The certification is done, so the access should be gone.
+
+Identify at least three boundary errors.
+
+First, one Certification Signed Off event is certification-level evidence, not whole-campaign completion.
+
+Second, campaign lifecycle completion and remediation are separate concerns.
+
+Third, remediation evidence and independent target-state evidence can be different boundaries.
+
+The design should correlate later work to the correct campaign/certification technical object, re-read authoritative governance state when needed, and make only the claim that the available evidence supports.
+
+---
+
+## 8. Working Engineer — When the source or caller cannot support your assumption
+
+Many production failures begin with an assumption that looked small.
+
+Two common forms are:
+
+```text
+the caller sent the field
+        ↓
+therefore the value must be trustworthy
+```
+
+and:
+
+```text
+ISC discovered the account
+        ↓
+therefore ISC can perform the desired action on it
+```
+
+Neither is safe.
+
+---
+
+### External Trigger crosses a trust boundary
+
+Suppose Acme's HR system starts a Workflow using External Trigger.
+
+It sends:
+
+```json
+{
+  "eventId": "hr-00421",
+  "eventType": "SEPARATION_FILED",
+  "workerId": "W-18422"
+}
+```
+
+The invocation may be authenticated.
+
+That establishes an authentication boundary.
+
+It does not establish every business fact inside the payload.
+
+Keep these distinctions:
+
+```text
+authenticated caller
+        ≠
+business data is correct
+
+basic type is valid
+        ≠
+business value is valid
+
+external worker identifier
+        ≠
+ISC technical identity identifier
+
+valid request
+        ≠
+safe to execute twice
+```
+
+---
+
+### Validation has layers
+
+A useful sequence is:
+
+```text
+STRUCTURE
+Does the field exist?
+Does it have the expected basic type?
+
+        ↓
+
+BUSINESS VALUE
+Is this eventType allowed?
+Is this date meaningful?
+Is this reasonCode accepted?
+
+        ↓
+
+IDENTITY RESOLUTION
+Does W-18422 map to exactly
+the intended ISC identity?
+
+        ↓
+
+AUTHORIZATION
+Is this business operation allowed
+for this caller/context?
+
+        ↓
+
+REPEAT SAFETY
+Has this stable business event
+already produced the intended side effect?
+```
+
+Verify Data Type helps with the first layer.
+
+Its job is not to prove all the later layers.
+
+A string can be the wrong string.
+
+---
+
+### Identifier confusion is dangerous
+
+This mistake is easy because many objects are called `id`.
+
+```text
+HR worker id
+        ≠
+ISC identity id
+
+source-native account identifier
+        ≠
+ISC account object id
+
+external case id
+        ≠
+campaign id
+```
+
+Do not make them interchangeable because their JSON fields have the same name.
+
+Resolve identifiers deliberately.
+
+Missing or ambiguous resolution deserves a deliberate branch.
+
+---
+
+### Source capability is another gate
+
+Now suppose Acme discovers Priya's accounts and wants to disable them.
+
+This reasoning is wrong:
+
+```text
+Get Accounts found account
+        ↓
+therefore automatic Disable is supported
+```
+
+Discovery and action capability are different questions.
+
+Use:
+
+```text
+ACCOUNT EXISTS
+        ↓
+What source owns it?
+        ↓
+Does that source/configuration support
+the required operation?
+        |
+        +---- yes → eligible automatic path
+        |
+        +---- no  → manual / escalation path
+```
+
+This is especially important for destructive automation.
+
+An unsupported account should not silently disappear from the success count.
+
+It needs ownership.
+
+---
+
+### The reusable principle
+
+```text
+DATA EXISTS
+        ≠
+DATA IS AUTHORITATIVE
+
+OBJECT EXISTS
+        ≠
+ACTION IS SUPPORTED
+```
+
+Those two statements prevent a surprising number of bad automations.
+
+---
+
+## 9. Advanced — When a signal looks stronger than it really is
+
+Security signals can make engineers overconfident because the event sounds serious.
+
+Two good examples are:
+
+- Native Change;
+- Outlier Detected.
+
+They represent different security conditions.
+
+But they share one crucial lesson:
+
+> **Signal does not automatically equal verdict.**
+
+---
+
+### Native Change — detected change is not intent
+
+Suppose Acme detects that Priya's Active Directory account was directly added to:
+
+```text
+Finance Privileged Operators
+```
+
+outside ISC.
+
+A Native Change event can establish that an out-of-band account change was detected through the configured Native Change Detection boundary.
+
+That is important security evidence.
+
+But keep the chain precise:
+
+```text
+detected out-of-band change
+        ≠
+malicious change
+        ≠
+unauthorized change
+        ≠
+automatic authorization
+for destructive remediation
+```
+
+The change could represent:
+
+- malicious activity;
+- a documented emergency grant;
+- break-glass procedure;
+- manual operational work;
+- another approved external process.
+
+The event tells you what changed.
+
+It does not read the administrator's mind.
+
+---
+
+#### Priya's emergency-access scenario
+
+During an outage, the AD team directly adds Priya to:
+
+```text
+Finance Privileged Operators
+```
+
+under an approved emergency process.
+
+Later aggregation detects the native change.
+
+A Workflow automatically revokes the addition.
+
+The Workflow is green.
+
+Security says:
+
+> Good. The Workflow fixed the unauthorized change.
+
+There are two problems.
+
+First:
+
+```text
+Native Change detected
+```
+
+did not prove:
+
+```text
+unauthorized
+```
+
+Second:
+
+```text
+Workflow green
+```
+
+did not prove:
+
+```text
+the chosen business response was correct
+```
+
+The automation may have successfully performed the wrong policy decision.
+
+---
+
+#### A safer response shape
+
+For high-impact signals:
+
+```text
+detect
+        ↓
+classify
+        ↓
+gather required context
+        ↓
+apply explicit Acme policy
+        ↓
+notify / ticket / investigate
+        ↓
+remediate only when authorized
+```
+
+Automatic remediation may be appropriate.
+
+But it needs stronger proof than:
+
+> An event fired.
+
+Ask:
+
+- What exact change occurred?
+- What current state exists?
+- What policy says about this case?
+- Are emergency exceptions possible?
+- Does the source support the action?
+- What happens if remediation repeats?
+- What evidence proves the intended correction?
+
+That is Advanced reasoning.
+
+---
+
+### Outlier — risk signal is not security judgment
+
+Outlier Detected gives a different kind of signal.
+
+It indicates unusual access/risk information according to the supported outlier capability.
+
+Do not translate that directly into:
+
+```text
+malicious identity
+```
+
+or:
+
+```text
+this entitlement is definitely unauthorized
+```
+
+Instead:
+
+```text
+OUTLIER SIGNAL
+        ↓
+potential risk / unusual access
+
+        +
+
+ACME POLICY
+        +
+
+current business/security context
+
+        ↓
+authorized response
+```
+
+The response may be:
+
+- notify;
+- investigate;
+- create governed review;
+- escalate;
+- perform explicitly authorized containment.
+
+The correct action comes from policy and context.
+
+Not from the existence of the score alone.
+
+---
+
+#### Do not memorize somebody else's threshold as your policy
+
+Product templates can demonstrate supported response patterns.
+
+They are examples.
+
+They do not automatically become Acme's security policy.
+
+If an exercise says:
+
+> Acme policy routes this Outlier signal to certification.
+
+then certification is the scenario response because **Acme adopted that rule for the scenario**.
+
+The reusable lesson is:
+
+```text
+signal
+        ↓
+policy interpretation
+        ↓
+authorized response
+```
+
+not:
+
+```text
+memorized number
+        ↓
+universal response
+```
+
+---
+
+### Native Change and Outlier side by side
+
+Keep the comparison simple:
+
+```text
+NATIVE CHANGE
+
+Evidence:
+an out-of-band account change
+was detected at that boundary.
+
+Does not by itself prove:
+malicious intent
+or unauthorized intent.
+```
+
+```text
+OUTLIER
+
+Evidence:
+ISC supplied the documented
+risk/outlier signal.
+
+Does not by itself prove:
+malicious intent
+or one specific unauthorized entitlement.
+```
+
+Both require judgment.
+
+Both can lead to destructive action if designed poorly.
+
+Both deserve:
+
+- explicit policy;
+- current context;
+- source-capability checks;
+- repeat-safety thinking;
+- recovery planning;
+- appropriate business-outcome evidence.
+
+---
+
+### Green still does not mean risk resolved
+
+Suppose an Outlier Workflow creates a certification successfully.
+
+You can safely say:
+
+```text
+the configured campaign-creation boundary
+completed according to its action contract
+```
+
+You cannot jump to:
+
+```text
+risky access was removed
+```
+
+Between those claims may be:
+
+```text
+campaign lifecycle
+        ↓
+review
+        ↓
+decision
+        ↓
+remediation
+        ↓
+target-state evidence
+```
+
+A security Workflow becomes dangerous when its language outruns its evidence.
+
+---
+
+## 10. Production reality — Testing does not remove these questions
+
+Module 07 taught you how to test and debug Workflows.
+
+Keep doing that.
+
+But do not assign testing a job it cannot perform.
+
+A passing test can show that:
+
+- a tested input followed the intended path;
+- the tested JSONPath worked for that data;
+- selected conditions produced the expected branch;
+- simulated or enabled actions behaved as observed.
+
+It cannot prove the permanent absence of:
+
+- production races;
+- every schedule overlap;
+- every dependency outage;
+- every ambiguous external result;
+- production-scale behavior;
+- every future source capability difference;
+- every combination of two executions touching shared state.
+
+That does not make testing weak.
+
+It means:
+
+```text
+TESTING
+        +
+SAFE DESIGN
+        +
+MONITORING
+        +
+RECOVERY
+        +
+RECONCILIATION WHERE NEEDED
+```
+
+work together.
+
+A production system is not safe because you discovered every possible failure in advance.
+
+It is safer because the failures you did not predict still have bounded consequences and visible recovery paths.
+
+---
+
+## 11. Production Stress-Test Exercise
+
+Now take one of the familiar patterns from Module 10.
+
+Acme's leaver coordination pattern is:
+
+```text
+Identity Lifecycle State Changed
+        ↓
+qualify the leaver transition
+        ↓
+retrieve required context
+        ↓
+notify Security
+        +
+create Facilities ticket
+```
+
+Assume the architecture decision is already correct.
+
+Workflow belongs here.
+
+Your job is not to redraw the canvas.
+
+Your job is to attack the design.
+
+Write your own answers.
+
+---
+
+### REPEAT
+
+```text
+What could cause this business work
+to become relevant again?
+
+What happens to the notification?
+
+What happens to the ticket?
+
+Which repeated operations are harmless?
+
+Which can multiply side effects?
+```
+
+Your answer:
+
+```text
+REPEAT:
+...
+```
+
+---
+
+### OVERLAP
+
+```text
+Could another execution touch Priya
+while this one is running?
+
+Could two executions both believe
+they should create the same ticket?
+
+What state could become stale?
+```
+
+Your answer:
+
+```text
+OVERLAP:
+...
+```
+
+---
+
+### PARTIAL
+
+```text
+What if the Security notification succeeds
+and ticket creation fails?
+
+What if ticket creation succeeds
+but later confirmation fails?
+
+Where would recovery resume?
+```
+
+Your answer:
+
+```text
+PARTIAL:
+...
+```
+
+---
+
+### DEPEND
+
+```text
+What if Facilities' ticketing system
+is unavailable?
+
+What if the request outcome is ambiguous?
+
+Which failure stops the process?
+Which one escalates?
+Which one waits for reconciliation?
+```
+
+Your answer:
+
+```text
+DEPEND:
+...
+```
+
+---
+
+### SCALE
+
+```text
+What if a large population of leavers
+is processed during a reorganization?
+
+What if a scheduled recovery process overlaps?
+
+At what point should the design
+be reconsidered as bulk processing?
+```
+
+Your answer:
+
+```text
+SCALE:
+...
+```
+
+---
+
+### INTERPRET
+
+```text
+What does the lifecycle event actually prove?
+
+Does it prove the Facilities ticket was completed?
+
+Does a green Workflow prove offboarding is finished?
+
+Which business outcomes remain outside
+the Workflow's success boundary?
+```
+
+Your answer:
+
+```text
+INTERPRET:
+...
+```
+
+---
+
+### CORRELATE
+
+Only if your design continues in later executions:
+
+```text
+What durable object or technical identifier
+connects later work back to this offboarding?
+
+Where does authoritative state live?
+
+How does recovery know which business process
+it is continuing?
+```
+
+Your answer:
+
+```text
+CORRELATE:
+...
+```
+
+---
+
+Do not compare your answers against a memorized canvas.
+
+Instead ask whether you found the dangerous assumptions.
+
+A strong Module 11 answer should identify things such as:
+
+```text
+duplicate side effect
+
+stale state
+
+concurrent check-then-act race
+
+partial completion
+
+ambiguous remote outcome
+
+unsupported target action
+
+cross-execution correlation
+
+signal stronger than its evidence
+
+business outcome beyond Workflow success
+```
+
+You are now evaluating the design, not merely describing it.
+
+---
+
+## 12. Checkpoint — Ready to design independently
+
+You should now be able to take a Workflow pattern that looks correct on the happy path and stress it deliberately.
+
+Ask:
+
+```text
+REPEAT
+What if this business situation is processed again?
+
+OVERLAP
+What if another execution acts at the same time?
+
+PARTIAL
+What if some side effects already succeeded?
+
+DEPEND
+What if another system is slow, unavailable,
+ambiguous, or incapable?
+
+SCALE
+What changes when the population grows
+or schedules overlap?
+
+INTERPRET
+What does this event or result actually prove?
+
+CORRELATE
+If work continues later,
+how does the later execution know
+which process it belongs to?
+```
+
+You should also be able to explain these distinctions:
+
+```text
+current-state check
+        ≠
+concurrency-safe idempotency guarantee
+
+retry
+        ≠
+recovery
+
+local failure
+        ≠
+remote side effect definitely failed
+
+approved
+        ≠
+provisioned
+
+Provisioning Completed
+        ≠
+independent target observation
+
+campaign created
+        ≠
+review complete
+
+Certification Signed Off
+        ≠
+Campaign Ended
+
+signal
+        ≠
+verdict
+
+account discovered
+        ≠
+action capability established
+
+green execution
+        ≠
+business outcome proven
+```
+
+Most importantly, this question should now feel automatic:
+
+> **If this happens twice, does the system still end in the correct state?**
+
+If your answer is:
+
+> I do not know yet.
+
+that is not failure.
+
+That is an engineering finding.
+
+Now you know which assumption has to be solved before production.
+
+---
+
+## From stress-testing to paper design
+
+You have reached the final transition in the theory course.
+
+```text
+Module 09
+Should Workflow participate?
+
+        ↓
+
+Module 10
+What reusable Workflow shape fits?
+
+        ↓
+
+Module 11
+How does that shape fail
+under production stress?
+
+        ↓
+
+Module 12
+Design the complete solution deliberately
+before opening the builder.
+```
+
+Module 12 will bring the course together.
+
+You will take the trigger, data, decisions, actions, boundaries, failure handling, repeat safety, evidence, and operating assumptions and turn them into a complete paper design.
+
+At this point, you should no longer look at a clean Workflow diagram and ask only:
+
+> Does the happy path work?
+
+You should ask:
+
+> What assumptions have to remain true for this design to stay correct?
+
+That is the difference between recognizing a Workflow pattern and engineering one.
+
+---
+
+## Official References
+
+- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Event Trigger Types — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/trigger-types/)
+- [Provisioning Completed — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
+- [Campaign Generated — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/campaign-generated)
+- [Native Change Detection — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
+- [Native Change Account Updated — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
+- [Outlier Detected — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
+
+---
+
+[← Previous: Module 10 Real-World Workflow Patterns](10-use-case-patterns.md) | [Course home](README.md) | [Next: Module 12 Readiness & Paper Design →](12-readiness-and-paper-design.md)

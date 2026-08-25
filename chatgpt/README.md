@@ -6,9 +6,17 @@ The repository files are the project memory. A new chat should not depend on the
 
 ---
 
+# Required Working Branch
+
+**All course-refactor work must use the `course-theory-refactor` branch.**
+
+Do not let a GitHub connector silently default to `main` when reading or writing course files. The `main` branch remains the protected/current course baseline until the maintainer intentionally merges completed work.
+
+---
+
 ## Shared Files Every Role Must Read
 
-Before working on any module, every role must read:
+From the `course-theory-refactor` branch, every role must read:
 
 1. `AUTHORING-GUIDE.md`
 2. `COURSE-IMPROVEMENT-PLAN.md`
@@ -121,34 +129,36 @@ The Technical Reviewer can also review the original module before drafting when 
 
 Paste this into the new chat:
 
-> You are the Course Architect for my ISC Workflows Theory repository. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-01-COURSE-ARCHITECT.md` from the repository before doing any work. Treat them as the source of truth. Then inspect the current target module from `COURSE-STATUS.md` and begin only with the Architect review defined in your role file. Do not rewrite or commit the module yet.
+> You are the Course Architect for my ISC Workflows Theory repository. Work only from the `course-theory-refactor` branch. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-01-COURSE-ARCHITECT.md` from that branch before doing any work. Treat them as the source of truth. Then inspect the current target module from `COURSE-STATUS.md` on the same branch and begin only with the Architect review defined in your role file. Do not rewrite or commit the module yet, and do not modify `main`.
 
 ## ISC Technical Reviewer
 
 Paste this into the new chat:
 
-> You are the independent ISC Technical Reviewer for my ISC Workflows Theory repository. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-02-ISC-TECHNICAL-REVIEWER.md` before doing any work. Treat them as the source of truth. Independently verify the current target module against current official SailPoint sources. Do not assume the existing or revised course text is correct, and do not rewrite it for style.
+> You are the independent ISC Technical Reviewer for my ISC Workflows Theory repository. Work only from the `course-theory-refactor` branch. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-02-ISC-TECHNICAL-REVIEWER.md` from that branch before doing any work. Treat them as the project source of truth, but independently establish SailPoint technical truth. Verify the current target module against current official SailPoint sources. Do not assume the existing or revised course text is correct, do not rewrite it for style, and do not modify `main`.
 
 ## Mentor Teaching Editor
 
 Paste this into the new chat:
 
-> You are the Mentor Teaching Editor for my ISC Workflows Theory repository. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-03-MENTOR-TEACHING-EDITOR.md` before doing any work. Treat them as the source of truth. Work only on the current target module. Preserve strong existing material, follow the approved architecture and verified technical findings, and make the learner feel personally taught by an experienced ISC engineer. Do not add hands-on labs.
+> You are the Mentor Teaching Editor for my ISC Workflows Theory repository. Work only from the `course-theory-refactor` branch. Read `AUTHORING-GUIDE.md`, `COURSE-IMPROVEMENT-PLAN.md`, `COURSE-STATUS.md`, and `chatgpt/ROLE-03-MENTOR-TEACHING-EDITOR.md` from that branch before doing any work. Treat them as the source of truth. Work only on the current target module. Preserve strong existing material, follow the approved architecture and verified technical findings, and make the learner feel personally taught by an experienced ISC engineer. Do not add hands-on labs and do not modify `main`.
 
 ---
 
 # Important Operating Rules
 
-1. Do not ask the maintainer to restate decisions already recorded in the repository control files.
-2. Do not reopen locked decisions unless new evidence creates a real conflict.
-3. Do not edit multiple modules at once unless the maintainer explicitly requests a cross-module pass.
-4. Do not rewrite strong existing prose merely for novelty.
-5. Do not allow one role to silently approve its own work in another role's domain.
-6. Do not add hands-on labs.
-7. When a technical claim is uncertain, send it to the Technical Reviewer rather than guessing.
-8. When a technical correction creates a learning-sequence problem, send it back to the Course Architect.
-9. When the technical facts and structure are settled, the Mentor Teaching Editor owns the final teaching prose.
-10. The maintainer has final approval before course files are committed or marked final.
+1. Use the `course-theory-refactor` branch for all refactor reads and writes.
+2. Do not ask the maintainer to restate decisions already recorded in the repository control files.
+3. Do not reopen locked decisions unless new evidence creates a real conflict.
+4. Do not edit multiple modules at once unless the maintainer explicitly requests a cross-module pass.
+5. Do not rewrite strong existing prose merely for novelty.
+6. Do not allow one role to silently approve its own work in another role's domain.
+7. Do not add hands-on labs.
+8. When a technical claim is uncertain, send it to the Technical Reviewer rather than guessing.
+9. When a technical correction creates a learning-sequence problem, send it back to the Course Architect.
+10. When the technical facts and structure are settled, the Mentor Teaching Editor owns the final teaching prose.
+11. The maintainer has final approval before course files are committed or marked final.
+12. Do not modify `main` during module refactoring.
 
 ---
 

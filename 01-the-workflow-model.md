@@ -1,116 +1,466 @@
 # Module 01: The Workflow Model
 
-The core anatomy of every workflow and how data moves through it.
+How a Workflow is organized, how execution moves through it, and why data can only be used after it becomes available.
 
-Most explanations of workflows start by naming the parts. We are going to do the opposite. First I want you to watch one whole workflow work, start to finish, so you have a complete thing in your head. Then we will take it apart and name the pieces. A part makes a lot more sense once you have seen the job it does.
+Module 00 ended with a question:
 
-So let us build Priya a welcome email.
+> **If Workflow really is the right capability, what does one actually look like?**
 
-## One whole workflow, start to finish
+That is our job now.
 
-Here is the task. When Priya is hired at Acme, a new identity is created for her in ISC. The moment that happens, we want to send her a short welcome email. That is the entire automation. Small on purpose, because a small example you fully understand beats a big one you half follow.
+We are not going to begin with syntax or a catalog of product features. First I want you to watch one small Workflow from beginning to end. Once you have the whole process in your head, the terminology has somewhere useful to attach.
 
-When Priya's identity is created, ISC hands the workflow a piece of JSON that describes what just happened. It looks like this:
+## One whole Priya Workflow, start to finish
 
-```json
-{
-  "identity": {
-    "type": "IDENTITY",
-    "id": "2c91808568c529c60168cca6f90c1313",
-    "name": "priya.patel"
-  },
-  "attributes": {
-    "firstname": "Priya",
-    "lastname": "Patel",
-    "email": "priya.patel@acme.com",
-    "department": "Sales"
-  }
-}
+Acme wants a simple process for new identities.
+
+After ISC detects and creates Priya's identity through the relevant authoritative-source processing, the **Identity Created** event can start a Workflow.
+
+Acme wants that Workflow to send Priya a welcome email.
+
+Nothing more.
+
+Keeping this small is deliberate. Right now you are learning the model, not trying to design a production joiner process.
+
+Conceptually, the Workflow looks like this:
+
+```text
+Identity Created
+     ↓
+starting context/data
+     ↓
+Send Welcome Email
+     ↓
+Success
 ```
 
-Read that slowly. There is an `identity` object holding the type, the internal id, and the login name. There is an `attributes` object holding the everyday fields, first name, last name, email, department. The identity created event carries all of the identity attributes as they are set up in your identity profile, so at Acme the attributes block will hold whatever Acme configured. For Priya today it holds these four.
+The trigger establishes the starting context for this execution. For an event such as Identity Created, that includes structured information about the identity and its configured identity attributes.
 
-This JSON is the seed. Everything the workflow does, it does by reading from this seed and adding to it.
+At Acme, assume Priya's available identity data includes the email address needed by the Send Email step.
 
-Now the workflow does its one job. It runs a Send Email step. In that step we have to fill in who the email goes to and what it says. We do not type Priya's address by hand, because tomorrow this same workflow has to work for the next new hire, and the one after that. Instead we point at the data. For the "to" field we point at the email in the seed. For the greeting we point at the first name. When the step runs for Priya, those pointers resolve to `priya.patel@acme.com` and `Priya`, and out goes the email. When it runs for the next hire, the same pointers resolve to their address and their name. We wrote it once. It works for everyone.
+The Send Email action uses that available value rather than having Priya's address typed permanently into the Workflow.
 
-That is a complete workflow. An event happened, data arrived, a step read that data and acted on it. Hold that picture. Now we name the parts.
+Then execution reaches the Success end step.
 
-## The three kinds of building block
+That is enough to understand one complete Workflow:
 
-Every workflow is made of three kinds of thing: one trigger, some number of actions, and some number of operators. Our welcome email used a trigger and an action and did not need an operator yet. Let us take them one at a time.
+- something started it;
+- data was available;
+- a step performed work using that data;
+- execution reached an end.
 
-The trigger is what starts the workflow. There is exactly one per workflow, always. It is the "when this happens" part. In our example the trigger was Identity Created. The trigger is also where the seed JSON comes from. The event supplies that first block of data, and the rest of the workflow reads from it. A workflow with no trigger cannot exist, because nothing would ever set it going. Module 02 is entirely about triggers and the full set you can choose from.
+Hold that picture for a moment. Now we can name the pieces.
 
-Actions are the steps that do something. Sending the email was an action. Actions are the verbs of a workflow. Some actions reach outside ISC, like sending mail or calling another system's API. Some actions fetch more data, like looking up an identity's full details. Some actions change things, like managing an account or an access assignment. Whenever a workflow actually affects the world, an action is doing it. Module 04 walks through the families of actions.
+## The building blocks
 
-Operators are the steps that make decisions and shape data without reaching outside. An operator is how a workflow asks a question and takes different paths based on the answer. If we wanted to send the welcome email only to people in the Sales department, we would add an operator that compares the department to "Sales" and lets the workflow continue only when it matches. Operators are the thinking of a workflow. Module 03 covers them in full.
+SailPoint groups Workflow steps into three categories:
 
-A clean way to remember it: the trigger is when, actions are do, operators are decide and shape. Almost everything you build is some arrangement of those three.
+- **triggers**
+- **actions**
+- **operators**
 
-## How data moves: the payload that grows
+A completed Workflow has exactly one trigger, at least one action, and one or more end steps. Other operators appear when the process needs them.
 
-Here is the idea that makes workflows finally click for most people, so I want to give it room.
+### Trigger — what starts the Workflow
 
-A workflow is not just a list of steps that run in order. It is a piece of JSON that travels through those steps and grows as it goes. The trigger drops the seed data in at the start. Then each step can read everything that came before it, and each step can add its own output to the pile. By the time you are deep in a workflow, the data available to you is the seed plus the output of every step that already ran.
+The **trigger** establishes when the Workflow begins.
 
-This is why order matters so much, and it leads to one hard rule that you must burn into memory: a step can only use data from steps that ran before it. You cannot reach forward. If step five produces a value, step two cannot see it, because when step two runs, step five has not happened yet. This is not an arbitrary restriction. It falls straight out of the fact that the data is being built up as the workflow moves forward. There is nothing there yet to read.
+There is exactly one trigger per Workflow.
 
-In our welcome email, the Send Email step could read the trigger's seed because the trigger came first. If we had somehow put the Send Email step before the trigger, there would be no email address to read, because nothing would have supplied it. Forward references are the single most common beginner mistake, and now you know exactly why they fail.
+In Priya's example, the trigger is **Identity Created**.
 
-## Pointing at data: a first look at JSONPath
+For now, think of the trigger as doing two jobs:
 
-So how does a step actually point at a piece of data? With a small path language called JSONPath. We are going to keep this light here and go deep in Module 06, because JSONPath rewards a whole module of its own. For now you only need to be able to read a path.
+1. establishing the starting boundary for execution;
+2. providing the starting context or input that the Workflow can use.
 
-A path starts at the root of the data, written as a dollar sign, and then walks down into the JSON by naming each key. To reach Priya's email in that seed, you start at the root, step into the trigger data, step into `attributes`, and step into `email`. Written out, that is `$.trigger.attributes.email`. To reach her first name, `$.trigger.attributes.firstname`. To reach her login name, which sits one level up in the `identity` object rather than in `attributes`, it is `$.trigger.identity.name`.
+Different triggers have different kinds of starting context. We will study those distinctions properly later.
 
-Look carefully at that last one, because it hides a trap. The login name lives under `identity`. The email lives under `attributes`. They are in different places in the JSON, so their paths are different. If you assume everything about a person lives in one tidy spot, you will write a path that points at nothing.
+You do not need the trigger catalog yet.
 
-Let me show you that exact failure, because seeing it now saves you an afternoon later. Suppose you want the email address and you write `$.trigger.identity.email`. It reads fine in English, "the identity's email." But look back at the JSON. There is no `email` inside the `identity` object. The email is inside `attributes`. So that path resolves to nothing. The Send Email step then has an empty "to" field, and either the workflow fails or an email goes out to no one. Nothing crashes loudly. You just get silence and a confused afternoon. The cure is boring and reliable: look at the actual JSON and follow the real nesting, key by key, instead of guessing where a field ought to be.
+### Action — work the Workflow performs
 
-## Two ways to write a path: the Variable Selector and inline variables
+An **action** performs a task.
 
-You will not have to type most paths by hand, which is a relief. The builder gives you a Variable Selector. You click it, you pick the step whose output you want, then you pick the field from a list, and the builder writes the correct JSONPath for you. When you are learning, use the selector. It looks at the real data shape and spells the path correctly, which protects you from the exact nesting mistake we just saw.
+Send Email is an action.
 
-The other way is to write the reference inline, right inside a text field, using double curly braces. Inside a message body you might write `Welcome to Acme, {{ $.trigger.attributes.firstname }}` and when the step runs it swaps in `Priya`. One small convenience to know: if you are referencing a value that comes from the very same step you are configuring, you can leave the step name out. Across steps, name the step. Same step, no need.
+Other actions can retrieve information, send notifications, call services, or change data or state depending on what that particular action is designed to do.
 
-There is one more detail I will flag now and explain properly later, so it does not surprise you. Trigger filters, which decide whether a workflow should fire at all, use a slightly different flavor of JSONPath than the one steps use to read data. They come from two different underlying engines. You do not need that distinction yet. Just tuck away the fact that "the path in a trigger filter" and "the path in a step" are close cousins, not identical twins, and Module 06 will make the difference clear.
+The useful beginner shorthand is:
 
-## Steps, order, start, and end
+> **action = do some work**
 
-Now the plumbing that holds it together. Inside a workflow, every step has a name, and every step except the trigger and the final ones points at the step that should run next. That "next" pointer is what puts the steps in order. The workflow also marks which step is the start, so it knows where to begin after the trigger fires.
+Do not turn that into “every action changes an external system.” Some actions retrieve or process information rather than creating an external side effect.
 
-Every path through a workflow has to end somewhere, and it ends at one of two end steps: Success or Failure. These are not decoration. They are how the workflow records whether it finished cleanly or fell over, and later, when you read a workflow's run history in Module 07, that Success or Failure is the first thing you will look at. When you build branching logic, different branches can end in different places, but each branch has to land on an end.
+Module 05 will examine action families and what their results actually guarantee.
 
-So the shape of any workflow is: a trigger fires, control passes to the start step, each step hands off to its named next step, and the line eventually reaches Success or Failure. Simple to say, and it holds for the smallest welcome email and the largest joiner automation alike.
+### Operator — control or shape execution and data
 
-## The builder is a friendly face over JSON
+An **operator** helps control the Workflow or work with its data.
 
-One last thing, and it is the thing that will make you comfortable rather than intimidated. Everything you do in the visual builder is really editing a JSON document underneath.
+Some operators compare values and choose a path. Others support loops, variables, validation, or ending the Workflow.
 
-The builder itself is a canvas. Down the left you have the steps you can add, sorted into tabs for triggers, actions, and operators. In the middle is the canvas where you drag steps and draw the connections between them. On the right is the configuration panel for whatever step you have selected, which is where you fill in fields like the email recipient. You build by dragging, connecting, and filling in.
+For our mental model, a decision is the easiest operator example.
 
-But when you save, all of that becomes a JSON definition with a clear structure. There is a name and a description at the top. Then there is a `definition` that holds the `trigger`, a `start` naming the first step, and a `steps` object holding every step keyed by its name. Here is the skeleton so you recognize it when you meet it:
+Suppose Acme changed the welcome process:
 
-```json
-{
-  "name": "Priya Welcome Email",
-  "description": "Send a welcome email when an identity is created",
-  "definition": {
-    "trigger": { },
-    "start": "Send Welcome Email",
-    "steps": {
-      "Send Welcome Email": { }
-    }
-  }
-}
+> Send one message to Finance hires and another message to everyone else.
+
+Now the Workflow needs to evaluate information and choose a path.
+
+Conceptually:
+
+```text
+Identity Created
+       ↓
+   Check department
+      ↙       ↘
+ Finance     Other
+    ↓          ↓
+ Send A      Send B
+      ↘      ↙
+       Success
 ```
 
-Why does this matter to you as a learner? Because you can download that JSON, edit it, and upload it again. That is how workflows get copied between tenants, saved in version control, and built by scripts instead of by hand. You do not need to do any of that yet. I point it out so that the builder never feels like a black box. It is a comfortable front end, and underneath is plain JSON that you can read and, one day, drive directly.
+You are not learning how to configure that branch yet.
 
-## Before you move on
+Just recognize the role:
 
-Go back to the seed JSON at the top of this module and answer three questions in your head. What is the JSONPath to Priya's department? What is the JSONPath to her last name? And if a step tried to read `$.trigger.attributes.manager`, what would it get, and why? If you can answer all three, and especially if your answer to the third one is "nothing, because there is no manager field in that data," then you understand how data lives and moves inside a workflow, and you are ready for Module 02, where we meet every kind of trigger that can set one of these off.
+> **an operator can influence how execution proceeds or how Workflow data is handled.**
+
+Detailed comparison and branching logic belongs in Module 04.
+
+## Two things move through a Workflow
+
+This distinction will save you a lot of confusion later.
+
+When I look at a Workflow, I mentally separate **control flow** from **data flow**.
+
+### Control flow: what runs next?
+
+Control flow is the route execution takes through the configured Workflow.
+
+In the simple welcome Workflow:
+
+```text
+Identity Created
+       ↓
+Send Welcome Email
+       ↓
+Success
+```
+
+The question is:
+
+> **Which configured step or path executes next?**
+
+A simple Workflow may look like a straight line.
+
+A larger Workflow may contain decisions, loops, error paths, or branches. You do not need those mechanics yet. The useful idea is that execution follows the connections and paths defined by the Workflow until it reaches an end step.
+
+### Data flow: what information is available here?
+
+Data flow asks a different question:
+
+> **What information can this executing step use?**
+
+The Workflow begins with starting context supplied by its trigger.
+
+As execution continues, previously executed steps can make additional data available to later steps.
+
+So at any point in the Workflow, I want you to ask two separate questions:
+
+1. **Where can execution go next?**
+2. **What data is available at this point?**
+
+Those questions are related, but they are not the same.
+
+That distinction becomes especially useful once Workflows begin branching.
+
+## Why order creates data dependencies
+
+Consider a slightly different Workflow:
+
+```text
+Trigger
+   ↓
+Get Information
+   ↓
+Make Decision
+   ↓
+Send Message
+   ↓
+Success
+```
+
+Suppose **Get Information** produces a value that **Make Decision** needs.
+
+That works because Get Information executed first and made the value available before Make Decision needed it.
+
+Now reverse the dependency.
+
+Suppose Get Information somehow needs a value that will only be produced later by Send Message.
+
+That cannot work.
+
+When Get Information executes, Send Message has not executed yet. Its future output does not exist yet for the earlier step to use.
+
+That gives us a foundational rule:
+
+> **A step can use data made available by the trigger or by steps that executed before it. It cannot depend on output that has not been produced yet.**
+
+Notice that I said **executed before it**, not simply “appears above it on the canvas.”
+
+That wording matters.
+
+As Workflows become more complicated, a step can exist somewhere in the definition without having executed on the path the current run followed.
+
+For now, keep the simpler habit:
+
+> **Think in execution order, not just visual position.**
+
+### Engineering Habit
+
+Before configuring a step to use another step's output, ask:
+
+> **Will that value actually exist by the time this step runs?**
+
+That question is more useful than memorizing syntax.
+
+Module 02 will teach you how to inspect and reference the actual value once you know it should exist.
+
+## Start, connected processing, and end
+
+Once the trigger starts an execution, the Workflow has a configured starting step.
+
+From there, control follows the Workflow's configured connections and paths.
+
+A simple version looks like:
+
+```text
+Trigger
+   ↓
+Start step
+   ↓
+More processing
+   ↓
+End step
+```
+
+Not every Workflow is a single straight chain. Decisions and other operators can create multiple possible paths.
+
+The general model still holds:
+
+```text
+trigger
+   ↓
+starting context
+   ↓
+connected processing
+   ↓
+one of the configured paths
+   ↓
+end
+```
+
+Workflows use **Success** and **Failure** as end operators.
+
+These steps stop execution and mark the Workflow execution's status.
+
+Keep that statement narrow for now.
+
+A Success end tells you that the **Workflow execution** ended in Success. Module 05 and Module 07 will later teach you why execution status and the final business outcome are not automatically the same fact.
+
+At this stage, you only need to recognize that every execution path eventually needs an ending.
+
+## Workflow definition and Workflow data are different things
+
+There are two concepts that both eventually involve structured data, and beginners often blend them together.
+
+I want you to separate them now.
+
+### Workflow definition
+
+The **Workflow definition** describes how the Workflow is configured.
+
+Conceptually, it describes things such as:
+
+- its trigger;
+- its executable steps;
+- where execution begins;
+- how those steps and paths are connected.
+
+The visual Workflow Builder gives you a canvas for working with that structure.
+
+There is also a structured JSON representation behind Workflow configuration and APIs.
+
+You do **not** need to memorize its exact object hierarchy here.
+
+In fact, you should not.
+
+The exact representation can depend on which SailPoint interface or object model you are looking at, and that detail is not what Module 01 is trying to teach.
+
+What matters today is simply:
+
+> **The canvas represents a structured Workflow definition.**
+
+### Runtime Workflow data
+
+Runtime data is different.
+
+It is the information available while one particular Workflow execution is running.
+
+For Priya's execution, that might include starting identity information and data later steps make available.
+
+For another person's execution, the Workflow definition may be identical while the runtime values are different.
+
+Think of it this way:
+
+```text
+Workflow definition
+= the process that was designed
+
+Workflow runtime data
+= the information that particular execution is working with
+```
+
+The definition tells ISC **what process exists**.
+
+Runtime data gives that execution **values to work with**.
+
+Do not worry about JSON syntax yet. Module 02 exists specifically to make that data comfortable to read.
+
+### Working Engineer preview
+
+Later, you will care about the formal Workflow representation because definitions can be inspected and managed outside the visual canvas.
+
+That matters for engineering and operations.
+
+It does not need to occupy space in your memory yet.
+
+For now, understanding that the structured definition exists is enough.
+
+## Put the model together
+
+You can now expand the simple picture from Module 00.
+
+There, Workflow looked like:
+
+```text
+something happens
+        ↓
+coordinated processing follows
+```
+
+Now you can see inside it:
+
+```text
+Trigger
+  ↓
+starting context/data
+  ↓
+Action
+  ↓
+Decision or other processing
+  ↓
+more actions / paths
+  ↓
+End
+```
+
+And you can ask two questions all the way through:
+
+```text
+CONTROL FLOW
+What runs next?
+
+DATA FLOW
+What information is available here?
+```
+
+That is the Workflow model I want you carrying into the rest of the course.
+
+Not JSONPath.
+
+Not a memorized object schema.
+
+Not a catalog of every trigger or action.
+
+The model.
+
+## Work It Out: Read the Workflow
+
+Consider this conceptual Acme Workflow:
+
+```text
+Identity event
+      ↓
+Get Manager Information
+      ↓
+Check Department
+    ↙            ↘
+Finance          Other
+   ↓               ↓
+Send Finance     Send Standard
+Message          Message
+    ↘             ↙
+        Success
+```
+
+Before reading the answers, reason through these five questions.
+
+### 1. What starts the process?
+
+The **trigger** represented by the identity event.
+
+You do not need to know which exact identity trigger is appropriate from this diagram alone. Trigger selection comes later.
+
+### 2. Which steps are performing work, and which one is controlling a decision?
+
+**Get Manager Information** and the two Send steps are actions performing tasks.
+
+**Check Department** represents an operator evaluating information and influencing the path.
+
+### 3. Can Check Department use information produced by Get Manager Information?
+
+Yes, assuming Get Manager Information executed first and made that information available.
+
+The dependency points backward to something that already happened.
+
+### 4. Can Get Manager Information depend on output that will only be produced by Send Finance Message?
+
+No.
+
+At the time Get Manager Information executes, that later Send step has not executed and has not produced that output.
+
+### 5. What is the difference between control flow and data flow in this diagram?
+
+**Control flow** tells you which path execution follows, such as Finance versus Other.
+
+**Data flow** tells you what information is available to each executing step along that path.
+
+If you can explain that difference without writing a single JSONPath expression, you have the right foundation.
+
+## Checkpoint
+
+You should now be able to look at a simple Workflow and explain:
+
+- what starts it;
+- what actions do;
+- what operators broadly contribute;
+- how control moves through connected processing;
+- what data is available as execution progresses;
+- why previously executed-step data can be used later;
+- why future output cannot be used before it exists;
+- the difference between the Workflow definition and one execution's runtime data;
+- where execution eventually ends.
+
+You do **not** need to know how to write a path to that data yet.
+
+That is the next problem.
+
+Module 02 starts with the data itself: values, objects, nested structures, and arrays. Once you can confidently see the shape of the information, we will teach you how a Workflow points to the exact value it needs.
 
 ---
-[← Previous: Module 00 Orientation](00-orientation.md) | [Course home](../README.md) | [Next: Module 02 Triggers →](02-triggers.md)
+
+[← Previous: Module 00 Orientation](00-orientation.md) | [Course home](README.md) | [Next: Module 02 Data, Payloads, Variables & JSONPath →](02-data-variables-and-expressions.md)

@@ -15,13 +15,23 @@ Update this file only after a module reaches an agreed milestone.
 
 ---
 
+# Working Branch
+
+**All course-refactor reads and writes must use:** `course-theory-refactor`
+
+The `main` branch is the protected/current course baseline. Do not modify student-facing course files on `main` during the refactor unless the maintainer explicitly decides to merge or apply completed work.
+
+If a role uses a GitHub connector, it must explicitly read and write the `course-theory-refactor` branch rather than relying on the connector's default branch.
+
+---
+
 # Current Project State
 
-**Phase:** Preparation / pre-refactor
+**Phase:** Final course integration approved; ready for maintainer merge/release decision
 
-**Current target:** Module 00 — Orientation
+**Current target:** None — Modules 00–12 are FINAL ACCEPTED
 
-**Course modules modified so far:** None
+**Course modules modified so far:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 — Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`); Module 12 — Readiness & Paper Design (`FINAL ACCEPTED`)
 
 **Repository-control files created:**
 
@@ -30,7 +40,7 @@ Update this file only after a module reaches an agreed milestone.
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-The student-facing course content should remain unchanged until the module-by-module review process begins.
+Modules 00 through 12 are final accepted. The module-by-module refactor sequence, coordinated filename/navigation repair, full-course technical audit, learner-continuity audit, teaching-voice audit, Official References/site-consistency audit, and final Course Lead repository-wide integrity review are complete. Final course integration is approved; only the maintainer merge/release decision remains.
 
 ---
 
@@ -50,6 +60,7 @@ Do not reopen these unless the maintainer explicitly changes them.
 - [x] Technical accuracy takes priority over style.
 - [x] Current official SailPoint sources are primary for changing technical behavior.
 - [x] Final module sequence is defined in `COURSE-IMPROVEMENT-PLAN.md`.
+- [x] Refactor work occurs on `course-theory-refactor`, not directly on `main`.
 
 ---
 
@@ -79,27 +90,27 @@ These findings came from the preliminary repository review. They are **review ta
 
 ## Module 01 — Workflow JSON model
 
-The existing JSON skeleton appears to place `trigger` inside `definition`. Verify the current Workflow model. Preliminary review indicates `trigger` is top-level while `definition` contains `start` and `steps`.
+The existing JSON skeleton appeared to place `trigger` inside `definition`. Formal technical review found conflicting current official representations: the API/SDK model places `trigger` at the top level, while product-help material shows a JSON-file representation with `trigger` nested under `definition`.
 
-**Status:** Pending formal technical review
+**Status:** Resolved in the final accepted Module 01 by removing the exact universal hierarchy and teaching only the stable structured-Workflow-definition concept.
 
 ## Modules 00 / 09 — Transform wording
 
 Existing language suggests transforms "do not make decisions." This is likely too absolute because supported transform operations can contain conditional/fallback logic. The intended architectural distinction is that transforms calculate/shape values and do not act as general workflow orchestration engines.
 
-**Status:** Pending formal technical review
+**Status:** Resolved in the final accepted Modules 00 and 09. Module 09 explicitly preserves supported conditional value logic while teaching the architectural boundary between attribute-value calculation/manipulation and event/process orchestration.
 
 ## Module 04 / future Module 05 — Get Identity execution wording
 
 Existing language says an unnecessary Get Identity "spends an execution." Verify the relevant execution-count definition. Preliminary review suggests the safer point is that an unnecessary lookup adds a service call, latency, data, and another failure surface rather than necessarily counting as a separate workflow execution.
 
-**Status:** Pending formal technical review
+**Status:** Resolved in the final accepted Module 05 by removing the incorrect execution-count claim and teaching the safer action/service-call, latency, returned-data, and failure-surface boundary.
 
 ## Module 05 / future Module 06 — Human-in-the-loop mechanisms
 
 Adaptive Approval, Approval Policy, Generic Approval Policy, Form action, Interactive Workflow, Approve/Deny Access Request, and identifier semantics require current-source verification during module review.
 
-**Status:** Pending
+**Status:** Resolved in the final accepted Module 06 through current-source technical review, mechanism-specific non-response handling, current Interactive Process terminology, Adaptive Approvals boundaries, and verified direct Approve/Deny identifier semantics.
 
 ## Module 08 — Operations additions
 
@@ -111,7 +122,7 @@ Verify and add where current documentation supports them:
 - scheduled execution overlap behavior
 - current execution thresholds and retention
 
-**Status:** Pending
+**Status:** Resolved in the final accepted Module 08 through current-source verification of ownership and Workflow PAT behavior, size limits, scheduled overlap, execution thresholds, retention boundaries, promotion/configuration-management behavior, and secure-credential scope.
 
 ---
 
@@ -137,36 +148,42 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 
 | Module | State | Notes |
 |---|---|---|
-| 00 Orientation | NOT STARTED | First target |
-| 01 Workflow Model | NOT STARTED | Workflow JSON model needs verification |
-| 02 Data / JSONPath | NOT STARTED | Built from current Module 06 |
-| 03 Triggers & Filters | NOT STARTED | Built from current Module 02; Core vs Specialized |
-| 04 Operators & Logic | NOT STARTED | Built from current Module 03 |
-| 05 Actions & Error Handling | NOT STARTED | Built from current Module 04; add native error handling |
-| 06 Forms / Approvals / Interactive | NOT STARTED | Built from current Module 05 |
-| 07 Testing / Debugging | NOT STARTED | Reorganize around diagnostic method |
-| 08 Operations / Limits / Governance | NOT STARTED | Add ownership, sizes, overlap, lifecycle |
-| 09 When to Use Workflows | NOT STARTED | Add decision framework |
-| 10 Real-World Patterns | NOT STARTED | Add difficulty classification |
-| 11 Failure Modes / Edge Cases | NOT STARTED | Increase scenario-first reasoning |
-| 12 Readiness / Paper Design | NOT STARTED | Finalize seven-question framework |
+| 00 Orientation | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 01 Workflow Model | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 02 Data / JSONPath | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 03 Triggers & Filters | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 04 Operators & Logic | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 05 Actions & Error Handling | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 06 Forms / Approvals / Interactive | FINAL ACCEPTED | Maintainer approved; integration complete; canonical filename finalized |
+| 07 Testing / Debugging | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 08 Operations / Limits / Governance | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 09 When to Use Workflows | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 10 Real-World Patterns | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 11 Failure Modes / Edge Cases | FINAL ACCEPTED | Maintainer approved; integration complete |
+| 12 Readiness / Paper Design | FINAL ACCEPTED | Maintainer approved; integration complete |
 
 ---
 
-# Repository-Wide Work Still Pending
+# Repository-Wide Completion Status
 
-Do not perform these globally until the relevant module architecture is approved.
+The module-by-module refactor sequence, structural navigation cleanup, course-wide audits, site/reference repair, and final Course Lead integrity review are complete. No additional course-content repair is pending.
 
-- [ ] Renumber/rename module files 02–06
-- [ ] Update README navigation
-- [ ] Update previous/next links
-- [ ] Update Docsify/sidebar navigation where required
-- [ ] Repair cross-module number references
-- [ ] Decide whether old public deep links need redirect/stub files
-- [ ] Add/update Official References sections
-- [ ] Run final technical consistency audit
-- [ ] Run final beginner learning-continuity audit
-- [ ] Run final teaching-voice audit
+- [x] Renumber/rename module files 02–06
+- [x] Update README navigation
+- [x] Update previous/next links
+- [x] Update Docsify/sidebar navigation where required
+- [x] Repair cross-module number references
+- [x] Decide whether old public deep links need redirect/stub files — preserved with moved-module stubs
+- [x] Add/update Official References sections and reconcile site-injected reference lists
+- [x] Run final technical consistency audit
+- [x] Run final beginner learning-continuity audit
+- [x] Run final teaching-voice audit
+- [x] Run final Official References / site-consistency audit
+- [x] Run final Course Lead repository-wide integrity review
+
+`index.html` module routing, ordering, display titles, module-key mappings, student-facing highlights, and generated-reference behavior have been reconciled with the final accepted course. Modules 02–12 use their authored Official References as the canonical displayed reference sections; Modules 00–01 retain generated references.
+
+**Final integration status:** APPROVED on `course-theory-refactor`. The remaining action is the maintainer's explicit merge/release decision for `main`.
 
 ---
 

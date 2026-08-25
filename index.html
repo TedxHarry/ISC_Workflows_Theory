@@ -525,45 +525,45 @@
     const modules = [
       { path: '00-orientation', title: 'Module 00: Orientation', category: 'Foundations' },
       { path: '01-the-workflow-model', title: 'Module 01: The Workflow Model', category: 'Foundations' },
-      { path: '02-triggers', title: 'Module 02: Triggers', category: 'Workflow Building Blocks' },
-      { path: '03-operators-and-logic', title: 'Module 03: Operators and Logic', category: 'Workflow Building Blocks' },
-      { path: '04-actions', title: 'Module 04: Actions', category: 'Workflow Building Blocks' },
-      { path: '05-forms-and-interactive-workflows', title: 'Module 05: Forms and Interactive Workflows', category: 'Workflow Building Blocks' },
-      { path: '06-data-variables-and-expressions', title: 'Module 06: Data, Variables and Expressions', category: 'Workflow Building Blocks' },
-      { path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging and Execution', category: 'Testing and Operations' },
-      { path: '08-operations-limits-and-governance', title: 'Module 08: Operations, Limits and Governance', category: 'Testing and Operations' },
-      { path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows and When Not', category: 'Design and Architecture' },
-      { path: '10-use-case-patterns', title: 'Module 10: Use Case Patterns', category: 'Design and Architecture' },
-      { path: '11-challenges-and-edge-cases', title: 'Module 11: Challenges and Edge Cases', category: 'Design and Architecture' },
-      { path: '12-readiness-and-paper-design', title: 'Module 12: Readiness and Paper Design', category: 'Design and Architecture' }
+      { path: '02-data-variables-and-expressions', title: 'Module 02: Data, Payloads, Variables & JSONPath', category: 'Foundations' },
+      { path: '03-triggers', title: 'Module 03: Triggers & Filters', category: 'Building Blocks' },
+      { path: '04-operators-and-logic', title: 'Module 04: Operators & Logic', category: 'Building Blocks' },
+      { path: '05-actions', title: 'Module 05: Actions & Error Handling', category: 'Building Blocks' },
+      { path: '06-forms-and-interactive-workflows', title: 'Module 06: Forms, Approvals & Interactive Workflows', category: 'Building Blocks' },
+      { path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging & Execution', category: 'Operating Workflows' },
+      { path: '08-operations-limits-and-governance', title: 'Module 08: Operations, Limits & Governance', category: 'Operating Workflows' },
+      { path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows and When Not', category: 'Engineering Judgment' },
+      { path: '10-use-case-patterns', title: 'Module 10: Real-World Workflow Patterns', category: 'Engineering Judgment' },
+      { path: '11-challenges-and-edge-cases', title: 'Module 11: Challenges, Failure Modes & Edge Cases', category: 'Engineering Judgment' },
+      { path: '12-readiness-and-paper-design', title: 'Module 12: Readiness & Paper Design', category: 'Engineering Judgment' }
     ];
 
     const moduleHighlights = {
       '00-orientation': {
-        key: 'Workflows are the event-driven automation layer in ISC. They sit beside transforms, the access model, provisioning, rules, and external event subscriptions.',
+        key: 'Workflows are an ISC orchestration capability for coordinating supported processing around configured start conditions.',
         watch: 'Do not reach for a workflow just because it can perform the task. Start by asking which ISC tool naturally owns the requirement.'
       },
       '01-the-workflow-model': {
         key: 'A trigger supplies the starting data, and later steps can read data produced by earlier steps. Think of the workflow as data moving forward through a controlled sequence.',
         watch: 'Never guess a JSONPath from how a field sounds in English. Inspect the real payload and follow the actual nesting.'
       },
-      '02-triggers': {
-        key: 'Choose the trigger whose event and payload already match the business moment you care about. Good trigger choice makes the rest of the workflow simpler.',
-        watch: 'A restrictive or incorrect trigger filter can prevent the workflow from starting. When there is no execution record, test the filter early.'
+      '03-triggers': {
+        key: 'Choose the trigger that represents the business event you actually care about. Then inspect the starting data that trigger provides.',
+        watch: 'When there is no execution, stay upstream: verify the event or detection boundary and Workflow eligibility before narrowing the problem to the filter.'
       },
-      '03-operators-and-logic': {
+      '04-operators-and-logic': {
         key: 'Operators decide, shape, and repeat. Comparisons branch, variables reshape data, and loops repeat work across arrays.',
         watch: 'Loop executions count toward an individual workflow total. Large loops are both a design and an operational concern.'
       },
-      '04-actions': {
+      '05-actions': {
         key: 'Every action has its own contract. Know what success means, what output it returns, and how long that specific action is allowed to run.',
         watch: 'A successful Manage Access step does not guarantee every requested access change succeeded. Inspect failedAccessRequests when complete success matters.'
       },
-      '05-forms-and-interactive-workflows': {
+      '06-forms-and-interactive-workflows': {
         key: 'Form Submitted starts a workflow, a Form action pauses a running workflow for a recipient, and an Interactive Process is launched by a user from the Launchpad.',
         watch: 'Interactive Message is not a Slack approval prompt. It displays progress information to the user inside an Interactive Process.'
       },
-      '06-data-variables-and-expressions': {
+      '02-data-variables-and-expressions': {
         key: 'Reliable workflows start with the real payload. Read the JSON shape first, then write the path that follows that shape.',
         watch: 'Trigger filters and workflow-step JSONPath expressions use different implementations. An expression that works in one place should not be assumed to behave identically in the other.'
       },
@@ -588,7 +588,7 @@
         watch: 'Know the timeout and success semantics of the action you are actually using. There is no single timeout that applies to every workflow action.'
       },
       '12-readiness-and-paper-design': {
-        key: 'A strong paper design names the trigger, data, logic, actions, failure paths, re-run safety, and test plan before anyone opens the builder.',
+        key: 'A strong paper design names the start boundary, required data, decisions, actions, failure handling, replay/concurrency behavior, and the evidence that proves the intended business outcome before anyone opens the builder.',
         watch: 'Do not stop at the happy path. A design is incomplete until you can explain what fails and how the process recovers safely.'
       }
     };
@@ -600,55 +600,6 @@
       ],
       '01-the-workflow-model': [
         ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html'],
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
-        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html']
-      ],
-      '02-triggers': [
-        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
-        ['JSONPath Expressions within Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-jsonpath-expressions.html']
-      ],
-      '03-operators-and-logic': [
-        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html'],
-        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html']
-      ],
-      '04-actions': [
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
-        ['Parameter Storage', 'https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html']
-      ],
-      '05-forms-and-interactive-workflows': [
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
-        ['Interactive Process', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-interactive-process.html'],
-        ['Forms', 'https://documentation.sailpoint.com/saas/help/forms/index.html']
-      ],
-      '06-data-variables-and-expressions': [
-        ['JSONPath Expressions within Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-jsonpath-expressions.html'],
-        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html']
-      ],
-      '07-testing-debugging-and-execution': [
-        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
-        ['Workflow Executions API v2026', 'https://developer.sailpoint.com/docs/api/v2026/get-workflow-executions']
-      ],
-      '08-operations-limits-and-governance': [
-        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
-        ['Parameter Storage', 'https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html'],
-        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html']
-      ],
-      '09-when-to-use-workflows': [
-        ['Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/index.html'],
-        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html']
-      ],
-      '10-use-case-patterns': [
-        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html']
-      ],
-      '11-challenges-and-edge-cases': [
-        ['Managing Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html'],
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html']
-      ],
-      '12-readiness-and-paper-design': [
-        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html'],
-        ['Workflow Triggers', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html'],
         ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
         ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html']
       ]
