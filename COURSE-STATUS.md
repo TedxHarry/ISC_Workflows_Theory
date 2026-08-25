@@ -27,7 +27,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 
 # Current Project State
 
-**Phase:** Repository-wide structural cleanup complete; course-wide audits pending
+**Phase:** Final course integration approved; ready for maintainer merge/release decision
 
 **Current target:** None — Modules 00–12 are FINAL ACCEPTED
 
@@ -40,7 +40,7 @@ If a role uses a GitHub connector, it must explicitly read and write the `course
 - `COURSE-STATUS.md`
 - role instructions under `chatgpt/`
 
-Modules 00 through 12 are final accepted. The module-by-module refactor sequence and coordinated filename/navigation repair are complete. Course-wide technical, learner-continuity, teaching-voice, and reference consistency audits remain pending.
+Modules 00 through 12 are final accepted. The module-by-module refactor sequence, coordinated filename/navigation repair, full-course technical audit, learner-continuity audit, teaching-voice audit, Official References/site-consistency audit, and final Course Lead repository-wide integrity review are complete. Final course integration is approved; only the maintainer merge/release decision remains.
 
 ---
 
@@ -164,9 +164,9 @@ The module should not be marked `FINAL ACCEPTED` merely because the prose was re
 
 ---
 
-# Repository-Wide Work Still Pending
+# Repository-Wide Completion Status
 
-The module-by-module refactor sequence and structural navigation cleanup are complete. The remaining work is the course-wide audit and final integrity phase.
+The module-by-module refactor sequence, structural navigation cleanup, course-wide audits, site/reference repair, and final Course Lead integrity review are complete. No additional course-content repair is pending.
 
 - [x] Renumber/rename module files 02–06
 - [x] Update README navigation
@@ -174,12 +174,16 @@ The module-by-module refactor sequence and structural navigation cleanup are com
 - [x] Update Docsify/sidebar navigation where required
 - [x] Repair cross-module number references
 - [x] Decide whether old public deep links need redirect/stub files — preserved with moved-module stubs
-- [ ] Add/update Official References sections and reconcile site-injected reference lists
-- [ ] Run final technical consistency audit
-- [ ] Run final beginner learning-continuity audit
-- [ ] Run final teaching-voice audit
+- [x] Add/update Official References sections and reconcile site-injected reference lists
+- [x] Run final technical consistency audit
+- [x] Run final beginner learning-continuity audit
+- [x] Run final teaching-voice audit
+- [x] Run final Official References / site-consistency audit
+- [x] Run final Course Lead repository-wide integrity review
 
-`index.html` module routing, ordering, display titles, and module-key mappings have been structurally updated. The student-facing `moduleHighlights` text and `officialReferences` contents were intentionally not substantively revised during structural cleanup and remain explicit specialist-audit targets.
+`index.html` module routing, ordering, display titles, module-key mappings, student-facing highlights, and generated-reference behavior have been reconciled with the final accepted course. Modules 02–12 use their authored Official References as the canonical displayed reference sections; Modules 00–01 retain generated references.
+
+**Final integration status:** APPROVED on `course-theory-refactor`. The remaining action is the maintainer's explicit merge/release decision for `main`.
 
 ---
 
