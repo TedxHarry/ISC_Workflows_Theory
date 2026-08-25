@@ -242,8 +242,8 @@ Position and meaning are different things.
 
 | Shape | Meaning |
 |---|---|
-| `{ ... }` | object — named properties |
-| `[ ... ]` | array — list of items |
+| `{ ... }` | object: named properties |
+| `[ ... ]` | array: list of items |
 
 When you are lost in a payload, identifying which of those two shapes you are looking at is often the fastest way forward.
 
@@ -608,7 +608,7 @@ Using Priya's two-change example:
 <details>
 <summary>Check your answer</summary>
 
-1. It selects the `attribute` property of the first change object — `manager` in this example.
+1. It selects the `attribute` property of the first change object, which is `manager` in this example.
 2. It selects by position, not by the meaning of the change. The first item is not a contract that says "department."
 3. It asks for change object or objects whose `attribute` equals `department`.
 4. You would be assuming the data always contains exactly one matching change object. The predicate itself does not make that guarantee.
@@ -1175,9 +1175,9 @@ That is where Triggers & Filters begins.
 
 ## Official References
 
-- [Building Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Filtering Events — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/filtering-events/)
+- [Building Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Filtering Events - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/filtering-events/)
 
 ---
 

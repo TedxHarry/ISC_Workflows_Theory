@@ -1,4 +1,4 @@
-# ISC Workflows Theory — Course Improvement Plan
+# ISC Workflows Theory: Course Improvement Plan
 
 ## Goal
 
@@ -10,57 +10,57 @@ This plan does **not** include hands-on labs. Labs are a separate course.
 
 # 1. Final Course Architecture
 
-## Part I — Foundations
+## Part I: Foundations
 
-### 00 — Orientation
+### 00: Orientation
 **Learner outcome:** Understand what ISC Workflows are, where they fit among other ISC capabilities, and how the course will teach workflow engineering.
 
-### 01 — The Workflow Model
+### 01: The Workflow Model
 **Learner outcome:** Understand trigger → data → steps → decisions → outcomes, and why later steps can use data produced earlier.
 
-### 02 — Data, Payloads, Variables & JSONPath
+### 02: Data, Payloads, Variables & JSONPath
 **Learner outcome:** Read workflow JSON confidently enough to identify objects, arrays, paths, missing data, and values produced by earlier steps.
 
 ---
 
-## Part II — Building Blocks
+## Part II: Building Blocks
 
-### 03 — Triggers & Filters
+### 03: Triggers & Filters
 **Learner outcome:** Hear a business event and identify the most appropriate workflow trigger and filter boundary.
 
-### 04 — Operators & Logic
+### 04: Operators & Logic
 **Learner outcome:** Turn business conditions into branches, validations, variable operations, and appropriately scoped loops.
 
-### 05 — Actions & Error Handling
+### 05: Actions & Error Handling
 **Learner outcome:** Choose appropriate actions, understand what their success actually guarantees, and design deliberate error paths.
 
-### 06 — Forms, Approvals & Interactive Workflows
+### 06: Forms, Approvals & Interactive Workflows
 **Learner outcome:** Choose correctly among intake forms, form actions, delegated interactive workflows, and governed approval mechanisms.
 
 ---
 
-## Part III — Operating Workflows
+## Part III: Operating Workflows
 
-### 07 — Testing, Debugging & Execution
+### 07: Testing, Debugging & Execution
 **Learner outcome:** Diagnose workflow behavior systematically from trigger input through the first unexpected step and downstream business boundary.
 
-### 08 — Operations, Limits & Governance
+### 08: Operations, Limits & Governance
 **Learner outcome:** Treat workflows as production assets with ownership, limits, promotion, secrets, monitoring, maintenance, and lifecycle concerns.
 
 ---
 
-## Part IV — Engineering Judgment
+## Part IV: Engineering Judgment
 
-### 09 — When to Use Workflows and When Not
+### 09: When to Use Workflows and When Not
 **Learner outcome:** Decide whether a requirement belongs in Workflow or another ISC capability and defend that decision.
 
-### 10 — Real-World Workflow Patterns
+### 10: Real-World Workflow Patterns
 **Learner outcome:** Recognize and adapt common production workflow shapes without blindly copying them.
 
-### 11 — Challenges, Failure Modes & Edge Cases
+### 11: Challenges, Failure Modes & Edge Cases
 **Learner outcome:** Anticipate replay, concurrency, partial failure, external dependency, scale, and signal-vs-verdict problems before production.
 
-### 12 — Readiness & Paper Design
+### 12: Readiness & Paper Design
 **Learner outcome:** Design and defend a complete workflow architecture before opening the visual builder.
 
 ---
@@ -133,7 +133,7 @@ This framework should become the learner's internal workflow-design checklist.
 
 # 5. Module-by-Module Improvement Requirements
 
-## Module 00 — Orientation
+## Module 00: Orientation
 
 ### Preserve
 - Acme/Priya introduction
@@ -155,7 +155,7 @@ The learner may know basic ISC identities/accounts/sources and basic JSON/REST c
 
 ---
 
-## Module 01 — The Workflow Model
+## Module 01: The Workflow Model
 
 ### Preserve
 - whole-workflow example before naming parts
@@ -177,7 +177,7 @@ The learner understands the purpose of Workflows and nearby ISC tools. Do not re
 
 ---
 
-## Module 02 — Data, Payloads, Variables & JSONPath
+## Module 02: Data, Payloads, Variables & JSONPath
 
 ### Source
 Refactor current Module 06 rather than merely renumbering it.
@@ -211,7 +211,7 @@ No assumption yet that the learner understands the full trigger catalog, loops, 
 
 ---
 
-## Module 03 — Triggers & Filters
+## Module 03: Triggers & Filters
 
 ### Structural change
 Split the catalog into **Core** and **Specialized/Advanced** triggers.
@@ -257,7 +257,7 @@ The learner understands JSON payloads and paths. Do not assume formal knowledge 
 
 ---
 
-## Module 04 — Operators & Logic
+## Module 04: Operators & Logic
 
 ### Required progression
 1. single comparison
@@ -284,7 +284,7 @@ The learner understands JSON payloads and paths. Do not assume formal knowledge 
 
 ---
 
-## Module 05 — Actions & Error Handling
+## Module 05: Actions & Error Handling
 
 ### Preserve
 - notify/fetch/change/integrate/pause action-family mental model
@@ -331,7 +331,7 @@ Target state independently confirmed
 
 ---
 
-## Module 06 — Forms, Approvals & Interactive Workflows
+## Module 06: Forms, Approvals & Interactive Workflows
 
 ### Add decision map first
 
@@ -366,7 +366,7 @@ Need a governed yes/no decision?
 
 ---
 
-## Module 07 — Testing, Debugging & Execution
+## Module 07: Testing, Debugging & Execution
 
 ### Reorganize around five diagnostic questions
 
@@ -391,7 +391,7 @@ Need a governed yes/no decision?
 
 ---
 
-## Module 08 — Operations, Limits & Governance
+## Module 08: Operations, Limits & Governance
 
 ### Preserve
 - individual vs tenant execution limits
@@ -432,7 +432,7 @@ Every numeric limit, retention period, and ownership-token statement must be ver
 
 ---
 
-## Module 09 — When to Use Workflows and When Not
+## Module 09: When to Use Workflows and When Not
 
 ### Add decision framework near the top
 
@@ -473,7 +473,7 @@ Use precise transform wording; do not imply transforms cannot contain conditiona
 
 ---
 
-## Module 10 — Real-World Workflow Patterns
+## Module 10: Real-World Workflow Patterns
 
 ### Structural change
 Classify patterns by expected learner maturity.
@@ -516,7 +516,7 @@ Do not remove advanced content merely to simplify the course. The labels control
 
 ---
 
-## Module 11 — Challenges, Failure Modes & Edge Cases
+## Module 11: Challenges, Failure Modes & Edge Cases
 
 ### Teaching-style change
 Increase scenario-first reasoning.
@@ -552,7 +552,7 @@ Scenario
 
 ---
 
-## Module 12 — Readiness & Paper Design
+## Module 12: Readiness & Paper Design
 
 ### Preserve
 - paper-design concept
@@ -628,7 +628,7 @@ A module is not final until all are true.
 
 After all modules are individually accepted, run three full-course audits.
 
-## Audit A — Technical Consistency
+## Audit A: Technical Consistency
 Check for contradictions across modules in:
 
 - trigger names and payloads
@@ -642,7 +642,7 @@ Check for contradictions across modules in:
 - deprecated/current actions
 - certification and Native Change behavior
 
-## Audit B — Learning Continuity
+## Audit B: Learning Continuity
 Read 00 → 12 as a beginner and identify:
 
 - concepts used before taught
@@ -652,7 +652,7 @@ Read 00 → 12 as a beginner and identify:
 - weak transitions
 - prerequisites that are assumed rather than taught
 
-## Audit C — Teaching Voice
+## Audit C: Teaching Voice
 Read 00 → 12 as one long mentor/student conversation and identify:
 
 - documentation-like sections

@@ -68,7 +68,7 @@ You do need to learn how an engineer discovers the operating boundary, decides w
 
 ---
 
-## 1. Core — From one execution to a production asset
+## 1. Core: From one execution to a production asset
 
 A Workflow can work perfectly today and still be poorly operated.
 
@@ -111,7 +111,7 @@ That is the mindset for this module.
 
 ---
 
-## 2. Core — The six operational questions
+## 2. Core: The six operational questions
 
 When I inherit a Workflow I did not build, I do not begin by reading every box on the canvas.
 
@@ -175,7 +175,7 @@ These six questions are more durable than any particular product screen.
 
 ---
 
-## 3. Core — Who owns this Workflow?
+## 3. Core: Who owns this Workflow?
 
 Ownership is not just a name displayed beside a Workflow.
 
@@ -276,7 +276,7 @@ The distinction matters.
 
 ---
 
-## 4. Core — What does it depend on?
+## 4. Core: What does it depend on?
 
 A production Workflow rarely stands alone.
 
@@ -404,7 +404,7 @@ That is the difference between **storing a credential securely** and **operating
 
 ---
 
-## 5. Core — What constrains it?
+## 5. Core: What constrains it?
 
 Every production system has an operating envelope.
 
@@ -578,7 +578,7 @@ Do not silently reinterpret that 10 MB value as a universal HTTP Request body or
 
 ---
 
-## 6. Core — What evidence shows that it is healthy?
+## 6. Core: What evidence shows that it is healthy?
 
 Module 07 taught you to use execution evidence to diagnose a failure.
 
@@ -699,7 +699,7 @@ Do not wait until an auditor asks for a year-old execution to discover that your
 
 ---
 
-## 7. Core — How do we change it safely?
+## 7. Core: How do we change it safely?
 
 A production Workflow is not just a canvas you edit until it looks right.
 
@@ -759,10 +759,10 @@ Some is engineering practice.
 
 For example:
 
-- **Workflow must be disabled before editing** — product behavior.
-- **Keep a known-good copy** — engineering practice.
-- **Peer review important changes** — engineering practice.
-- **Observe the first production executions after the change** — engineering practice.
+- **Workflow must be disabled before editing**: product behavior.
+- **Keep a known-good copy**: engineering practice.
+- **Peer review important changes**: engineering practice.
+- **Observe the first production executions after the change**: engineering practice.
 
 Do not confuse “SailPoint supports this” with “SailPoint forces our organization to operate this way.”
 
@@ -776,7 +776,7 @@ Do not wait until ownership has already become a production problem.
 
 ---
 
-## 8. Working Engineer — Promotion and maintainable artifacts
+## 8. Working Engineer: Promotion and maintainable artifacts
 
 A Workflow has a structured definition underneath the visual builder.
 
@@ -870,7 +870,7 @@ The destination environment may require its own supported credential or paramete
 
 ---
 
-## 9. Working Engineer — Scheduled work can collide with itself
+## 9. Working Engineer: Scheduled work can collide with itself
 
 A schedule answers:
 
@@ -924,7 +924,7 @@ For now, recognize the production condition:
 
 ---
 
-## 10. Core — Handoff, governance, and retirement
+## 10. Core: Handoff, governance, and retirement
 
 Eventually, someone other than the original author will operate your Workflow.
 
@@ -1048,7 +1048,7 @@ The important idea is that deletion should be the end of a decision process, not
 
 ---
 
-## 11. Work It Out — You inherit Priya's production Workflow
+## 11. Work It Out: You inherit Priya's production Workflow
 
 You join Acme's IAM team and inherit this Workflow:
 
@@ -1142,7 +1142,7 @@ The test is whether another engineer can operate it safely after you are gone.
 
 ---
 
-## 12. Checkpoint — Can another engineer operate it?
+## 12. Checkpoint: Can another engineer operate it?
 
 You should now be able to look at a production Workflow and reason through:
 
@@ -1180,14 +1180,14 @@ Next we ask a different engineering question:
 
 ## Official References
 
-- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
-- [Building Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Managing Parameter Storage — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html)
-- [Configuration Management — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/configuration-management/)
-- [SaaS Configuration Support — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/configuration-management/saas-configuration/)
-- [Workflow Execution History API — SailPoint Developer Community](https://developer.sailpoint.com/docs/api/v2026/get-workflow-execution-history)
+- [Managing Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Building Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Actions - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Managing Parameter Storage - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html)
+- [Configuration Management - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/configuration-management/)
+- [SaaS Configuration Support - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/configuration-management/saas-configuration/)
+- [Workflow Execution History API - SailPoint Developer Community](https://developer.sailpoint.com/docs/api/v2026/get-workflow-execution-history)
 
 ---
 

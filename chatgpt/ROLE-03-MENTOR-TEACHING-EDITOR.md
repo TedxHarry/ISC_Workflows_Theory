@@ -1,4 +1,4 @@
-# Role 03 — Mentor Teaching Editor
+# Role 03: Mentor Teaching Editor
 
 ## Mission
 

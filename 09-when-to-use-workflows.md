@@ -50,7 +50,7 @@ That is what this module teaches.
 
 ---
 
-## 1. Core — From operating Workflows to choosing architecture
+## 1. Core: From operating Workflows to choosing architecture
 
 Imagine Priya moves from Sales to Finance.
 
@@ -100,7 +100,7 @@ The important skill is knowing **which one owns which responsibility**.
 
 ---
 
-## 2. Core — “Can” is not “should”
+## 2. Core: “Can” is not “should”
 
 Every module before this showed you what Workflows can do.
 
@@ -156,7 +156,7 @@ First decide whether Workflow belongs in the solution.
 
 ---
 
-## 3. Core — Find the primary owner first
+## 3. Core: Find the primary owner first
 
 When someone gives you an automation requirement, resist the urge to choose a tool immediately.
 
@@ -245,7 +245,7 @@ That is a much stronger way to think than:
 
 ---
 
-## 4. Core — The capability decision map
+## 4. Core: The capability decision map
 
 Now that you have the reasoning model, we can examine the neighboring capabilities.
 
@@ -617,7 +617,7 @@ That is intentional.
 
 ---
 
-## 5. Core — Workflow as an orchestrator, not a replacement engine
+## 5. Core: Workflow as an orchestrator, not a replacement engine
 
 Return to Priya's move into Finance.
 
@@ -681,7 +681,7 @@ That is how mature IAM systems are usually composed.
 
 ---
 
-## 6. Core — When Workflow is a good fit
+## 6. Core: When Workflow is a good fit
 
 So when should Workflow move toward the center of the design?
 
@@ -793,7 +793,7 @@ A good engineer knows the difference.
 
 ---
 
-## 7. Core — Anti-patterns as architecture warnings
+## 7. Core: Anti-patterns as architecture warnings
 
 The old anti-pattern names are useful because they make bad shapes easy to recognize.
 
@@ -1061,7 +1061,7 @@ The architecture lesson is to make credential handling an explicit dependency ra
 
 ---
 
-## 8. Working Engineer — When constraints change the architecture
+## 8. Working Engineer: When constraints change the architecture
 
 Module 08 treated constraints as an operations problem:
 
@@ -1163,7 +1163,7 @@ That is architecture judgment.
 
 ---
 
-## 9. Work It Out — Choose the capability for Acme
+## 9. Work It Out: Choose the capability for Acme
 
 Now apply the full model.
 
@@ -1187,7 +1187,7 @@ Try each one before reading the discussion.
 
 ---
 
-### Scenario 1 — Format every display name
+### Scenario 1: Format every display name
 
 Acme wants every identity's display name formatted as:
 
@@ -1209,13 +1209,13 @@ Conditional complexity would not by itself change that answer. Transforms can co
 
 ---
 
-### Scenario 2 — Give employees standard access
+### Scenario 2: Give employees standard access
 
 Acme says:
 
 > Every employee who meets the standard business criteria should receive the normal employee access package.
 
-**PRIMARY OWNER:** Access model — typically a Role using Access Profiles for identity-criteria-based assignment.
+**PRIMARY OWNER:** Access model, typically a Role using Access Profiles for identity-criteria-based assignment.
 
 If the requirement is specifically driven by employment/lifecycle status, Lifecycle State configuration may own that part.
 
@@ -1227,7 +1227,7 @@ If the requirement is specifically driven by employment/lifecycle status, Lifecy
 
 ---
 
-### Scenario 3 — Priya moves to Finance
+### Scenario 3: Priya moves to Finance
 
 Requirement:
 
@@ -1256,7 +1256,7 @@ Provisioning
 
 ---
 
-### Scenario 4 — Govern privileged Finance access
+### Scenario 4: Govern privileged Finance access
 
 Requirement:
 
@@ -1272,7 +1272,7 @@ Requirement:
 
 ---
 
-### Scenario 5 — Fulfill an approved target access change
+### Scenario 5: Fulfill an approved target access change
 
 Requirement:
 
@@ -1288,7 +1288,7 @@ Requirement:
 
 ---
 
-### Scenario 6 — Recompute a large risk dataset every night
+### Scenario 6: Recompute a large risk dataset every night
 
 Requirement:
 
@@ -1316,7 +1316,7 @@ The engineering conclusion is:
 
 ---
 
-### Scenario 7 — Send identity events to external analytics
+### Scenario 7: Send identity events to external analytics
 
 Requirement:
 
@@ -1334,7 +1334,7 @@ Choose the mechanism that owns the required interaction.
 
 ---
 
-### Scenario 8 — Compute a value that supported Transforms cannot express
+### Scenario 8: Compute a value that supported Transforms cannot express
 
 Requirement:
 
@@ -1390,7 +1390,7 @@ That is the real Module 09 skill.
 
 ---
 
-## 10. Checkpoint — Defend the architecture
+## 10. Checkpoint: Defend the architecture
 
 You should now be able to hear a new requirement and reason through five questions.
 
@@ -1532,16 +1532,16 @@ That is how you prevent a useful automation tool from becoming the answer to eve
 
 ## Official References
 
-- [Transforms — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/transforms/)
-- [Access Overview — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/access/index.html)
-- [Provisioning Overview — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/provisioning/index.html)
-- [Access Request Overview — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/requests/index.html)
-- [Adaptive Approvals Overview — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
-- [Using Event Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/common/event_triggers.html)
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Rules — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/rules/)
-- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
-- [Managing Parameter Storage — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html)
+- [Transforms - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/transforms/)
+- [Access Overview - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/access/index.html)
+- [Provisioning Overview - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/provisioning/index.html)
+- [Access Request Overview - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/requests/index.html)
+- [Adaptive Approvals Overview - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
+- [Using Event Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/common/event_triggers.html)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Rules - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/rules/)
+- [Managing Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Managing Parameter Storage - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/parameter_storage/managing_parameters.html)
 
 ---
 

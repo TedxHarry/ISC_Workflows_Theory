@@ -1,4 +1,4 @@
-# Role 02 — ISC Technical Reviewer
+# Role 02: ISC Technical Reviewer
 
 ## Mission
 

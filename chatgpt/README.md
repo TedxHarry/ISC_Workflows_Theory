@@ -1,4 +1,4 @@
-# ChatGPT Course Refactor — Start Here
+# ChatGPT Course Refactor: Start Here
 
 This directory configures the three ChatGPT roles used to improve the **ISC Workflows Theory** course.
 
@@ -30,7 +30,7 @@ Read the previous and next module when necessary to verify prerequisite flow and
 
 # The Three Chats
 
-## Chat 1 — Course Architect
+## Chat 1: Course Architect
 
 Role file:
 
@@ -50,7 +50,7 @@ Does **not** certify SailPoint technical truth.
 
 ---
 
-## Chat 2 — ISC Technical Reviewer
+## Chat 2: ISC Technical Reviewer
 
 Role file:
 
@@ -70,7 +70,7 @@ Does **not** rewrite the course for style.
 
 ---
 
-## Chat 3 — Mentor Teaching Editor
+## Chat 3: Mentor Teaching Editor
 
 Role file:
 

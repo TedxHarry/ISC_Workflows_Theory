@@ -1,4 +1,4 @@
-# ISC Workflows Theory — Authoring Guide
+# ISC Workflows Theory: Authoring Guide
 
 ## Purpose
 
@@ -40,6 +40,8 @@ Prefer language that guides attention and reasoning, for example:
 - "The useful question is not only whether the step succeeded, but what that success actually proves."
 
 Use these naturally, not as templates.
+
+Do not use em dashes in course or project prose. Choose commas, colons, semicolons, parentheses, or ordinary hyphens according to the sentence instead.
 
 ---
 
@@ -212,9 +214,9 @@ Use difficulty labels where they reduce cognitive load.
 
 Recommended levels:
 
-- **Core** — expected first-pass understanding
-- **Working Engineer** — important after the core model is comfortable
-- **Advanced** — recognize the design problem and return when needed
+- **Core**: expected first-pass understanding
+- **Working Engineer**: important after the core model is comfortable
+- **Advanced**: recognize the design problem and return when needed
 
 Do not use labels as decoration. Use them when a learner could otherwise mistake reference material for required beginner memorization.
 
