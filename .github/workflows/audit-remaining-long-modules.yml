@@ -1,0 +1,29 @@
+name: Audit remaining long modules
+
+on:
+  push:
+    branches:
+      - readability/final-splits
+    paths:
+      - .github/workflows/audit-remaining-long-modules.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print headings and word counts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ['04-operators-and-logic.md','06-forms-and-interactive-workflows.md','07-testing-debugging-and-execution.md']:
+              text = Path(name).read_text(encoding='utf-8')
+              print(f'===== {name} =====')
+              print('WORDS', len(text.split()))
+              for i, line in enumerate(text.splitlines(), 1):
+                  if line.startswith('## '):
+                      print(f'{i}: {line}')
+          PY
