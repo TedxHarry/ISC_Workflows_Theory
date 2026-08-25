@@ -1446,7 +1446,7 @@ The next question changes the shape of the Workflow:
 
 > **What if the process needs a person to provide information or make a governed decision?**
 
-That is where Module 06 - Forms, Approvals & Interactive Workflows begins.
+That is where Module 06: Forms, Approvals & Interactive Workflows begins.
 
 ---
 

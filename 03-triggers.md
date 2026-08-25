@@ -69,7 +69,7 @@ Use this order instead:
 2. Which Workflow trigger most directly represents that event?
 3. What starting data does that trigger provide?
 4. Does a filter need to narrow which events qualify?
-5. What does this event prove - and what does it not prove?
+5. What does this event prove, and what does it not prove?
 ```
 
 If the correct trigger does not contain every value you eventually need, that is a later design problem.
@@ -146,10 +146,10 @@ That is a learning classification, not a claim about which triggers every SailPo
 
 We will use the same four questions for each one:
 
-1. **Business event - what happened?**
-2. **Data boundary - what starting information is available?**
-3. **Natural choice - what kind of requirement maps here?**
-4. **Common assumption - what nearby fact should you not infer?**
+1. **Business event: what happened?**
+2. **Data boundary: what starting information is available?**
+3. **Natural choice: what kind of requirement maps here?**
+4. **Common assumption: what nearby fact should you not infer?**
 
 The repetition is deliberate. I want you learning a selection method, not six disconnected definitions.
 
@@ -1081,7 +1081,7 @@ Should every event qualify?
         ↓
 If not, what filter narrows it?
         ↓
-What does this event prove - and what remains unproven?
+What does this event prove, and what remains unproven?
 ```
 
 You should also be able to explain:

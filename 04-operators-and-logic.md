@@ -1109,7 +1109,7 @@ The Workflow can now decide what path it wants.
 
 Module 05 asks the next question:
 
-> **What happens when that path needs the Workflow to act - and what should the design do when an action does not go as planned?**
+> **What happens when that path needs the Workflow to act, and what should the design do when an action does not go as planned?**
 
 That is where Actions & Error Handling begins.
 

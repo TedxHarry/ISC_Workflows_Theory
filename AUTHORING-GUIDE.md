@@ -41,6 +41,8 @@ Prefer language that guides attention and reasoning, for example:
 
 Use these naturally, not as templates.
 
+Do not use em dashes in course or project prose. Choose commas, colons, semicolons, parentheses, or ordinary hyphens according to the sentence instead.
+
 ---
 
 ## 2. Teach Reasoning, Not Memorization

@@ -149,7 +149,7 @@ The person acts first.
 
 The Workflow does not exist as a running execution waiting for that person. Their submission is the event that creates the execution.
 
-Think of this as **intake - the front door**.
+Think of this as **intake: the front door**.
 
 Acme might provide a form for requesting a shared mailbox:
 

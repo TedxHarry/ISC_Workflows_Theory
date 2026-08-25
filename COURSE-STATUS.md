@@ -27,9 +27,9 @@ New course work should start from the current `main` baseline unless the maintai
 
 # Current Project State
 
-**Phase:** COMPLETE - final course integration approved and merged to `main`
+**Phase:** COMPLETE. Final course integration approved and merged to `main`
 
-**Current target:** None - Modules 00–12 are FINAL ACCEPTED
+**Current target:** None. Modules 00–12 are FINAL ACCEPTED
 
 **Course modules:** Module 00 - Orientation (`FINAL ACCEPTED`); Module 01 - The Workflow Model (`FINAL ACCEPTED`); Module 02 - Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 - Triggers & Filters (`FINAL ACCEPTED`); Module 04 - Operators & Logic (`FINAL ACCEPTED`); Module 05 - Actions & Error Handling (`FINAL ACCEPTED`); Module 06 - Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 - Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 - Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 - When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 - Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 - Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`); Module 12 - Readiness & Paper Design (`FINAL ACCEPTED`)
 

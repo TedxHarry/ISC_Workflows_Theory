@@ -1215,7 +1215,7 @@ Acme says:
 
 > Every employee who meets the standard business criteria should receive the normal employee access package.
 
-**PRIMARY OWNER:** Access model - typically a Role using Access Profiles for identity-criteria-based assignment.
+**PRIMARY OWNER:** Access model, typically a Role using Access Profiles for identity-criteria-based assignment.
 
 If the requirement is specifically driven by employment/lifecycle status, Lifecycle State configuration may own that part.
 
