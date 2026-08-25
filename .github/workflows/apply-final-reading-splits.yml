@@ -6,6 +6,7 @@ on:
       - readability/final-splits
     paths:
       - scripts/apply_final_reading_splits.py
+      - .github/workflows/apply-final-reading-splits.yml
 
 permissions:
   contents: write
