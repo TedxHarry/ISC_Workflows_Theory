@@ -138,7 +138,7 @@ This module stays with the first.
 
 ---
 
-# Core Triggers
+## Core Triggers
 
 The six triggers in this section are **Core for this course**.
 
@@ -750,7 +750,7 @@ Module 07 will turn that into a full debugging method.
 
 ---
 
-# Specialized / Working Engineer: recognize the boundary
+## Specialized / Working Engineer: recognize the boundary
 
 You do not need equal-depth mastery of the entire trigger catalog.
 
@@ -868,7 +868,7 @@ Do not memorize the catalog.
 
 ---
 
-# Advanced: signals and feature-dependent events
+## Advanced: signals and feature-dependent events
 
 Some Workflow triggers represent security or platform signals that require more context before action.
 

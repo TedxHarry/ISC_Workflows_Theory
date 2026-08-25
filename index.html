@@ -39,6 +39,42 @@
       color: var(--course-text);
     }
 
+
+    .skip-link {
+      position: fixed;
+      top: 0.5rem;
+      left: 0.5rem;
+      z-index: 1000;
+      padding: 0.65rem 0.85rem;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--course-navy);
+      font-weight: 700;
+      transform: translateY(-160%);
+      transition: transform 0.15s ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid #1f704f;
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+
     .sidebar .app-name {
       margin: 1.5rem 0 0.35rem;
     }
@@ -519,6 +555,7 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to course content</a>
   <div id="app">Loading course...</div>
 
   <script>
@@ -538,72 +575,6 @@
       { path: '12-readiness-and-paper-design', title: 'Module 12: Readiness & Paper Design', category: 'Engineering Judgment' }
     ];
 
-    const moduleHighlights = {
-      '00-orientation': {
-        key: 'Workflows are an ISC orchestration capability for coordinating supported processing around configured start conditions.',
-        watch: 'Do not reach for a workflow just because it can perform the task. Start by asking which ISC tool naturally owns the requirement.'
-      },
-      '01-the-workflow-model': {
-        key: 'A trigger supplies the starting data, and later steps can read data produced by earlier steps. Think of the workflow as data moving forward through a controlled sequence.',
-        watch: 'Never guess a JSONPath from how a field sounds in English. Inspect the real payload and follow the actual nesting.'
-      },
-      '03-triggers': {
-        key: 'Choose the trigger that represents the business event you actually care about. Then inspect the starting data that trigger provides.',
-        watch: 'When there is no execution, stay upstream: verify the event or detection boundary and Workflow eligibility before narrowing the problem to the filter.'
-      },
-      '04-operators-and-logic': {
-        key: 'Operators decide, shape, and repeat. Comparisons branch, variables reshape data, and loops repeat work across arrays.',
-        watch: 'Loop executions count toward an individual workflow total. Large loops are both a design and an operational concern.'
-      },
-      '05-actions': {
-        key: 'Every action has its own contract. Know what success means, what output it returns, and how long that specific action is allowed to run.',
-        watch: 'A successful Manage Access step does not guarantee every requested access change succeeded. Inspect failedAccessRequests when complete success matters.'
-      },
-      '06-forms-and-interactive-workflows': {
-        key: 'Form Submitted starts a workflow, a Form action pauses a running workflow for a recipient, and an Interactive Process is launched by a user from the Launchpad.',
-        watch: 'Interactive Message is not a Slack approval prompt. It displays progress information to the user inside an Interactive Process.'
-      },
-      '02-data-variables-and-expressions': {
-        key: 'Reliable workflows start with the real payload. Read the JSON shape first, then write the path that follows that shape.',
-        watch: 'Trigger filters and workflow-step JSONPath expressions use different implementations. An expression that works in one place should not be assumed to behave identically in the other.'
-      },
-      '07-testing-debugging-and-execution': {
-        key: 'The first debugging question is whether the workflow started. No execution record and a failed execution are different problems.',
-        watch: 'Testing can execute enabled steps for real. Protect live identities and systems with simulation and a sandbox whenever possible.'
-      },
-      '08-operations-limits-and-governance': {
-        key: 'Tenant execution rate limits and individual workflow limits are separate counters with different rules, especially around loop executions.',
-        watch: 'Workflow execution history is not a permanent audit archive. Plan external retention if evidence must live longer than the supported history window.'
-      },
-      '09-when-to-use-workflows': {
-        key: 'Workflows are best at event-driven orchestration. Use the access model, transforms, provisioning, rules, or external services when those tools own the job better.',
-        watch: 'A workflow being technically capable of doing something is not enough reason to choose it.'
-      },
-      '10-use-case-patterns': {
-        key: 'Patterns are starting points, not recipes. Preserve the trigger choice, data assumptions, failure behavior, and scale reasoning when you adapt one.',
-        watch: 'The gotcha in a pattern is often more important than the happy path. Keep the failure condition visible when adapting an example.'
-      },
-      '11-challenges-and-edge-cases': {
-        key: 'Production design is about partial failure, repeat execution, stale state, dependency behavior, and scale, not only the happy path.',
-        watch: 'Know the timeout and success semantics of the action you are actually using. There is no single timeout that applies to every workflow action.'
-      },
-      '12-readiness-and-paper-design': {
-        key: 'A strong paper design names the start boundary, required data, decisions, actions, failure handling, replay/concurrency behavior, and the evidence that proves the intended business outcome before anyone opens the builder.',
-        watch: 'Do not stop at the happy path. A design is incomplete until you can explain what fails and how the process recovers safely.'
-      }
-    };
-
-    const officialReferences = {
-      '00-orientation': [
-        ['Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/index.html'],
-        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html']
-      ],
-      '01-the-workflow-model': [
-        ['Building Workflows', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html'],
-        ['Workflow Actions', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html'],
-        ['Workflow Operators', 'https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html']
-      ]
-    };
 
     function currentPath() {
       return window.location.hash
@@ -730,39 +701,6 @@
       }
     }
 
-    function insertModuleCallouts() {
-      const info = currentModuleInfo();
-      const content = document.querySelector('.markdown-section');
-      if (!info || !content) {
-        return;
-      }
-
-      const highlight = moduleHighlights[info.module.path];
-      if (!highlight) {
-        return;
-      }
-
-      const h1 = content.querySelector('h1');
-      const intro = h1 ? h1.nextElementSibling : null;
-      if (intro && intro.tagName === 'P' && !content.querySelector('.auto-key-callout')) {
-        const box = document.createElement('div');
-        box.className = 'callout-key auto-key-callout';
-        box.innerHTML = '<span class="callout-label">Key idea</span>' + highlight.key;
-        intro.insertAdjacentElement('afterend', box);
-      }
-
-      const beforeMoveOn = Array.from(content.querySelectorAll('h2')).find(function (heading) {
-        return heading.textContent.trim().toLowerCase() === 'before you move on';
-      });
-
-      if (beforeMoveOn && !content.querySelector('.auto-watch-callout')) {
-        const box = document.createElement('div');
-        box.className = 'callout-warning auto-watch-callout';
-        box.innerHTML = '<span class="callout-label">Watch out</span>' + highlight.watch;
-        beforeMoveOn.insertAdjacentElement('beforebegin', box);
-      }
-    }
-
     function addCopyButtons() {
       const content = document.querySelector('.markdown-section');
       if (!content) {
@@ -784,31 +722,24 @@
         button.className = 'copy-code-button';
         button.textContent = 'Copy';
         button.setAttribute('aria-label', 'Copy code');
+        button.setAttribute('aria-live', 'polite');
         button.addEventListener('click', function () {
           const text = code.innerText;
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(function () {
               button.textContent = 'Copied';
               setTimeout(function () { button.textContent = 'Copy'; }, 1400);
+            }).catch(function () {
+              button.textContent = 'Copy failed';
+              setTimeout(function () { button.textContent = 'Copy'; }, 1400);
             });
+          } else {
+            button.textContent = 'Copy unavailable';
+            setTimeout(function () { button.textContent = 'Copy'; }, 1400);
           }
         });
         pre.appendChild(button);
       });
-    }
-
-    function referencesHtml(path) {
-      const refs = officialReferences[path] || [];
-      if (!refs.length) {
-        return '';
-      }
-
-      let html = '<section class="official-references"><h2>Official References</h2><ul>';
-      refs.forEach(function (ref) {
-        html += '<li><a href="' + ref[1] + '" target="_blank" rel="noopener noreferrer">' + ref[0] + '</a></li>';
-      });
-      html += '</ul></section>';
-      return html;
     }
 
     window.$docsify = {
@@ -831,7 +762,6 @@
             if (info) {
               const module = info.module;
               html = '<div class="module-category">' + module.category + ' <span class="module-progress">· Module ' + (info.index + 1) + ' of ' + modules.length + '</span></div>' + html;
-              html += referencesHtml(module.path);
 
               const previous = info.index > 0
                 ? modules[info.index - 1]
@@ -866,10 +796,19 @@
           });
 
           hook.doneEach(function () {
+            const mainContent = document.querySelector('.markdown-section');
+            if (mainContent) {
+              mainContent.id = 'main-content';
+              mainContent.setAttribute('tabindex', '-1');
+            }
+
+            const activeSidebarLink = document.querySelector('.sidebar-nav li.active > a');
+            if (activeSidebarLink) {
+              activeSidebarLink.setAttribute('aria-current', 'page');
+            }
             const info = currentModuleInfo();
             document.title = info ? info.module.title + ' | SailPoint ISC Workflows' : 'SailPoint ISC Workflows';
             removeLegacyFooterNavigation();
-            insertModuleCallouts();
             linkModuleReferences();
             addCopyButtons();
           });

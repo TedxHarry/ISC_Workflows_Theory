@@ -533,7 +533,7 @@ This is the same engineering habit you are building across the course:
 
 ---
 
-# Green Does Not Mean Done
+## Green Does Not Mean Done
 
 You have now seen enough actions to name the principle directly.
 
@@ -779,7 +779,7 @@ If your design depends on that exact routing behavior, verify it for the action 
 
 ---
 
-# 10. When an Action Fails: native Error Handling
+## 10. When an Action Fails: native Error Handling
 
 So far we have mostly talked about the action's **normal result**.
 
