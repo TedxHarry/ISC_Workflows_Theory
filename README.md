@@ -11,7 +11,7 @@
   <div class="repo-website"><a href="https://tedxharry.github.io/ISC_Workflows_Theory/">View the Course Website</a></div>
 </div>
 
-<div class="course-stats">13 modules · Foundations to engineering to design</div>
+<div class="course-stats">13 modules · 22 reading units · Foundations to engineering to design</div>
 
 ## Course Structure
 
@@ -56,5 +56,5 @@
 
 <div class="callout-key">
   <span class="callout-label">How to use this guide</span>
-  Read the modules in order if you are new to ISC Workflows. If you already build workflows, use the sidebar to jump directly to the topic you need.
+  Read the modules in order if you are new to ISC Workflows. Longer modules are divided into numbered reading units, giving you natural stopping points while preserving the 00-12 course structure. If you already build workflows, use the sidebar to jump directly to the topic you need.
 </div>

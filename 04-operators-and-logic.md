@@ -1123,4 +1123,4 @@ That is where Actions & Error Handling begins.
 
 ---
 
-[← Previous: Module 03 Triggers & Filters](03-triggers.md) | [Course home](README.md) | [Next: Module 05 Actions & Error Handling →](05-actions.md)
+[← Previous: Module 03.2: Filters & Specialized Triggers](03-2-filters-and-specialized-triggers.md) | [Course home](README.md) | [Next: Module 05.1: Action Contracts & Core Actions →](05-1-action-contracts-and-core-actions.md)

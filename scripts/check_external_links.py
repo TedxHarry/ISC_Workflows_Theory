@@ -5,23 +5,8 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = [
-    ROOT / "00-orientation.md",
-    ROOT / "01-the-workflow-model.md",
-    ROOT / "02-data-variables-and-expressions.md",
-    ROOT / "03-triggers.md",
-    ROOT / "04-operators-and-logic.md",
-    ROOT / "05-actions.md",
-    ROOT / "06-forms-and-interactive-workflows.md",
-    ROOT / "07-testing-debugging-and-execution.md",
-    ROOT / "08-operations-limits-and-governance.md",
-    ROOT / "09-when-to-use-workflows.md",
-    ROOT / "10-use-case-patterns.md",
-    ROOT / "11-challenges-and-edge-cases.md",
-    ROOT / "12-readiness-and-paper-design.md",
-    ROOT / "README.md",
-]
-pattern = re.compile(r"https://[^\s)>\"']+")
+FILES = [ROOT / name for name in ['README.md', '00-orientation.md', '01-the-workflow-model.md', '02-1-data-and-payload-shape.md', '02-2-variables-and-jsonpath.md', '03-1-choosing-the-right-trigger.md', '03-2-filters-and-specialized-triggers.md', '04-operators-and-logic.md', '05-1-action-contracts-and-core-actions.md', '05-2-error-handling-external-actions-and-success-boundaries.md', '06-forms-and-interactive-workflows.md', '07-testing-debugging-and-execution.md', '08-1-operating-a-workflow.md', '08-2-limits-change-and-governance.md', '09-1-capability-ownership.md', '09-2-architecture-decisions-and-tradeoffs.md', '10-1-pattern-method-and-core-patterns.md', '10-2-working-engineer-patterns.md', '10-3-advanced-patterns-and-pattern-transfer.md', '11-1-repetition-partial-failure-and-concurrency.md', '11-2-scale-correlation-and-external-state.md', '12-1-paper-design-framework.md', '12-2-capstone-design-lab.md']]
+pattern = re.compile(r'https://[^\s)>"\']+')
 urls = set()
 for path in FILES:
     if path.exists():
