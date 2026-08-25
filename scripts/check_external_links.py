@@ -21,7 +21,7 @@ FILES = [
     ROOT / "12-readiness-and-paper-design.md",
     ROOT / "README.md",
 ]
-pattern = re.compile(r"https://[^\s)>]+")
+pattern = re.compile(r"https://[^\s)>\"']+")
 urls = set()
 for path in FILES:
     if path.exists():
