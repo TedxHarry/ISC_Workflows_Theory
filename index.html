@@ -609,6 +609,29 @@
       return link;
     }
 
+    function normalizeHomeModuleLinks() {
+      if (currentPath()) {
+        return;
+      }
+
+      const content = document.querySelector('.markdown-section');
+      if (!content) {
+        return;
+      }
+
+      const modulePaths = new Set(modules.map(function (item) { return item.path; }));
+      content.querySelectorAll('a[href$=".md"]').forEach(function (link) {
+        const href = link.getAttribute('href');
+        if (!href) {
+          return;
+        }
+        const path = href.replace(/^\.\//, '').replace(/\.md$/, '');
+        if (modulePaths.has(path)) {
+          link.setAttribute('href', '#/' + path);
+        }
+      });
+    }
+
     function linkModuleReferences() {
       const content = document.querySelector('.markdown-section');
       const info = currentModuleInfo();
@@ -809,6 +832,7 @@
             const info = currentModuleInfo();
             document.title = info ? info.module.title + ' | SailPoint ISC Workflows' : 'SailPoint ISC Workflows';
             removeLegacyFooterNavigation();
+            normalizeHomeModuleLinks();
             linkModuleReferences();
             addCopyButtons();
           });
