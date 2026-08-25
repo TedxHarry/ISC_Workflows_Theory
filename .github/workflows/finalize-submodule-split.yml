@@ -1,0 +1,63 @@
+name: Finalize submodule split
+
+on:
+  push:
+    branches:
+      - readability/submodules
+    paths:
+      - .github/workflows/finalize-submodule-split.yml
+
+permissions:
+  contents: write
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: readability/submodules
+          fetch-depth: 0
+      - name: Apply split and normalize preserved Markdown hard breaks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply_submodule_split.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'authoring_path.write_text(authoring.rstrip() + section + "\\n", encoding="utf-8")'
+          new = 'authoring_path.write_text(authoring.rstrip() + section.rstrip() + "\\n", encoding="utf-8")'
+          if old in text:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python scripts/apply_submodule_split.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('05-2-error-handling-external-actions-and-success-boundaries.md')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          normalized = [line[:-2] + '<br>' if line.endswith('  ') else line for line in lines]
+          path.write_text('\n'.join(normalized) + '\n', encoding='utf-8')
+          PY
+      - name: Validate course content
+        run: python scripts/check_content.py
+      - name: Validate Python, site JavaScript, and whitespace
+        run: |
+          python -m py_compile scripts/check_content.py scripts/check_external_links.py
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('index.html').read_text(encoding='utf-8')
+          blocks = re.findall(r'<script>(.*?)</script>', text, flags=re.S)
+          if not blocks:
+              raise SystemExit('No inline script found')
+          Path('/tmp/course-site.js').write_text('\n'.join(blocks), encoding='utf-8')
+          PY
+          node --check /tmp/course-site.js
+          git diff --check
+      - name: Commit generated reading-unit structure
+        run: |
+          git config user.name "TedxHarry"
+          git config user.email "106974482+TedxHarry@users.noreply.github.com"
+          git add . ':!.github/workflows/inventory-submodules.yml' ':!.github/workflows/apply-submodule-split.yml' ':!.github/workflows/retry-submodule-split.yml' ':!.github/workflows/finalize-submodule-split.yml' ':!scripts/apply_submodule_split.py'
+          git diff --cached --check
+          git commit -m "Split long modules into shorter reading units"
+          git push origin HEAD:readability/submodules
