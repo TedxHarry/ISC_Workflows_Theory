@@ -1,0 +1,39 @@
+name: Audit stale branches
+
+on:
+  push:
+    branches:
+      - hardening/course-quality
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hardening/course-quality
+          fetch-depth: 0
+      - name: Compare old branch tips with authoritative main
+        run: |
+          git fetch origin --prune
+          branches='agent/certification-campaign-lifecycle agent/external-trigger-integration agent/native-change-unauthorized-response agent/outlier-response cleanup/remove-em-dashes course-theory-refactor feat/access-request-vertical-slice feat/aggregation-failure-slice feat/joiner-vertical-slice feat/leaver-vertical-slice fix/workflow-execution-limits'
+          for branch in $branches; do
+            echo "===== $branch ====="
+            if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+              echo "MISSING"
+              continue
+            fi
+            counts=$(git rev-list --left-right --count "origin/main...origin/$branch")
+            echo "main-only / branch-only commits: $counts"
+            if git diff --quiet "origin/main" "origin/$branch"; then
+              echo "CONTENT: IDENTICAL TO MAIN"
+            else
+              echo "CONTENT: DIFFERENT"
+              git diff --shortstat "origin/main" "origin/$branch"
+              echo "Changed paths:"
+              git diff --name-status "origin/main" "origin/$branch" | head -100
+            fi
+          done
