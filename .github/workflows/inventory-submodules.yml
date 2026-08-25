@@ -1,0 +1,37 @@
+name: Inventory module boundaries
+
+on:
+  push:
+    branches:
+      - readability/submodules
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print module headings and word counts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files = [
+              '02-data-variables-and-expressions.md',
+              '03-triggers.md',
+              '05-actions.md',
+              '08-operations-limits-and-governance.md',
+              '09-when-to-use-workflows.md',
+              '10-use-case-patterns.md',
+              '11-challenges-and-edge-cases.md',
+              '12-readiness-and-paper-design.md',
+          ]
+          for name in files:
+              text = Path(name).read_text(encoding='utf-8')
+              print(f'===== {name} =====')
+              print('WORDS', len(text.split()))
+              for i, line in enumerate(text.splitlines(), 1):
+                  if line.startswith('## '):
+                      print(f'{i}: {line}')
+          PY
