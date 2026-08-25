@@ -1,4 +1,4 @@
-name: Audit stale branches
+name: Apply audited cleanup
 
 on:
   push:
@@ -6,34 +6,77 @@ on:
       - hardening/course-quality
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  cleanup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: hardening/course-quality
           fetch-depth: 0
-      - name: Compare old branch tips with authoritative main
+
+      - name: Make GitHub README links route correctly in Docsify
         run: |
-          git fetch origin --prune
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          if 'function normalizeHomeModuleLinks()' not in text:
+              marker = '    function linkModuleReferences() {\n'
+              function = '''    function normalizeHomeModuleLinks() {
+      if (currentPath()) {
+        return;
+      }
+
+      const content = document.querySelector('.markdown-section');
+      if (!content) {
+        return;
+      }
+
+      const modulePaths = new Set(modules.map(function (item) { return item.path; }));
+      content.querySelectorAll('a[href$=".md"]').forEach(function (link) {
+        const href = link.getAttribute('href');
+        if (!href) {
+          return;
+        }
+        const path = href.replace(/^\.\//, '').replace(/\.md$/, '');
+        if (modulePaths.has(path)) {
+          link.setAttribute('href', '#/' + path);
+        }
+      });
+    }
+
+'''
+              if marker not in text:
+                  raise SystemExit('Could not find linkModuleReferences marker')
+              text = text.replace(marker, function + marker, 1)
+              call_marker = '            removeLegacyFooterNavigation();\n'
+              text = text.replace(call_marker, call_marker + '            normalizeHomeModuleLinks();\n', 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+
+      - name: Delete audited obsolete development branches
+        run: |
           branches='agent/certification-campaign-lifecycle agent/external-trigger-integration agent/native-change-unauthorized-response agent/outlier-response cleanup/remove-em-dashes course-theory-refactor feat/access-request-vertical-slice feat/aggregation-failure-slice feat/joiner-vertical-slice feat/leaver-vertical-slice fix/workflow-execution-limits'
           for branch in $branches; do
-            echo "===== $branch ====="
-            if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-              echo "MISSING"
-              continue
-            fi
-            counts=$(git rev-list --left-right --count "origin/main...origin/$branch")
-            echo "main-only / branch-only commits: $counts"
-            if git diff --quiet "origin/main" "origin/$branch"; then
-              echo "CONTENT: IDENTICAL TO MAIN"
-            else
-              echo "CONTENT: DIFFERENT"
-              git diff --shortstat "origin/main" "origin/$branch"
-              echo "Changed paths:"
-              git diff --name-status "origin/main" "origin/$branch" | head -100
+            if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+              echo "Deleting obsolete branch: $branch"
+              git push origin --delete "$branch"
             fi
           done
+
+      - name: Commit site routing improvement
+        run: |
+          git config user.name "TedxHarry"
+          git config user.email "106974482+TedxHarry@users.noreply.github.com"
+          git add index.html
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No site change to commit"
+            exit 0
+          fi
+          git commit -m "Route repository links correctly on course site"
+          git push origin HEAD:hardening/course-quality
