@@ -366,3 +366,14 @@ This repository is the **theory and engineering-design course**.
 Do not add hands-on lab exercises, tenant setup instructions, click-by-click build labs, or lab verification steps. Those belong to the separate practical course.
 
 Theory exercises may ask the learner to reason about payloads, designs, execution histories, failure cases, and architecture on paper.
+
+## Reading-unit structure
+
+The course keeps **13 conceptual modules, numbered 00 through 12**. Longer modules may be divided into numbered reading units such as `10.1`, `10.2`, and `10.3` when there is a genuine learner stopping point.
+
+- Keep the conceptual module landing page and repository path stable.
+- Split at an existing conceptual boundary rather than an arbitrary word count.
+- Preserve the full teaching and technical substance unless a separate content revision is approved.
+- Keep first-pass navigation linear across reading units.
+- Use the module landing page for cross-module references such as “Module 10.”
+- Do not split a short module merely to make the file structure symmetrical.

@@ -4,22 +4,11 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULES = [
-    "00-orientation.md",
-    "01-the-workflow-model.md",
-    "02-data-variables-and-expressions.md",
-    "03-triggers.md",
-    "04-operators-and-logic.md",
-    "05-actions.md",
-    "06-forms-and-interactive-workflows.md",
-    "07-testing-debugging-and-execution.md",
-    "08-operations-limits-and-governance.md",
-    "09-when-to-use-workflows.md",
-    "10-use-case-patterns.md",
-    "11-challenges-and-edge-cases.md",
-    "12-readiness-and-paper-design.md",
-]
-CHECK_LINKS = MODULES + ["README.md", "_sidebar.md", "AUTHORING-GUIDE.md", "COURSE-STATUS.md"]
+CANONICAL_MODULES = ['00-orientation.md', '01-the-workflow-model.md', '02-data-variables-and-expressions.md', '03-triggers.md', '04-operators-and-logic.md', '05-actions.md', '06-forms-and-interactive-workflows.md', '07-testing-debugging-and-execution.md', '08-operations-limits-and-governance.md', '09-when-to-use-workflows.md', '10-use-case-patterns.md', '11-challenges-and-edge-cases.md', '12-readiness-and-paper-design.md']
+SUBMODULES = ['02-1-data-and-payload-shape.md', '02-2-variables-and-jsonpath.md', '03-1-choosing-the-right-trigger.md', '03-2-filters-and-specialized-triggers.md', '05-1-action-contracts-and-core-actions.md', '05-2-error-handling-external-actions-and-success-boundaries.md', '08-1-operating-a-workflow.md', '08-2-limits-change-and-governance.md', '09-1-capability-ownership.md', '09-2-architecture-decisions-and-tradeoffs.md', '10-1-pattern-method-and-core-patterns.md', '10-2-working-engineer-patterns.md', '10-3-advanced-patterns-and-pattern-transfer.md', '11-1-repetition-partial-failure-and-concurrency.md', '11-2-scale-correlation-and-external-state.md', '12-1-paper-design-framework.md', '12-2-capstone-design-lab.md']
+READING_UNITS = ['00-orientation.md', '01-the-workflow-model.md', '02-1-data-and-payload-shape.md', '02-2-variables-and-jsonpath.md', '03-1-choosing-the-right-trigger.md', '03-2-filters-and-specialized-triggers.md', '04-operators-and-logic.md', '05-1-action-contracts-and-core-actions.md', '05-2-error-handling-external-actions-and-success-boundaries.md', '06-forms-and-interactive-workflows.md', '07-testing-debugging-and-execution.md', '08-1-operating-a-workflow.md', '08-2-limits-change-and-governance.md', '09-1-capability-ownership.md', '09-2-architecture-decisions-and-tradeoffs.md', '10-1-pattern-method-and-core-patterns.md', '10-2-working-engineer-patterns.md', '10-3-advanced-patterns-and-pattern-transfer.md', '11-1-repetition-partial-failure-and-concurrency.md', '11-2-scale-correlation-and-external-state.md', '12-1-paper-design-framework.md', '12-2-capstone-design-lab.md']
+READER_PAGES = CANONICAL_MODULES + SUBMODULES
+CHECK_LINKS = READER_PAGES + ["README.md", "_sidebar.md", "AUTHORING-GUIDE.md", "COURSE-STATUS.md"]
 errors = []
 
 
@@ -37,10 +26,10 @@ for path in ROOT.rglob("*"):
     if text is not None and "\u2014" in text:
         errors.append(f"Em dash found: {path.relative_to(ROOT)}")
 
-for name in MODULES:
+for name in READER_PAGES:
     path = ROOT / name
     if not path.exists():
-        errors.append(f"Missing canonical module: {name}")
+        errors.append(f"Missing course page: {name}")
         continue
     lines = path.read_text(encoding="utf-8").splitlines()
     headings = []
@@ -91,11 +80,14 @@ for name in CHECK_LINKS:
 
 readme = (ROOT / "README.md").read_text(encoding="utf-8")
 sidebar = (ROOT / "_sidebar.md").read_text(encoding="utf-8")
-for module in MODULES:
+for module in CANONICAL_MODULES:
     if module not in readme:
         errors.append(f"README.md: missing canonical module link {module}")
     if module not in sidebar:
         errors.append(f"_sidebar.md: missing canonical module link {module}")
+for unit in READING_UNITS:
+    if unit not in sidebar:
+        errors.append(f"_sidebar.md: missing reading-unit link {unit}")
 
 if errors:
     print("Content quality checks failed:")
@@ -103,4 +95,4 @@ if errors:
         print(f" - {error}")
     sys.exit(1)
 
-print(f"Content quality checks passed for {len(MODULES)} canonical modules.")
+print(f"Content quality checks passed for {len(CANONICAL_MODULES)} conceptual modules and {len(READING_UNITS)} reading units.")

@@ -469,4 +469,4 @@ Module 02 starts with the data itself: values, objects, nested structures, and a
 
 ---
 
-[← Previous: Module 00 Orientation](00-orientation.md) | [Course home](README.md) | [Next: Module 02 Data, Payloads, Variables & JSONPath →](02-data-variables-and-expressions.md)
+[← Previous: Module 00: Orientation](00-orientation.md) | [Course home](README.md) | [Next: Module 02.1: Data & Payload Shape →](02-1-data-and-payload-shape.md)

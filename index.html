@@ -560,19 +560,44 @@
 
   <script>
     const modules = [
-      { path: '00-orientation', title: 'Module 00: Orientation', category: 'Foundations' },
-      { path: '01-the-workflow-model', title: 'Module 01: The Workflow Model', category: 'Foundations' },
-      { path: '02-data-variables-and-expressions', title: 'Module 02: Data, Payloads, Variables & JSONPath', category: 'Foundations' },
-      { path: '03-triggers', title: 'Module 03: Triggers & Filters', category: 'Building Blocks' },
-      { path: '04-operators-and-logic', title: 'Module 04: Operators & Logic', category: 'Building Blocks' },
-      { path: '05-actions', title: 'Module 05: Actions & Error Handling', category: 'Building Blocks' },
-      { path: '06-forms-and-interactive-workflows', title: 'Module 06: Forms, Approvals & Interactive Workflows', category: 'Building Blocks' },
-      { path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging & Execution', category: 'Operating Workflows' },
-      { path: '08-operations-limits-and-governance', title: 'Module 08: Operations, Limits & Governance', category: 'Operating Workflows' },
-      { path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows and When Not', category: 'Engineering Judgment' },
-      { path: '10-use-case-patterns', title: 'Module 10: Real-World Workflow Patterns', category: 'Engineering Judgment' },
-      { path: '11-challenges-and-edge-cases', title: 'Module 11: Challenges, Failure Modes & Edge Cases', category: 'Engineering Judgment' },
-      { path: '12-readiness-and-paper-design', title: 'Module 12: Readiness & Paper Design', category: 'Engineering Judgment' }
+      { number: '00', path: '00-orientation', title: 'Module 00: Orientation', category: 'Foundations' },
+      { number: '01', path: '01-the-workflow-model', title: 'Module 01: The Workflow Model', category: 'Foundations' },
+      { number: '02', path: '02-data-variables-and-expressions', title: 'Module 02: Data, Payloads, Variables & JSONPath', category: 'Foundations' },
+      { number: '03', path: '03-triggers', title: 'Module 03: Triggers & Filters', category: 'Building Blocks' },
+      { number: '04', path: '04-operators-and-logic', title: 'Module 04: Operators & Logic', category: 'Building Blocks' },
+      { number: '05', path: '05-actions', title: 'Module 05: Actions & Error Handling', category: 'Building Blocks' },
+      { number: '06', path: '06-forms-and-interactive-workflows', title: 'Module 06: Forms, Approvals & Interactive Workflows', category: 'Building Blocks' },
+      { number: '07', path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging & Execution', category: 'Operating Workflows' },
+      { number: '08', path: '08-operations-limits-and-governance', title: 'Module 08: Operations, Limits & Governance', category: 'Operating Workflows' },
+      { number: '09', path: '09-when-to-use-workflows', title: 'Module 09: When to Use Workflows and When Not', category: 'Engineering Judgment' },
+      { number: '10', path: '10-use-case-patterns', title: 'Module 10: Real-World Workflow Patterns', category: 'Engineering Judgment' },
+      { number: '11', path: '11-challenges-and-edge-cases', title: 'Module 11: Challenges, Failure Modes & Edge Cases', category: 'Engineering Judgment' },
+      { number: '12', path: '12-readiness-and-paper-design', title: 'Module 12: Readiness & Paper Design', category: 'Engineering Judgment' }
+    ];
+
+    const readingUnits = [
+      { path: '00-orientation', title: 'Module 00: Orientation', category: 'Foundations', moduleNumber: '00', part: null, partCount: 1 },
+      { path: '01-the-workflow-model', title: 'Module 01: The Workflow Model', category: 'Foundations', moduleNumber: '01', part: null, partCount: 1 },
+      { path: '02-1-data-and-payload-shape', title: 'Module 02.1: Data & Payload Shape', category: 'Foundations', moduleNumber: '02', part: 1, partCount: 2 },
+      { path: '02-2-variables-and-jsonpath', title: 'Module 02.2: Variables & JSONPath', category: 'Foundations', moduleNumber: '02', part: 2, partCount: 2 },
+      { path: '03-1-choosing-the-right-trigger', title: 'Module 03.1: Choosing the Right Trigger', category: 'Building Blocks', moduleNumber: '03', part: 1, partCount: 2 },
+      { path: '03-2-filters-and-specialized-triggers', title: 'Module 03.2: Filters & Specialized Triggers', category: 'Building Blocks', moduleNumber: '03', part: 2, partCount: 2 },
+      { path: '04-operators-and-logic', title: 'Module 04: Operators & Logic', category: 'Building Blocks', moduleNumber: '04', part: null, partCount: 1 },
+      { path: '05-1-action-contracts-and-core-actions', title: 'Module 05.1: Action Contracts & Core Actions', category: 'Building Blocks', moduleNumber: '05', part: 1, partCount: 2 },
+      { path: '05-2-error-handling-external-actions-and-success-boundaries', title: 'Module 05.2: Error Handling, External Actions & Success Boundaries', category: 'Building Blocks', moduleNumber: '05', part: 2, partCount: 2 },
+      { path: '06-forms-and-interactive-workflows', title: 'Module 06: Forms, Approvals & Interactive Workflows', category: 'Building Blocks', moduleNumber: '06', part: null, partCount: 1 },
+      { path: '07-testing-debugging-and-execution', title: 'Module 07: Testing, Debugging & Execution', category: 'Operating Workflows', moduleNumber: '07', part: null, partCount: 1 },
+      { path: '08-1-operating-a-workflow', title: 'Module 08.1: Operating a Workflow', category: 'Operating Workflows', moduleNumber: '08', part: 1, partCount: 2 },
+      { path: '08-2-limits-change-and-governance', title: 'Module 08.2: Limits, Change & Governance', category: 'Operating Workflows', moduleNumber: '08', part: 2, partCount: 2 },
+      { path: '09-1-capability-ownership', title: 'Module 09.1: Capability Ownership', category: 'Engineering Judgment', moduleNumber: '09', part: 1, partCount: 2 },
+      { path: '09-2-architecture-decisions-and-tradeoffs', title: 'Module 09.2: Architecture Decisions & Tradeoffs', category: 'Engineering Judgment', moduleNumber: '09', part: 2, partCount: 2 },
+      { path: '10-1-pattern-method-and-core-patterns', title: 'Module 10.1: Pattern Method & Core Patterns', category: 'Engineering Judgment', moduleNumber: '10', part: 1, partCount: 3 },
+      { path: '10-2-working-engineer-patterns', title: 'Module 10.2: Working Engineer Patterns', category: 'Engineering Judgment', moduleNumber: '10', part: 2, partCount: 3 },
+      { path: '10-3-advanced-patterns-and-pattern-transfer', title: 'Module 10.3: Advanced Patterns & Pattern Transfer', category: 'Engineering Judgment', moduleNumber: '10', part: 3, partCount: 3 },
+      { path: '11-1-repetition-partial-failure-and-concurrency', title: 'Module 11.1: Repetition, Partial Failure & Concurrency', category: 'Engineering Judgment', moduleNumber: '11', part: 1, partCount: 2 },
+      { path: '11-2-scale-correlation-and-external-state', title: 'Module 11.2: Scale, Correlation & External State', category: 'Engineering Judgment', moduleNumber: '11', part: 2, partCount: 2 },
+      { path: '12-1-paper-design-framework', title: 'Module 12.1: Paper Design Framework', category: 'Engineering Judgment', moduleNumber: '12', part: 1, partCount: 2 },
+      { path: '12-2-capstone-design-lab', title: 'Module 12.2: Capstone Design Lab', category: 'Engineering Judgment', moduleNumber: '12', part: 2, partCount: 2 }
     ];
 
 
@@ -584,10 +609,29 @@
         .replace(/\/$/, '');
     }
 
+    function currentReadingInfo() {
+      const path = currentPath();
+      const index = readingUnits.findIndex(function (item) {
+        return item.path === path;
+      });
+      return index >= 0 ? { unit: readingUnits[index], index: index } : null;
+    }
+
     function currentModuleInfo() {
       const path = currentPath();
-      const index = modules.findIndex(function (item) {
+      let index = modules.findIndex(function (item) {
         return item.path === path;
+      });
+      if (index >= 0) {
+        return { module: modules[index], index: index };
+      }
+
+      const unitInfo = currentReadingInfo();
+      if (!unitInfo) {
+        return null;
+      }
+      index = modules.findIndex(function (item) {
+        return item.number === unitInfo.unit.moduleNumber;
       });
       return index >= 0 ? { module: modules[index], index: index } : null;
     }
@@ -609,17 +653,13 @@
       return link;
     }
 
-    function normalizeHomeModuleLinks() {
-      if (currentPath()) {
-        return;
-      }
-
+    function normalizeCourseLinks() {
       const content = document.querySelector('.markdown-section');
       if (!content) {
         return;
       }
 
-      const modulePaths = new Set(modules.map(function (item) { return item.path; }));
+      const modulePaths = new Set(modules.map(function (item) { return item.path; }).concat(readingUnits.map(function (item) { return item.path; })));
       content.querySelectorAll('a[href$=".md"]').forEach(function (link) {
         const href = link.getAttribute('href');
         if (!href) {
@@ -780,17 +820,23 @@
       plugins: [
         function (hook) {
           hook.afterEach(function (html) {
-            const info = currentModuleInfo();
+            const unitInfo = currentReadingInfo();
+            const moduleInfo = currentModuleInfo();
 
-            if (info) {
-              const module = info.module;
-              html = '<div class="module-category">' + module.category + ' <span class="module-progress">· Module ' + (info.index + 1) + ' of ' + modules.length + '</span></div>' + html;
+            if (unitInfo) {
+              const unit = unitInfo.unit;
+              let progress = '· Module ' + unit.moduleNumber;
+              if (unit.partCount > 1) {
+                progress += ' · Part ' + unit.part + ' of ' + unit.partCount;
+              }
+              progress += ' · Reading unit ' + (unitInfo.index + 1) + ' of ' + readingUnits.length;
+              html = '<div class="module-category">' + unit.category + ' <span class="module-progress">' + progress + '</span></div>' + html;
 
-              const previous = info.index > 0
-                ? modules[info.index - 1]
+              const previous = unitInfo.index > 0
+                ? readingUnits[unitInfo.index - 1]
                 : { path: '', title: 'Course Home' };
-              const next = info.index < modules.length - 1
-                ? modules[info.index + 1]
+              const next = unitInfo.index < readingUnits.length - 1
+                ? readingUnits[unitInfo.index + 1]
                 : null;
 
               let navigation = '<nav class="course-navigation" aria-label="Course navigation">';
@@ -813,6 +859,9 @@
 
               navigation += '</nav>';
               html += navigation;
+            } else if (moduleInfo) {
+              const module = moduleInfo.module;
+              html = '<div class="module-category">' + module.category + ' <span class="module-progress">· Module ' + module.number + ' overview</span></div>' + html;
             }
 
             return html + '<footer class="course-footer">© TedxHarry · SailPoint ISC Workflows</footer>';
@@ -829,10 +878,11 @@
             if (activeSidebarLink) {
               activeSidebarLink.setAttribute('aria-current', 'page');
             }
-            const info = currentModuleInfo();
-            document.title = info ? info.module.title + ' | SailPoint ISC Workflows' : 'SailPoint ISC Workflows';
+            const unitInfo = currentReadingInfo();
+            const moduleInfo = currentModuleInfo();
+            document.title = unitInfo ? unitInfo.unit.title + ' | SailPoint ISC Workflows' : (moduleInfo ? moduleInfo.module.title + ' | SailPoint ISC Workflows' : 'SailPoint ISC Workflows');
             removeLegacyFooterNavigation();
-            normalizeHomeModuleLinks();
+            normalizeCourseLinks();
             linkModuleReferences();
             addCopyButtons();
           });

@@ -1158,4 +1158,4 @@ Module 07 moves into testing, execution history, and systematic diagnosis.
 
 ---
 
-[← Previous: Module 05 Actions & Error Handling](05-actions.md) | [Course home](README.md) | [Next: Module 07 Testing, Debugging & Execution →](07-testing-debugging-and-execution.md)
+[← Previous: Module 05.2: Error Handling, External Actions & Success Boundaries](05-2-error-handling-external-actions-and-success-boundaries.md) | [Course home](README.md) | [Next: Module 07: Testing, Debugging & Execution →](07-testing-debugging-and-execution.md)

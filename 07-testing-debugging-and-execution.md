@@ -1196,4 +1196,4 @@ Next we ask how to operate the Workflow itself as a production asset over time.
 
 ---
 
-[← Previous: Module 06 Forms, Approvals & Interactive Workflows](06-forms-and-interactive-workflows.md) | [Course home](README.md) | [Next: Module 08 Operations, Limits & Governance →](08-operations-limits-and-governance.md)
+[← Previous: Module 06: Forms, Approvals & Interactive Workflows](06-forms-and-interactive-workflows.md) | [Course home](README.md) | [Next: Module 08.1: Operating a Workflow →](08-1-operating-a-workflow.md)
