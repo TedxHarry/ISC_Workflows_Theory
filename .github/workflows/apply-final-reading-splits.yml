@@ -21,6 +21,22 @@ jobs:
           fetch-depth: 0
       - name: Apply final reading-unit splits
         run: python scripts/apply_final_reading_splits.py
+      - name: Normalize preserved Markdown whitespace semantics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p1 = Path('04-1-decisions-guards-and-variables.md')
+          text = p1.read_text(encoding='utf-8')
+          text = text.replace('Finance\nfinance\n Finance\nFinance \n', '"Finance"\n"finance"\n" Finance"\n"Finance "\n', 1)
+          p1.write_text(text, encoding='utf-8')
+
+          p2 = Path('04-2-loops-and-repeated-logic.md')
+          text = p2.read_text(encoding='utf-8')
+          text = re.sub(r'^(\*\*[^\n]+\*\*)  $', r'\1<br>', text, flags=re.M)
+          p2.write_text(text, encoding='utf-8')
+          PY
       - name: Validate course content
         run: python scripts/check_content.py
       - name: Validate scripts, site JavaScript, and whitespace
