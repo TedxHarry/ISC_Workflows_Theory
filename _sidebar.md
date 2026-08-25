@@ -14,14 +14,20 @@
   - [03.1: Choosing the Right Trigger](03-1-choosing-the-right-trigger.md)
   - [03.2: Filters & Specialized Triggers](03-2-filters-and-specialized-triggers.md)
 - [04: Operators & Logic](04-operators-and-logic.md)
+  - [04.1: Decisions, Guards & Variables](04-1-decisions-guards-and-variables.md)
+  - [04.2: Loops & Repeated Logic](04-2-loops-and-repeated-logic.md)
 - [05: Actions & Error Handling](05-actions.md)
   - [05.1: Action Contracts & Core Actions](05-1-action-contracts-and-core-actions.md)
   - [05.2: Error Handling, External Actions & Success Boundaries](05-2-error-handling-external-actions-and-success-boundaries.md)
 - [06: Forms, Approvals & Interactive Workflows](06-forms-and-interactive-workflows.md)
+  - [06.1: Forms, Input & Human Delay](06-1-forms-input-and-human-delay.md)
+  - [06.2: Approvals & Interactive Processes](06-2-approvals-and-interactive-processes.md)
 
 ## Operating Workflows
 
 - [07: Testing, Debugging & Execution](07-testing-debugging-and-execution.md)
+  - [07.1: Safe Testing & First Divergence](07-1-safe-testing-and-first-divergence.md)
+  - [07.2: Boundary Diagnosis & Retesting](07-2-boundary-diagnosis-and-retesting.md)
 - [08: Operations, Limits & Governance](08-operations-limits-and-governance.md)
   - [08.1: Operating a Workflow](08-1-operating-a-workflow.md)
   - [08.2: Limits, Change & Governance](08-2-limits-change-and-governance.md)
