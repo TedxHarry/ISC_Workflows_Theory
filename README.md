@@ -11,7 +11,7 @@
   <div class="repo-website"><a href="https://tedxharry.github.io/ISC_Workflows_Theory/">View the Course Website</a></div>
 </div>
 
-<div class="course-stats">13 modules · 22 reading units · Foundations to engineering to design</div>
+<div class="course-stats">13 modules · 25 reading units · Foundations to engineering to design</div>
 
 ## Course Structure
 
