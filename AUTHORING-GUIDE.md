@@ -1,4 +1,4 @@
-# ISC Workflows Theory — Authoring Guide
+# ISC Workflows Theory: Authoring Guide
 
 ## Purpose
 
@@ -212,9 +212,9 @@ Use difficulty labels where they reduce cognitive load.
 
 Recommended levels:
 
-- **Core** — expected first-pass understanding
-- **Working Engineer** — important after the core model is comfortable
-- **Advanced** — recognize the design problem and return when needed
+- **Core**: expected first-pass understanding
+- **Working Engineer**: important after the core model is comfortable
+- **Advanced**: recognize the design problem and return when needed
 
 Do not use labels as decoration. Use them when a learner could otherwise mistake reference material for required beginner memorization.
 

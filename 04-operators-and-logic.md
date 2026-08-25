@@ -1109,7 +1109,7 @@ The Workflow can now decide what path it wants.
 
 Module 05 asks the next question:
 
-> **What happens when that path needs the Workflow to act — and what should the design do when an action does not go as planned?**
+> **What happens when that path needs the Workflow to act - and what should the design do when an action does not go as planned?**
 
 That is where Actions & Error Handling begins.
 
@@ -1117,9 +1117,9 @@ That is where Actions & Error Handling begins.
 
 ## Official References
 
-- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
-- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
-- [Serial Loop rollout discussion — SailPoint Developer Community](https://developer.sailpoint.com/discuss/t/new-capability-workflows-with-1k-serial-loops/207478)
+- [Workflow Operators - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Managing Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Serial Loop rollout discussion - SailPoint Developer Community](https://developer.sailpoint.com/discuss/t/new-capability-workflows-with-1k-serial-loops/207478)
 
 ---
 

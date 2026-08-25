@@ -71,7 +71,7 @@ It exposes more production defects than another hour spent polishing the happy p
 
 ---
 
-## 1. Core — Stress the design
+## 1. Core: Stress the design
 
 Module 10 gave you a pattern anatomy.
 
@@ -210,7 +210,7 @@ That distinction becomes important immediately.
 
 ---
 
-## 2. Core — When the same thing happens twice
+## 2. Core: When the same thing happens twice
 
 Start with something simple.
 
@@ -500,7 +500,7 @@ Recovery begins by determining actual state, not by assuming that every step bef
 
 ---
 
-## 3. Core — When two correct executions collide
+## 3. Core: When two correct executions collide
 
 Repetition is one problem.
 
@@ -702,7 +702,7 @@ The schedule itself also deserves review if overlap is becoming normal rather th
 
 ---
 
-## 4. Core — When half the Workflow already happened
+## 4. Core: When half the Workflow already happened
 
 Clean failure is easy to reason about:
 
@@ -943,7 +943,7 @@ Recovery continues from reality. It does not pretend the failed execution never 
 
 ---
 
-## 5. Core — When another system gives you an ambiguous answer
+## 5. Core: When another system gives you an ambiguous answer
 
 External dependencies create a special kind of failure.
 
@@ -1149,7 +1149,7 @@ the remote side effect definitely did not happen
 
 ---
 
-## 6. Working Engineer — When the design grows
+## 6. Working Engineer: When the design grows
 
 A pattern that works for five subjects can become unsafe for five hundred.
 
@@ -1345,7 +1345,7 @@ A supported capability is not automatically the right architecture.
 
 ---
 
-## 7. Working Engineer — When one business process crosses executions
+## 7. Working Engineer: When one business process crosses executions
 
 Users describe business processes as one thing:
 
@@ -1651,7 +1651,7 @@ The design should correlate later work to the correct campaign/certification tec
 
 ---
 
-## 8. Working Engineer — When the source or caller cannot support your assumption
+## 8. Working Engineer: When the source or caller cannot support your assumption
 
 Many production failures begin with an assumption that looked small.
 
@@ -1839,7 +1839,7 @@ Those two statements prevent a surprising number of bad automations.
 
 ---
 
-## 9. Advanced — When a signal looks stronger than it really is
+## 9. Advanced: When a signal looks stronger than it really is
 
 Security signals can make engineers overconfident because the event sounds serious.
 
@@ -1856,7 +1856,7 @@ But they share one crucial lesson:
 
 ---
 
-### Native Change — detected change is not intent
+### Native Change: detected change is not intent
 
 Suppose Acme detects that Priya's Active Directory account was directly added to:
 
@@ -1985,7 +1985,7 @@ That is Advanced reasoning.
 
 ---
 
-### Outlier — risk signal is not security judgment
+### Outlier: risk signal is not security judgment
 
 Outlier Detected gives a different kind of signal.
 
@@ -2147,7 +2147,7 @@ A security Workflow becomes dangerous when its language outruns its evidence.
 
 ---
 
-## 10. Production reality — Testing does not remove these questions
+## 10. Production reality: Testing does not remove these questions
 
 Module 07 taught you how to test and debug Workflows.
 
@@ -2410,7 +2410,7 @@ You are now evaluating the design, not merely describing it.
 
 ---
 
-## 12. Checkpoint — Ready to design independently
+## 12. Checkpoint: Ready to design independently
 
 You should now be able to take a Workflow pattern that looks correct on the happy path and stress it deliberately.
 
@@ -2547,16 +2547,16 @@ That is the difference between recognizing a Workflow pattern and engineering on
 
 ## Official References
 
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
-- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
-- [Event Trigger Types — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/trigger-types/)
-- [Provisioning Completed — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
-- [Campaign Generated — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/campaign-generated)
-- [Native Change Detection — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
-- [Native Change Account Updated — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
-- [Outlier Detected — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Operators - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Workflow Actions - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Managing Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Event Trigger Types - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/trigger-types/)
+- [Provisioning Completed - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
+- [Campaign Generated - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/campaign-generated)
+- [Native Change Detection - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
+- [Native Change Account Updated - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
+- [Outlier Detected - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
 
 ---
 

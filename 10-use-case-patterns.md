@@ -50,7 +50,7 @@ That requires a model.
 
 ---
 
-## 1. Core — The anatomy of a Workflow pattern
+## 1. Core: The anatomy of a Workflow pattern
 
 Every pattern in this module can be examined through the same seven questions:
 
@@ -149,7 +149,7 @@ The pattern shape survives.
 
 ---
 
-## 2. Core — How to adapt a pattern
+## 2. Core: How to adapt a pattern
 
 When you borrow a pattern, do not copy everything.
 
@@ -267,9 +267,9 @@ Module 11 will teach you how to attack that answer.
 
 ---
 
-# Part I — Core Patterns
+# Part I: Core Patterns
 
-## 4. Core — Joiner communication
+## 4. Core: Joiner communication
 
 Priya joins Acme.
 
@@ -389,7 +389,7 @@ event
 
 ---
 
-## 5. Core — Mover notification
+## 5. Core: Mover notification
 
 Priya moves from Sales to Finance.
 
@@ -507,7 +507,7 @@ Your pattern still has to interpret the right part of that signal.
 
 ---
 
-## 6. Core — Leaver communication and ticketing
+## 6. Core: Leaver communication and ticketing
 
 Now Priya leaves Acme.
 
@@ -605,7 +605,7 @@ Module 11 will force that question much harder.
 
 ---
 
-## 7. Core — Aggregation-failure alert
+## 7. Core: Aggregation-failure alert
 
 One of the most useful Workflows in a tenant can be very small.
 
@@ -710,7 +710,7 @@ Automated remediation requires a stronger decision boundary.
 
 ---
 
-## 8. Core — Provisioning-result reaction
+## 8. Core: Provisioning-result reaction
 
 Suppose Acme wants an operations team notified when a provisioning process reaches its later Workflow event boundary.
 
@@ -771,7 +771,7 @@ Do not silently upgrade one Workflow event into stronger evidence than its bound
 
 ---
 
-## 9. Core — Data-quality alert
+## 9. Core: Data-quality alert
 
 Every tenant accumulates imperfect data.
 
@@ -812,7 +812,7 @@ or turning Workflow into an unbounded batch processor.
 
 There are two different shapes here.
 
-### Shape A — Scheduled Search as a report-ready event
+### Shape A: Scheduled Search as a report-ready event
 
 Conceptually:
 
@@ -840,7 +840,7 @@ as a general contract.
 
 If the full report needs substantial processing, that may belong in a different execution environment.
 
-### Shape B — Scheduled Trigger plus bounded lookup
+### Shape B: Scheduled Trigger plus bounded lookup
 
 Another pattern is:
 
@@ -884,7 +884,7 @@ Module 09 taught you to recognize that signal.
 
 ---
 
-## 10. Core — Simple outbound integration
+## 10. Core: Simple outbound integration
 
 Acme receives a meaningful ISC event and needs to create a case in another system.
 
@@ -966,7 +966,7 @@ And never send sensitive identity information to a chat channel simply because n
 
 ---
 
-## 11. Core — Simple scheduled operational pattern
+## 11. Core: Simple scheduled operational pattern
 
 Scheduled work has a different data shape from event-driven identity work.
 
@@ -1037,7 +1037,7 @@ At that point the operating model deserves a new architecture review.
 
 ---
 
-## 12. Core — Human-input pattern
+## 12. Core: Human-input pattern
 
 Some orchestration starts because a person needs to provide information.
 
@@ -1163,9 +1163,9 @@ If you can produce that without memorizing a previous canvas, you are using patt
 
 ---
 
-# Part II — Working Engineer Patterns
+# Part II: Working Engineer Patterns
 
-## 14. Working Engineer — Manage Access orchestration
+## 14. Working Engineer: Manage Access orchestration
 
 Sometimes Workflow deliberately initiates an access change.
 
@@ -1221,7 +1221,7 @@ Do not stretch the action's success boundary because the business wants a strong
 
 ---
 
-## 15. Working Engineer — Manage Accounts orchestration
+## 15. Working Engineer: Manage Accounts orchestration
 
 A Workflow may deliberately perform a supported account operation.
 
@@ -1285,7 +1285,7 @@ That is Working Engineer reasoning.
 
 ---
 
-## 16. Working Engineer — Access Request Decision reaction
+## 16. Working Engineer: Access Request Decision reaction
 
 Sometimes you do not own the approval process.
 
@@ -1335,7 +1335,7 @@ The next ownership boundary still matters.
 
 ---
 
-## 17. Working Engineer — Adaptive Approval
+## 17. Working Engineer: Adaptive Approval
 
 Priya requests sensitive Finance access through ISC's native governed request process.
 
@@ -1426,7 +1426,7 @@ That architectural distinction from Module 09 remains binding.
 
 ---
 
-## 18. Working Engineer — Controlled collection pattern
+## 18. Working Engineer: Controlled collection pattern
 
 Some Workflows legitimately process a bounded collection.
 
@@ -1489,7 +1489,7 @@ They are exactly where Module 11 begins.
 
 ---
 
-## 19. Working Engineer — Certification creation
+## 19. Working Engineer: Certification creation
 
 Sometimes the required orchestration is not merely:
 
@@ -1627,7 +1627,7 @@ Module 11 will handle the deeper replay/correlation design.
 
 ---
 
-# Part III — Advanced Recognition
+# Part III: Advanced Recognition
 
 Advanced does **not** mean irrelevant.
 
@@ -1639,7 +1639,7 @@ Your goal is to recognize the architecture, the facts each event proves, and the
 
 ---
 
-## 20. Advanced — Certification lifecycle orchestration
+## 20. Advanced: Certification lifecycle orchestration
 
 A certification can span multiple independent event boundaries.
 
@@ -1766,7 +1766,7 @@ You do need to recognize that a campaign name or a green box is not enough to an
 
 ---
 
-## 21. Advanced — Native Change response
+## 21. Advanced: Native Change response
 
 Suppose Priya's Active Directory account is directly added to:
 
@@ -1914,7 +1914,7 @@ Carry that problem to Module 11.
 
 ---
 
-## 22. Advanced — Outlier response
+## 22. Advanced: Outlier response
 
 Identity Outliers gives us a useful example of another major principle:
 
@@ -2094,7 +2094,7 @@ The deeper reconciliation and repeat-safety design belongs in Module 11.
 
 ---
 
-## 23. Advanced — External Trigger integration contract
+## 23. Advanced: External Trigger integration contract
 
 Sometimes the initiating business event belongs outside ISC.
 
@@ -2245,9 +2245,9 @@ Module 11 will handle the durable state and duplicate-side-effect reasoning.
 
 ---
 
-# Part IV — Combining Patterns
+# Part IV: Combining Patterns
 
-## 24. Core / Working Engineer Bridge — Real Workflows combine simple shapes
+## 24. Core / Working Engineer Bridge: Real Workflows combine simple shapes
 
 Real production Workflows rarely fit one isolated label.
 
@@ -2315,7 +2315,7 @@ This is where pattern adaptation becomes architecture.
 
 ---
 
-## 25. Working Engineer — Notification plus ticket
+## 25. Working Engineer: Notification plus ticket
 
 Take a common example:
 
@@ -2359,9 +2359,9 @@ That is the preparation Module 11 needs.
 
 ---
 
-# Part V — Pattern Transfer
+# Part V: Pattern Transfer
 
-## 26. Work It Out — A pattern you have not seen exactly
+## 26. Work It Out: A pattern you have not seen exactly
 
 Acme has a privileged application.
 
@@ -2463,7 +2463,7 @@ You recognized several reusable shapes and combined them around one requirement.
 
 ---
 
-## 27. One more transfer exercise — Scheduled data-quality review
+## 27. One more transfer exercise: Scheduled data-quality review
 
 Acme wants a daily report when identities are missing a manager.
 
@@ -2518,9 +2518,9 @@ That is exactly why pattern anatomy matters more than recipe copying.
 
 ---
 
-# Part VI — Final Pattern Checkpoint
+# Part VI: Final Pattern Checkpoint
 
-## 28. Checkpoint — Do you recognize the shape?
+## 28. Checkpoint: Do you recognize the shape?
 
 By now you should be able to take an unfamiliar Workflow requirement and describe:
 
@@ -2671,19 +2671,19 @@ That is the skill that survives when the next requirement has a business name yo
 
 ## Official References
 
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Workflow Operators — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
-- [Identity Attributes Changed — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
-- [Account Aggregation Completed — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/account-aggregation-completed/)
-- [Setting Up Lifecycle States — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/provisioning/lifecycle.html)
-- [Adaptive Approvals — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
-- [Managing Native Change Detection — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
-- [Native Change Account Updated — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
-- [Outlier Detected — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
-- [Identity Outliers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/ai/access_insights/outliers.html)
-- [Workflow Templates — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-templates.html)
-- [Managing Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Actions - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Workflow Operators - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-operators.html)
+- [Identity Attributes Changed - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
+- [Account Aggregation Completed - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/account-aggregation-completed/)
+- [Setting Up Lifecycle States - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/provisioning/lifecycle.html)
+- [Adaptive Approvals - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
+- [Managing Native Change Detection - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
+- [Native Change Account Updated - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
+- [Outlier Detected - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
+- [Identity Outliers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/ai/access_insights/outliers.html)
+- [Workflow Templates - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-templates.html)
+- [Managing Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
 
 ---
 

@@ -94,7 +94,7 @@ Under pressure, engineers violate it constantly.
 
 ---
 
-## 2. Core — Test safely before trusting the result
+## 2. Core: Test safely before trusting the result
 
 Before we diagnose a Workflow, we need evidence.
 
@@ -206,7 +206,7 @@ Nothing more.
 
 ---
 
-## 3. Core — The five diagnostic questions
+## 3. Core: The five diagnostic questions
 
 This is the method I want you to carry out of this module.
 
@@ -265,7 +265,7 @@ The five questions are enough to navigate it.
 
 ---
 
-## 4. Core — Question 1: Did the Workflow start?
+## 4. Core: Question 1: Did the Workflow start?
 
 Start with the simplest distinction:
 
@@ -373,7 +373,7 @@ You already know why:
 
 ---
 
-## 5. Core — Question 2: What data actually arrived?
+## 5. Core: Question 2: What data actually arrived?
 
 Once an execution exists, resist the urge to jump to the step that looks broken.
 
@@ -466,7 +466,7 @@ That is why validation remains useful even when a Get Identity step exists.
 
 ---
 
-## 6. Core — Question 3: Where did the first unexpected value appear?
+## 6. Core: Question 3: Where did the first unexpected value appear?
 
 Now walk the execution **in order**.
 
@@ -557,7 +557,7 @@ Read the rendered values and diagnose from evidence.
 
 ---
 
-## 7. Core — Question 4: What did that action actually guarantee?
+## 7. Core: Question 4: What did that action actually guarantee?
 
 This is where Module 05 becomes a debugging skill.
 
@@ -689,7 +689,7 @@ Classify the result before trying to “fix” it.
 
 ---
 
-## 8. Core — Question 5: Which system or process owned the next boundary?
+## 8. Core: Question 5: Which system or process owned the next boundary?
 
 This question prevents endless Workflow debugging after the Workflow has already done its job.
 
@@ -781,7 +781,7 @@ It does not invent a new universal timeout rule.
 
 ---
 
-## 9. Core — Classify the first divergence
+## 9. Core: Classify the first divergence
 
 Once you have found the first point where evidence differs from expectation, give the problem a useful class.
 
@@ -804,7 +804,7 @@ Classification only helps you decide what kind of evidence comes next.
 
 ---
 
-## 10. Core — One hypothesis, one change, one safe retest
+## 10. Core: One hypothesis, one change, one safe retest
 
 Once you find the first divergence, form one explanation that fits the evidence.
 
@@ -852,13 +852,13 @@ For now, do not create a second incident while fixing the first one.
 
 ---
 
-## 11. Working Engineer — Apply the same method to harder boundaries
+## 11. Working Engineer: Apply the same method to harder boundaries
 
 The five questions are valuable only if they transfer.
 
 Here are three situations that look very different but use the same method.
 
-### Native Change — add the upstream detection boundary
+### Native Change: add the upstream detection boundary
 
 Suppose someone adds `Finance Privileged Operators` directly to an AD account.
 
@@ -931,7 +931,7 @@ It is the same method with an extra detection boundary before the Workflow.
 
 ---
 
-### Access request — follow the business boundaries
+### Access request: follow the business boundaries
 
 Priya requests sensitive Finance access.
 
@@ -981,7 +981,7 @@ approval is proven
 
 That is systematic diagnosis.
 
-### HTTP integration — separate Workflow evidence from remote-system evidence
+### HTTP integration: separate Workflow evidence from remote-system evidence
 
 Suppose Acme's separation Workflow should create a case in an external security platform.
 
@@ -1022,7 +1022,7 @@ Only the owner of the next boundary changed.
 
 ---
 
-## 12. Advanced — What this module is deliberately not solving yet
+## 12. Advanced: What this module is deliberately not solving yet
 
 At this point you know how to diagnose **one execution**.
 
@@ -1066,7 +1066,7 @@ That is enough to make debugging dramatically less random.
 
 ---
 
-## 13. Work It Out — Full diagnosis
+## 13. Work It Out: Full diagnosis
 
 Priya requests a Finance access profile.
 
@@ -1125,7 +1125,7 @@ Only return to the approval Workflow if new evidence points back there.
 
 ---
 
-## 14. Checkpoint — Diagnose before you redesign
+## 14. Checkpoint: Diagnose before you redesign
 
 You should now be able to take a Workflow incident and walk it systematically rather than changing random steps.
 
@@ -1183,16 +1183,16 @@ Next we ask how to operate the Workflow itself as a production asset over time.
 
 ## Official References
 
-- [Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/index.html)
-- [Building Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
-- [Creating Data for Testing Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-test-data.html)
-- [Managing Workflows — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
-- [Workflow Actions — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Workflow Triggers — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Identity Attributes Changed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
-- [Identity Created — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-created/)
-- [Provisioning Completed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
-- [Native Change Account Updated — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
+- [Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/index.html)
+- [Building Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Creating Data for Testing Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-test-data.html)
+- [Managing Workflows - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-manage.html)
+- [Workflow Actions - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Workflow Triggers - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Identity Attributes Changed - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
+- [Identity Created - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-created/)
+- [Provisioning Completed - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
+- [Native Change Account Updated - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/native-change-account-updated/)
 
 ---
 

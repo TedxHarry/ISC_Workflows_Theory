@@ -1,4 +1,4 @@
-# ISC Workflows Theory — Project Status
+# ISC Workflows Theory: Project Status
 
 ## Purpose
 
@@ -27,11 +27,11 @@ New course work should start from the current `main` baseline unless the maintai
 
 # Current Project State
 
-**Phase:** COMPLETE — final course integration approved and merged to `main`
+**Phase:** COMPLETE - final course integration approved and merged to `main`
 
-**Current target:** None — Modules 00–12 are FINAL ACCEPTED
+**Current target:** None - Modules 00–12 are FINAL ACCEPTED
 
-**Course modules:** Module 00 — Orientation (`FINAL ACCEPTED`); Module 01 — The Workflow Model (`FINAL ACCEPTED`); Module 02 — Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 — Triggers & Filters (`FINAL ACCEPTED`); Module 04 — Operators & Logic (`FINAL ACCEPTED`); Module 05 — Actions & Error Handling (`FINAL ACCEPTED`); Module 06 — Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 — Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 — Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 — When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 — Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 — Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`); Module 12 — Readiness & Paper Design (`FINAL ACCEPTED`)
+**Course modules:** Module 00 - Orientation (`FINAL ACCEPTED`); Module 01 - The Workflow Model (`FINAL ACCEPTED`); Module 02 - Data, Payloads, Variables & JSONPath (`FINAL ACCEPTED`); Module 03 - Triggers & Filters (`FINAL ACCEPTED`); Module 04 - Operators & Logic (`FINAL ACCEPTED`); Module 05 - Actions & Error Handling (`FINAL ACCEPTED`); Module 06 - Forms, Approvals & Interactive Workflows (`FINAL ACCEPTED`); Module 07 - Testing, Debugging & Execution (`FINAL ACCEPTED`); Module 08 - Operations, Limits & Governance (`FINAL ACCEPTED`); Module 09 - When to Use Workflows and When Not (`FINAL ACCEPTED`); Module 10 - Real-World Workflow Patterns (`FINAL ACCEPTED`); Module 11 - Challenges, Failure Modes & Edge Cases (`FINAL ACCEPTED`); Module 12 - Readiness & Paper Design (`FINAL ACCEPTED`)
 
 **Repository-control files:**
 
@@ -90,31 +90,31 @@ Do not reopen these unless the maintainer explicitly changes them.
 
 These findings came from the preliminary repository review. They are preserved here as project history; each was formally resolved before final acceptance.
 
-## Module 01 — Workflow JSON model
+## Module 01: Workflow JSON model
 
 The existing JSON skeleton appeared to place `trigger` inside `definition`. Formal technical review found conflicting current official representations: the API/SDK model places `trigger` at the top level, while product-help material shows a JSON-file representation with `trigger` nested under `definition`.
 
 **Status:** Resolved in the final accepted Module 01 by removing the exact universal hierarchy and teaching only the stable structured-Workflow-definition concept.
 
-## Modules 00 / 09 — Transform wording
+## Modules 00 / 09: Transform wording
 
 Existing language suggested transforms "do not make decisions." This was too absolute because supported transform operations can contain conditional/fallback logic. The intended architectural distinction is that transforms calculate/shape values and do not act as general workflow orchestration engines.
 
 **Status:** Resolved in the final accepted Modules 00 and 09. Module 09 explicitly preserves supported conditional value logic while teaching the architectural boundary between attribute-value calculation/manipulation and event/process orchestration.
 
-## Module 04 / future Module 05 — Get Identity execution wording
+## Module 04 / future Module 05: Get Identity execution wording
 
 Existing language said an unnecessary Get Identity "spends an execution." Technical review established the safer point: an unnecessary lookup adds a service call, latency, data, and another failure surface rather than necessarily counting as a separate workflow execution.
 
 **Status:** Resolved in the final accepted Module 05 by removing the incorrect execution-count claim and teaching the safer action/service-call, latency, returned-data, and failure-surface boundary.
 
-## Module 05 / future Module 06 — Human-in-the-loop mechanisms
+## Module 05 / future Module 06: Human-in-the-loop mechanisms
 
 Adaptive Approval, Approval Policy, Generic Approval Policy, Form action, Interactive Workflow, Approve/Deny Access Request, and identifier semantics required current-source verification during module review.
 
 **Status:** Resolved in the final accepted Module 06 through current-source technical review, mechanism-specific non-response handling, current Interactive Process terminology, Adaptive Approvals boundaries, and verified direct Approve/Deny identifier semantics.
 
-## Module 08 — Operations additions
+## Module 08: Operations additions
 
 The review verified and incorporated, where supported by current documentation:
 

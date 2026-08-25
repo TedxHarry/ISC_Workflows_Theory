@@ -48,7 +48,7 @@ You are going to turn everything you have learned into a paper architecture anot
 
 ---
 
-## 1. Core — From stress testing to complete design
+## 1. Core: From stress testing to complete design
 
 Module 11 taught you to attack a design with:
 
@@ -115,7 +115,7 @@ You are designing as a junior engineer who expects another engineer to ask:
 
 ---
 
-## 2. Core — Before the seven: should Workflow own this?
+## 2. Core: Before the seven: should Workflow own this?
 
 Before answering any architecture question, make one capability decision:
 
@@ -175,7 +175,7 @@ That is architecture.
 
 ---
 
-## 3. Core — The seven engineering questions
+## 3. Core: The seven engineering questions
 
 If Workflow passes the ownership gate, run the seven questions.
 
@@ -201,7 +201,7 @@ These are not seven builder steps.
 
 They are seven ways to discover whether your design is complete.
 
-### Question 1 — What actually starts this process?
+### Question 1: What actually starts this process?
 
 Find the real business event.
 
@@ -233,7 +233,7 @@ It does not automatically tell you everything you need to know about the busines
 
 ---
 
-### Question 2 — What data arrives, and what is missing?
+### Question 2: What data arrives, and what is missing?
 
 Inspect the real event data.
 
@@ -306,7 +306,7 @@ confidently wrong decision
 
 ---
 
-### Question 3 — What decisions must be made?
+### Question 3: What decisions must be made?
 
 Now model the decisions.
 
@@ -361,7 +361,7 @@ action taken without enough reasoning
 
 ---
 
-### Question 4 — What actions belong here?
+### Question 4: What actions belong here?
 
 Actions perform the work.
 
@@ -417,7 +417,7 @@ stronger conclusion than the step earned
 
 ---
 
-### Question 5 — What can fail, and how will failure be handled?
+### Question 5: What can fail, and how will failure be handled?
 
 Do not stop at:
 
@@ -482,7 +482,7 @@ The failure this question prevents is blind recovery that multiplies damage.
 
 ---
 
-### Question 6 — What happens if this runs twice or concurrently?
+### Question 6: What happens if this runs twice or concurrently?
 
 Always ask both parts.
 
@@ -555,7 +555,7 @@ The failure this question prevents is a design that works only when reality poli
 
 ---
 
-### Question 7 — What evidence proves the intended business outcome?
+### Question 7: What evidence proves the intended business outcome?
 
 This is the final architecture question.
 
@@ -635,7 +635,7 @@ This is the final form of:
 
 ---
 
-## 4. Core — Turn answers into a paper architecture
+## 4. Core: Turn answers into a paper architecture
 
 Seven answers are useful.
 
@@ -753,7 +753,7 @@ That is stronger than false certainty.
 
 ---
 
-## 5. Core — One complete worked design
+## 5. Core: One complete worked design
 
 Now watch the full method once.
 
@@ -826,7 +826,7 @@ can support the promised scope.
 
 ---
 
-### 1. START — What actually starts this process?
+### 1. START: What actually starts this process?
 
 "Contract end date has passed" is a business condition.
 
@@ -860,7 +860,7 @@ That becomes a data problem.
 
 ---
 
-### 2. DATA — What arrives, and what is missing?
+### 2. DATA: What arrives, and what is missing?
 
 The Workflow needs enough context to establish:
 
@@ -913,7 +913,7 @@ using the chosen supported approach.
 
 ---
 
-### 3. DECISIONS — What decisions must be made?
+### 3. DECISIONS: What decisions must be made?
 
 For each contractor, the design may need to decide:
 
@@ -952,7 +952,7 @@ automatic action capability established
 
 ---
 
-### 4. ACTIONS — What actions belong here?
+### 4. ACTIONS: What actions belong here?
 
 A reasonable action sequence is:
 
@@ -999,7 +999,7 @@ It does not prove the sponsor responded.
 
 ---
 
-### 5. FAILURE — What can fail, and how will failure be handled?
+### 5. FAILURE: What can fail, and how will failure be handled?
 
 Consider failures separately.
 
@@ -1057,7 +1057,7 @@ The design should preserve evidence from important actions and make unresolved w
 
 ---
 
-### 6. REPEAT — What happens if this runs twice or concurrently?
+### 6. REPEAT: What happens if this runs twice or concurrently?
 
 Ask two different questions.
 
@@ -1103,7 +1103,7 @@ Do not assume one scheduled execution always finishes before another begins.
 
 ---
 
-### 7. EVIDENCE — What proves the intended business outcome?
+### 7. EVIDENCE: What proves the intended business outcome?
 
 The evidence must match the promise.
 
@@ -1284,7 +1284,7 @@ No builder was required.
 
 ---
 
-## 6. Working Engineer — Now you drive
+## 6. Working Engineer: Now you drive
 
 The mentor steps back now.
 
@@ -1385,13 +1385,13 @@ That is why alerting and remediation should not be treated as the same design wi
 
 ---
 
-## 7. Working Engineer — Independent paper designs
+## 7. Working Engineer: Independent paper designs
 
 No model answer comes first now.
 
 Use the same paper-design sheet for every scenario.
 
-### Scenario A — Joiner welcome
+### Scenario A: Joiner welcome
 
 Priya joins Acme.
 
@@ -1403,7 +1403,7 @@ Do not assume the manager context is already available merely because the busine
 
 ---
 
-### Scenario B — Sensitive Finance approval
+### Scenario B: Sensitive Finance approval
 
 Priya requests sensitive Finance access.
 
@@ -1417,7 +1417,7 @@ Design it.
 
 ---
 
-### Scenario C — External HR separation event
+### Scenario C: External HR separation event
 
 An external HR service tells Acme that worker:
 
@@ -1459,7 +1459,7 @@ duplicate suppression
 
 ---
 
-### Scenario D — Leaver with partial failure
+### Scenario D: Leaver with partial failure
 
 Priya enters the leaver lifecycle state.
 
@@ -1481,7 +1481,7 @@ Design recovery.
 
 ---
 
-### Scenario E — The requirement that should not use Workflow
+### Scenario E: The requirement that should not use Workflow
 
 Choose one IAM requirement that another capability should own.
 
@@ -1566,7 +1566,7 @@ That is the point of the exercise.
 
 ---
 
-## 8. Advanced — Design under ambiguity
+## 8. Advanced: Design under ambiguity
 
 These scenarios are intentionally harder.
 
@@ -1574,7 +1574,7 @@ They are not final-course trivia tests.
 
 Use them to expose architecture boundaries.
 
-### Challenge 1 — Event-driven certification
+### Challenge 1: Event-driven certification
 
 Priya moves into Finance.
 
@@ -1624,7 +1624,7 @@ What evidence proves the business review actually reached the required boundary?
 
 ---
 
-### Challenge 2 — Outlier response
+### Challenge 2: Outlier response
 
 ISC emits an Outlier signal for Priya.
 
@@ -1679,7 +1679,7 @@ And a successful retrieval still does not prove population completeness.
 
 ---
 
-### Challenge 3 — Work that continues across executions
+### Challenge 3: Work that continues across executions
 
 Imagine a Workflow creates a business object whose lifecycle continues after the first execution ends.
 
@@ -1730,7 +1730,7 @@ That is an engineering answer.
 
 ---
 
-## 9. Core — Defend the design
+## 9. Core: Defend the design
 
 A paper architecture is not finished when the boxes are filled in.
 
@@ -1863,7 +1863,7 @@ Your job is to expose it.
 
 ---
 
-## 10. Checkpoint — Are you ready to build?
+## 10. Checkpoint: Are you ready to build?
 
 You are ready to move into labs when you can do these without being handed the answer first.
 
@@ -1989,12 +1989,12 @@ It is one whose behavior you can explain, observe, recover, and defend.
 
 ## Official References
 
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Workflow Actions — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Building Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
-- [Managing Native Change Detection — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
-- [Configuring Sources — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/config_sources.html)
-- [Outlier Detected — SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Actions - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Building Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Managing Native Change Detection - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/native_change_detection.html)
+- [Configuring Sources - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/sources/config_sources.html)
+- [Outlier Detected - SailPoint Developer Community](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/outlier-detected/)
 
 ---
 

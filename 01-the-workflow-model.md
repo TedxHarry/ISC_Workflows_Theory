@@ -61,7 +61,7 @@ SailPoint groups Workflow steps into three categories:
 
 A completed Workflow has exactly one trigger, at least one action, and one or more end steps. Other operators appear when the process needs them.
 
-### Trigger — what starts the Workflow
+### Trigger: what starts the Workflow
 
 The **trigger** establishes when the Workflow begins.
 
@@ -78,7 +78,7 @@ Different triggers have different kinds of starting context. We will study those
 
 You do not need the trigger catalog yet.
 
-### Action — work the Workflow performs
+### Action: work the Workflow performs
 
 An **action** performs a task.
 
@@ -94,7 +94,7 @@ Do not turn that into “every action changes an external system.” Some action
 
 Module 05 will examine action families and what their results actually guarantee.
 
-### Operator — control or shape execution and data
+### Operator: control or shape execution and data
 
 An **operator** helps control the Workflow or work with its data.
 

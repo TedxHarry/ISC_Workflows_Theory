@@ -34,7 +34,7 @@ Start one level earlier:
 
 ---
 
-## 1. Core — Start with the human-interaction decision map
+## 1. Core: Start with the human-interaction decision map
 
 Use this map before you think about individual action names.
 
@@ -127,7 +127,7 @@ Those are different contracts.
 
 ---
 
-## 3. Core — Intake: the person acts first
+## 3. Core: Intake: the person acts first
 
 You met **Form Submitted** earlier as a specialized trigger.
 
@@ -149,7 +149,7 @@ The person acts first.
 
 The Workflow does not exist as a running execution waiting for that person. Their submission is the event that creates the execution.
 
-Think of this as **intake — the front door**.
+Think of this as **intake - the front door**.
 
 Acme might provide a form for requesting a shared mailbox:
 
@@ -187,7 +187,7 @@ That distinction will keep appearing throughout this module.
 
 ---
 
-## 4. Core — Assigned response: the Workflow acts first
+## 4. Core: Assigned response: the Workflow acts first
 
 Now reverse the direction.
 
@@ -292,7 +292,7 @@ That does not make the value automatically suitable for every later business dec
 
 ---
 
-## 5. Core — Human delay is part of the contract
+## 5. Core: Human delay is part of the contract
 
 A system action may finish in seconds.
 
@@ -423,7 +423,7 @@ That is why you inspect the contract instead of generalizing from another human 
 
 ---
 
-## 6. Core — Information is not approval
+## 6. Core: Information is not approval
 
 Now consider a different requirement.
 
@@ -476,7 +476,7 @@ Do not make a Form impersonate an approval mechanism simply because both involve
 
 ---
 
-## 7. Core / Working Engineer — Adaptive Approvals
+## 7. Core / Working Engineer: Adaptive Approvals
 
 ISC's **Adaptive Approvals** capability currently contains two policy types:
 
@@ -588,7 +588,7 @@ It is not the downstream action itself.
 
 ---
 
-## 8. Green Does Not Mean Done — human edition
+## 8. Green Does Not Mean Done: human edition
 
 Module 05 separated action success from later business outcomes.
 
@@ -660,7 +660,7 @@ The useful engineering question remains:
 
 ---
 
-## 9. Working Engineer — Interactive Process
+## 9. Working Engineer: Interactive Process
 
 There is another human-participation pattern that does not look like either intake or an emailed Form assignment.
 
@@ -747,7 +747,7 @@ In-progress Interactive Processes can be returned to and continued from the Laun
 
 ---
 
-## 10. Working Engineer — Interactive Form and Interactive Message
+## 10. Working Engineer: Interactive Form and Interactive Message
 
 Inside an Interactive Process, two names are easy to confuse.
 
@@ -820,7 +820,7 @@ Keep the safe boundary:
 
 ---
 
-## 11. Working Engineer — Design forms for completion
+## 11. Working Engineer: Design forms for completion
 
 Once you choose the correct mechanism, the form itself still needs good engineering judgment.
 
@@ -877,7 +877,7 @@ A form that respects the person's time is more likely to be completed correctly.
 
 ---
 
-## 12. Advanced / Reference — Direct Approve and Deny actions
+## 12. Advanced / Reference: Direct Approve and Deny actions
 
 ISC also provides direct actions named:
 
@@ -975,7 +975,7 @@ That is more useful than memorizing a feature catalog.
 
 ## 14. Work It Out
 
-## Scenario 1 — Intake
+## Scenario 1: Intake
 
 Acme publishes a “Request Shared Mailbox” form.
 
@@ -996,7 +996,7 @@ A Form action would be the wrong direction because there is no already-running W
 
 ---
 
-## Scenario 2 — Priya's onboarding choices
+## Scenario 2: Priya's onboarding choices
 
 Priya's onboarding Workflow is already running.
 
@@ -1022,7 +1022,7 @@ If the deadline is reached, that belongs to the Form action's cancellation-error
 
 ---
 
-## Scenario 3 — Help-desk delegated process
+## Scenario 3: Help-desk delegated process
 
 An Acme help-desk analyst should deliberately launch a “Create Shared Mailbox” process from the Launchpad, enter information as the process reaches interactive steps, and see progress information inside that experience.
 
@@ -1038,7 +1038,7 @@ This is different from assigning a normal Form action to somebody from an alread
 
 ---
 
-## Scenario 4 — Sensitive Finance access
+## Scenario 4: Sensitive Finance access
 
 Priya requests a sensitive Finance access profile.
 
@@ -1062,7 +1062,7 @@ That approval still does not prove provisioning completed.
 
 ---
 
-## Scenario 5 — Nobody responds
+## Scenario 5: Nobody responds
 
 A human step reaches its deadline without a response.
 
@@ -1149,12 +1149,12 @@ Module 07 moves into testing, execution history, and systematic diagnosis.
 
 ## Official References
 
-- [Workflow Triggers — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Workflow Actions — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
-- [Forms — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/forms/index.html)
-- [Interactive Process — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-interactive-process.html)
-- [Adaptive Approvals — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
-- [Managing Launchers — SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/access/launchers.html)
+- [Workflow Triggers - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Workflow Actions - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-actions.html)
+- [Forms - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/forms/index.html)
+- [Interactive Process - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/workflows/workflow-interactive-process.html)
+- [Adaptive Approvals - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/adaptive_approvals/index.html)
+- [Managing Launchers - SailPoint Identity Services](https://documentation.sailpoint.com/saas/help/access/launchers.html)
 
 ---
 

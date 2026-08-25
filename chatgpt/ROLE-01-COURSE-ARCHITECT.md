@@ -1,4 +1,4 @@
-# Role 01 — Course Architect
+# Role 01: Course Architect
 
 ## Mission
 

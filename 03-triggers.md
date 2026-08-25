@@ -69,7 +69,7 @@ Use this order instead:
 2. Which Workflow trigger most directly represents that event?
 3. What starting data does that trigger provide?
 4. Does a filter need to narrow which events qualify?
-5. What does this event prove — and what does it not prove?
+5. What does this event prove - and what does it not prove?
 ```
 
 If the correct trigger does not contain every value you eventually need, that is a later design problem.
@@ -146,18 +146,18 @@ That is a learning classification, not a claim about which triggers every SailPo
 
 We will use the same four questions for each one:
 
-1. **Business event — what happened?**
-2. **Data boundary — what starting information is available?**
-3. **Natural choice — what kind of requirement maps here?**
-4. **Common assumption — what nearby fact should you not infer?**
+1. **Business event - what happened?**
+2. **Data boundary - what starting information is available?**
+3. **Natural choice - what kind of requirement maps here?**
+4. **Common assumption - what nearby fact should you not infer?**
 
 The repetition is deliberate. I want you learning a selection method, not six disconnected definitions.
 
 ---
 
-## Identity Created — Priya appears in ISC
+## Identity Created: Priya appears in ISC
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 **Identity Created** represents the point where ISC detects and creates a new identity during the relevant authoritative-source aggregation and refresh processing.
 
@@ -175,7 +175,7 @@ ISC detects a new identity
 Identity Created
 ```
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 The event provides an identity reference and identity-profile attribute data.
 
@@ -185,7 +185,7 @@ The important design habit here is not to assume that every value your future st
 
 Inspect the actual trigger input.
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 Identity Created is a natural starting boundary when the process really cares that ISC has now created the identity.
 
@@ -203,7 +203,7 @@ not:
 
 > **the instant Acme hires the person**
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 Do not infer that Identity Created proves Priya is:
 
@@ -222,7 +222,7 @@ Nothing more should be smuggled into the word *created*.
 
 ---
 
-## Identity Attributes Changed — Priya moves
+## Identity Attributes Changed: Priya moves
 
 Months later, Priya moves from Sales to Finance.
 
@@ -230,7 +230,7 @@ Module 02 already used this event's `changes` array to teach arrays, indexes, an
 
 Now we care about **why this trigger is the right boundary**.
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 **Identity Attributes Changed** represents authoritative identity attributes changing during identity refresh.
 
@@ -244,7 +244,7 @@ Finance
 
 The event can contain more than one changed attribute.
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 The event includes:
 
@@ -257,7 +257,7 @@ The event includes:
 
 You already know not to assume the business-relevant change is always `changes[0]`.
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 This is a natural starting point when the business requirement is genuinely about an identity-attribute transition.
 
@@ -267,7 +267,7 @@ For example:
 
 The event boundary is the attribute change itself.
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 Do not assume:
 
@@ -307,11 +307,11 @@ The lesson is:
 
 ---
 
-## Identity Lifecycle State Changed — Priya leaves
+## Identity Lifecycle State Changed: Priya leaves
 
 Acme's leaver process gives us one of the clearest examples of why event boundaries matter.
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 **Identity Lifecycle State Changed** represents the identity's `cloudLifecycleState` changing.
 
@@ -327,7 +327,7 @@ Those values are examples.
 
 Lifecycle-state technical names are tenant-configurable and case-sensitive, so do not memorize Acme's sample values as a product-wide enum.
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 The current Workflow event boundary provides data including:
 
@@ -337,7 +337,7 @@ The current Workflow event boundary provides data including:
 
 That makes the before/after state transition directly relevant to the Workflow.
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 This is a natural choice when the process truly cares about the identity entering or leaving a configured lifecycle state.
 
@@ -347,7 +347,7 @@ For example:
 
 The important boundary is the lifecycle transition.
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 Do not confuse:
 
@@ -391,11 +391,11 @@ You will see that distinction repeatedly in this course:
 
 ---
 
-## Scheduled Trigger — the clock is the boundary
+## Scheduled Trigger: the clock is the boundary
 
 Not every Workflow starts because something happened to Priya.
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 With **Scheduled Trigger**, the start condition is the configured schedule.
 
@@ -409,7 +409,7 @@ Examples include:
 - yearly;
 - CRON-based scheduling.
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 This trigger is a useful counterexample to the idea that every trigger supplies JSON event data.
 
@@ -417,7 +417,7 @@ SailPoint documents Scheduled Trigger input as a CRON expression rather than JSO
 
 There is no inherent identity, account, access request, or other business-event subject supplied merely because the Workflow started on a schedule.
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 Scheduled Trigger is a natural choice when the business requirement is periodic rather than event-subject-driven.
 
@@ -429,7 +429,7 @@ For example:
 
 If later processing needs identities, accounts, or other subjects, the Workflow design has to obtain the information it needs.
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 Do not assume:
 
@@ -447,13 +447,13 @@ For now, simply avoid designing with an unstated assumption that “the previous
 
 ---
 
-## Account Aggregation Completed — an operational event boundary
+## Account Aggregation Completed: an operational event boundary
 
 Priya is useful, but Workflows are not limited to identity lifecycle stories.
 
 This trigger moves us into ISC operations.
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 **Account Aggregation Completed** represents an account aggregation/account-collection boundary for a source operation.
 
@@ -465,7 +465,7 @@ Do not read the word *Completed* as:
 
 That is broader than the documented boundary.
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 Current Workflow data for this event includes evidence such as:
 
@@ -486,7 +486,7 @@ aggregationGood = true/false
 
 SailPoint's own examples can show a successful status alongside warnings.
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 This trigger is a natural choice when the business process genuinely cares that the account aggregation operation reached this boundary.
 
@@ -498,7 +498,7 @@ Examples might include:
 
 This broadens your trigger thinking beyond joiner/mover/leaver.
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 There are three common mistakes.
 
@@ -548,17 +548,17 @@ That is better engineering than memorizing an enum that may not be the contract 
 
 ---
 
-## Provisioning Completed — a later processing boundary
+## Provisioning Completed: a later processing boundary
 
 The final Core trigger teaches a distinction that will matter throughout the rest of the course.
 
-### 1. Business event — what happened?
+### 1. Business event: what happened?
 
 **Provisioning Completed** represents a provisioning action reaching the Provisioning Completed event boundary on a source.
 
 It is not limited to one access-request scenario. Provisioning can arise from multiple ISC processes.
 
-### 2. Data boundary — what starting information is available?
+### 2. Data boundary: what starting information is available?
 
 The event can provide provisioning context including:
 
@@ -577,7 +577,7 @@ Do not reduce the trigger name to:
 everything succeeded
 ```
 
-### 3. Natural choice — what kind of requirement maps here?
+### 3. Natural choice: what kind of requirement maps here?
 
 This is a natural trigger when the Workflow genuinely needs to react at the provisioning-processing boundary.
 
@@ -587,7 +587,7 @@ For example:
 
 The exact follow-up design belongs later.
 
-### 4. Common assumption — what should you not infer?
+### 4. Common assumption: what should you not infer?
 
 Do not infer:
 
@@ -750,7 +750,7 @@ Module 07 will turn that into a full debugging method.
 
 ---
 
-# Specialized / Working Engineer — recognize the boundary
+# Specialized / Working Engineer: recognize the boundary
 
 You do not need equal-depth mastery of the entire trigger catalog.
 
@@ -868,7 +868,7 @@ Do not memorize the catalog.
 
 ---
 
-# Advanced — signals and feature-dependent events
+# Advanced: signals and feature-dependent events
 
 Some Workflow triggers represent security or platform signals that require more context before action.
 
@@ -950,7 +950,7 @@ For each scenario, answer five questions:
 4. Would you consider a filter?
 5. What nearby event or assumption would be wrong?
 
-### Scenario 1 — Priya first appears in ISC
+### Scenario 1: Priya first appears in ISC
 
 Acme wants a notification after ISC detects and creates Priya's identity through authoritative processing.
 
@@ -969,7 +969,7 @@ Acme wants a notification after ISC detects and creates Priya's identity through
 
 </details>
 
-### Scenario 2 — Priya moves into Finance
+### Scenario 2: Priya moves into Finance
 
 Priya's authoritative department changes from Sales to Finance. Acme only wants the Workflow for moves into Finance.
 
@@ -988,7 +988,7 @@ Priya's authoritative department changes from Sales to Finance. Acme only wants 
 
 </details>
 
-### Scenario 3 — Priya enters Acme's leaver state
+### Scenario 3: Priya enters Acme's leaver state
 
 Acme wants its leaver orchestration to begin when Priya's configured lifecycle state changes to its terminated state.
 
@@ -1007,7 +1007,7 @@ Acme wants its leaver orchestration to begin when Priya's configured lifecycle s
 
 </details>
 
-### Scenario 4 — Acme cares about an aggregation outcome
+### Scenario 4: Acme cares about an aggregation outcome
 
 Acme wants follow-up orchestration after an account aggregation reaches its completion/outcome boundary, but only for outcomes that meet an operational condition Acme has explicitly verified.
 
@@ -1026,7 +1026,7 @@ Acme wants follow-up orchestration after an account aggregation reaches its comp
 
 </details>
 
-### Scenario 5 — provisioning processing reaches its completion boundary
+### Scenario 5: provisioning processing reaches its completion boundary
 
 Acme wants a follow-up notification after provisioning processing reaches the Provisioning Completed boundary.
 
@@ -1045,7 +1045,7 @@ Acme wants a follow-up notification after provisioning processing reaches the Pr
 
 </details>
 
-### Scenario 6 — the event originates outside ISC
+### Scenario 6: the event originates outside ISC
 
 A separate HR application owns a business event that Acme wants to send explicitly into a native Workflow.
 
@@ -1081,7 +1081,7 @@ Should every event qualify?
         ↓
 If not, what filter narrows it?
         ↓
-What does this event prove — and what remains unproven?
+What does this event prove - and what remains unproven?
 ```
 
 You should also be able to explain:
@@ -1111,13 +1111,13 @@ That is where Operators & Logic begins.
 
 ## Official References
 
-- [Workflow Triggers — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
-- [Building Workflows — SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
-- [Identity Created — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-created/)
-- [Identity Attributes Changed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
-- [Filtering Events — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/filtering-events/)
-- [Account Aggregation Completed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/account-aggregation-completed/)
-- [Provisioning Completed — SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
+- [Workflow Triggers - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-triggers.html)
+- [Building Workflows - SailPoint Documentation](https://documentation.sailpoint.com/saas/help/workflows/workflow-build.html)
+- [Identity Created - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-created/)
+- [Identity Attributes Changed - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/identity-attribute-changed/)
+- [Filtering Events - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/filtering-events/)
+- [Account Aggregation Completed - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/account-aggregation-completed/)
+- [Provisioning Completed - SailPoint Developer Documentation](https://developer.sailpoint.com/docs/extensibility/event-triggers/triggers/provisioning-completed/)
 
 ---
 
