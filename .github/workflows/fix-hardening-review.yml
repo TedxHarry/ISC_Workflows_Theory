@@ -1,0 +1,37 @@
+name: Fix hardening review issue
+
+on:
+  push:
+    branches:
+      - hardening/course-quality
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hardening/course-quality
+      - name: Remove duplicate accessibility attributes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          duplicate = "        button.setAttribute('aria-live', 'polite');\n" * 3
+          single = "        button.setAttribute('aria-live', 'polite');\n"
+          if duplicate not in text:
+              raise SystemExit('Expected duplicate aria-live attributes were not found')
+          path.write_text(text.replace(duplicate, single, 1), encoding='utf-8')
+          PY
+          git diff --check
+      - name: Commit review fix
+        run: |
+          git config user.name "TedxHarry"
+          git config user.email "106974482+TedxHarry@users.noreply.github.com"
+          git add index.html
+          git commit -m "Remove duplicate accessibility attributes"
+          git push origin HEAD:hardening/course-quality
